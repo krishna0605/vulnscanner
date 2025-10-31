@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Integrations - CyberSec Inc.</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings:
+        'FILL' 0,
+        'wght' 400,
+        'GRAD' 0,
+        'opsz' 24
+      }
+      .material-symbols-outlined.fill {
+        font-variation-settings: 'FILL' 1;
+      }
+      .glow-active {
+        box-shadow: 0 0 15px 1px rgba(0, 245, 255, 0.4);
+      }
+    </style>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#00F5FF",
+              "background-light": "#0A0F1A",
+              "background-dark": "#0A0F1A",
+              "surface": "#101828",
+              "text-primary": "#E0E0E0",
+              "text-secondary": "#8A94A6",
+              "success": "#00FF85",
+              "error": "#FF4D4D"
+            },
+            fontFamily: {
+              "display": ["Space Grotesk", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.5rem", "lg": "0.75rem", "xl": "1rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+</head>
+<body class="font-display bg-background-dark text-text-primary antialiased">
+<div class="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden">
+<div class="absolute inset-0 z-0 opacity-10">
+<div class="absolute inset-0 bg-[radial-gradient(circle_at_center,_#00F5FF30_0,_transparent_40%)]"></div>
+</div>
+<div class="relative z-10 flex h-full grow">
+<!-- SideNavBar -->
+<aside class="flex w-64 shrink-0 flex-col border-r border-surface bg-background-dark/50 p-6 backdrop-blur-sm">
+<div class="flex flex-col gap-4">
+<div class="flex items-center gap-3">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" data-alt="CyberSec Inc. Logo" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDh4kXL3RMXNJEoyGdgeey1kVWoDqE7fmlaoxkoR84EcGTFaJukjB0LWEbSGoeKtSIFeEbvnMnHDIOWbXUV2GZzpKESaoAPztOg4SFZ1rCYRsoHSBhNervJdCRWXesqIm4lyMSjtFHJphmbkDK_PZZUGhRt74l_5ob7WVnHXidhLSLWt63NmUuk-Y6pMVRyjsiM4Sbx28jmrPQ1clS0wEevkR7fmUyyXaFhPCVg9ub3_1JgYbM1yd5kPIDDJ2iPFAiEOt2ZwQytoX9a");'></div>
+<div class="flex flex-col">
+<h1 class="text-text-primary text-base font-medium leading-normal">CyberSec Inc.</h1>
+<p class="text-text-secondary text-sm font-normal leading-normal">Workspace</p>
+</div>
+</div>
+<nav class="mt-6 flex flex-col gap-2">
+<a class="flex items-center gap-3 rounded-md px-3 py-2 text-text-secondary hover:bg-surface hover:text-text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-2xl">dashboard</span>
+<p class="text-sm font-medium leading-normal">Dashboard</p>
+</a>
+<a class="flex items-center gap-3 rounded-md px-3 py-2 text-text-secondary hover:bg-surface hover:text-text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-2xl">folder</span>
+<p class="text-sm font-medium leading-normal">Projects</p>
+</a>
+<a class="flex items-center gap-3 rounded-md px-3 py-2 text-text-secondary hover:bg-surface hover:text-text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-2xl">target</span>
+<p class="text-sm font-medium leading-normal">Scans</p>
+</a>
+<a class="flex items-center gap-3 rounded-md px-3 py-2 text-text-secondary hover:bg-surface hover:text-text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-2xl">bar_chart</span>
+<p class="text-sm font-medium leading-normal">Reports</p>
+</a>
+<a class="flex items-center gap-3 rounded-md px-3 py-2 bg-surface text-primary shadow-sm glow-active" href="#">
+<span class="material-symbols-outlined text-2xl fill">power</span>
+<p class="text-sm font-medium leading-normal">Integrations</p>
+</a>
+</nav>
+</div>
+<div class="mt-auto flex flex-col gap-1">
+<a class="flex items-center gap-3 rounded-md px-3 py-2 text-text-secondary hover:bg-surface hover:text-text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-2xl">settings</span>
+<p class="text-sm font-medium leading-normal">Settings</p>
+</a>
+<a class="flex items-center gap-3 rounded-md px-3 py-2 text-text-secondary hover:bg-surface hover:text-text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-2xl">help</span>
+<p class="text-sm font-medium leading-normal">Help</p>
+</a>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 p-8 md:p-12">
+<div class="mx-auto max-w-4xl">
+<!-- PageHeading -->
+<header class="flex flex-col gap-3">
+<h1 class="text-4xl font-black leading-tight tracking-[-0.033em] text-text-primary">Integrations</h1>
+<p class="text-base font-normal leading-normal text-text-secondary">Connect your favorite tools to streamline your security workflow.</p>
+</header>
+<!-- Search and Filters -->
+<div class="mt-8 flex flex-col gap-6 md:flex-row md:items-center">
+<!-- SearchBar -->
+<div class="flex-1">
+<label class="flex flex-col min-w-40 h-12 w-full">
+<div class="flex w-full flex-1 items-stretch rounded-lg h-full">
+<div class="text-text-secondary flex border-r-0 border-surface bg-surface items-center justify-center pl-4 rounded-l-lg">
+<span class="material-symbols-outlined text-2xl">search</span>
+</div>
+<input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-r-lg text-text-primary focus:outline-0 focus:ring-2 focus:ring-primary/50 border-none bg-surface h-full placeholder:text-text-secondary px-4 text-base font-normal leading-normal" placeholder="Find an integration (e.g., Jira, Slack)" value=""/>
+</div>
+</label>
+</div>
+<!-- Chips -->
+<div class="flex gap-2 overflow-x-auto pb-2">
+<button class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-primary/20 px-4 text-primary transition-all duration-300 hover:bg-primary/30">
+<p class="text-sm font-medium leading-normal">All</p>
+</button>
+<button class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-surface px-4 text-text-secondary transition-all duration-300 hover:bg-primary/20 hover:text-primary">
+<p class="text-sm font-medium leading-normal">Issue Trackers</p>
+</button>
+<button class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-surface px-4 text-text-secondary transition-all duration-300 hover:bg-primary/20 hover:text-primary">
+<p class="text-sm font-medium leading-normal">CI/CD</p>
+</button>
+<button class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-surface px-4 text-text-secondary transition-all duration-300 hover:bg-primary/20 hover:text-primary">
+<p class="text-sm font-medium leading-normal">Notifications</p>
+</button>
+<button class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-surface px-4 text-text-secondary transition-all duration-300 hover:bg-primary/20 hover:text-primary">
+<p class="text-sm font-medium leading-normal">Data &amp; Reporting</p>
+</button>
+</div>
+</div>
+<!-- Integration List -->
+<div class="mt-8 grid grid-cols-1 gap-4">
+<!-- ListItem 1: Jira (Connected) -->
+<div class="flex flex-col md:flex-row md:items-center gap-4 bg-surface/50 border border-surface rounded-lg px-6 min-h-[80px] py-4 justify-between transition-all duration-300 hover:border-primary/50 hover:bg-surface hover:shadow-2xl hover:shadow-primary/10">
+<div class="flex items-center gap-4">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-md size-12" data-alt="Jira Logo" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBahYI8Rp_MGCz5OyrAuaapriLZ56J2vJzQ8ld32-ivGokQHGAx514isJ-rL9ijF2ArG3br-T1Zhe2BZUU4LVeQ-VGYSOkb9ck_rZ6iHy4QuSOiGY6ID93jg9e69qGXS_iZ6yGVxux4GNkh1RVA3wZglDGZ7k4wD6KCqikkV3RuY6Y-DLJu_WdwDTZ0S1T0oiMWsKkNZawDBHvBuXPSMz2a-8FN_ggMmF2KGfWE76-baByrkyMHJuiFBSZdnfi50Hg2IdJies96Ar1d");'></div>
+<div class="flex flex-col justify-center">
+<p class="text-base font-medium leading-normal text-text-primary">Jira</p>
+<p class="text-sm font-normal leading-normal text-text-secondary line-clamp-2">Automatically create tickets for new vulnerabilities.</p>
+</div>
+</div>
+<div class="flex items-center gap-4 shrink-0">
+<div class="flex items-center gap-2">
+<div class="size-2 rounded-full bg-success shadow-[0_0_8px_theme(colors.success)]"></div>
+<span class="text-sm text-success">Connected</span>
+</div>
+<button class="flex h-9 w-9 items-center justify-center rounded-md bg-surface text-text-secondary transition-colors hover:bg-primary/20 hover:text-primary">
+<span class="material-symbols-outlined text-xl">settings</span>
+</button>
+<label class="relative flex h-[28px] w-[50px] cursor-pointer items-center rounded-full bg-primary p-0.5 has-[:checked]:justify-end has-[:checked]:bg-primary glow-active">
+<div class="size-[20px] rounded-full bg-background-dark transition-transform" style="box-shadow: rgba(0, 0, 0, 0.15) 0px 3px 8px, rgba(0, 0, 0, 0.06) 0px 3px 1px;"></div>
+<input checked="" class="invisible absolute" type="checkbox"/>
+</label>
+</div>
+</div>
+<!-- ListItem 2: Slack (Disconnected) -->
+<div class="flex flex-col md:flex-row md:items-center gap-4 bg-surface/50 border border-surface rounded-lg px-6 min-h-[80px] py-4 justify-between transition-all duration-300 hover:border-primary/50 hover:bg-surface hover:shadow-2xl hover:shadow-primary/10">
+<div class="flex items-center gap-4">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-md size-12" data-alt="Slack Logo" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuARkAxl9lRMtBpdICDJg6lxnFFyQEswmxdTBJ6hdul7LIgxHI0_32-pqVKh6qUr16bKdMOiZa2JDoOT7OhyAPn60X1QGtj8qtVvKfat1NcMBTJJgq42aNbc0X0E-Mrj-ICRMqX7JQDb9D6ObYXkNyL-rwGALryyuwFVgVFUd0jsYhUrw__JOzljiM0DSFCpLgW4U0Z5wGka3OZZJFFabIwfbbPsDFnYTbwwIoUG8yuuSDseq1-OUaMJxmdB8l1250IokZuaxvU8sIQc");'></div>
+<div class="flex flex-col justify-center">
+<p class="text-base font-medium leading-normal text-text-primary">Slack</p>
+<p class="text-sm font-normal leading-normal text-text-secondary line-clamp-2">Receive real-time notifications about scan results.</p>
+</div>
+</div>
+<div class="flex items-center gap-4 shrink-0">
+<div class="flex items-center gap-2">
+<div class="size-2 rounded-full bg-text-secondary"></div>
+<span class="text-sm text-text-secondary">Disconnected</span>
+</div>
+<button class="flex h-9 w-9 items-center justify-center rounded-md bg-surface text-text-secondary transition-colors hover:bg-primary/20 hover:text-primary">
+<span class="material-symbols-outlined text-xl">settings</span>
+</button>
+<label class="relative flex h-[28px] w-[50px] cursor-pointer items-center rounded-full bg-background-dark/50 border border-surface p-0.5 has-[:checked]:justify-end has-[:checked]:bg-primary has-[:checked]:glow-active">
+<div class="size-[20px] rounded-full bg-text-secondary transition-transform has-[:checked]:bg-background-dark" style="box-shadow: rgba(0, 0, 0, 0.15) 0px 3px 8px, rgba(0, 0, 0, 0.06) 0px 3px 1px;"></div>
+<input class="invisible absolute" type="checkbox"/>
+</label>
+</div>
+</div>
+<!-- ListItem 3: GitHub Actions (Requires Config) -->
+<div class="flex flex-col md:flex-row md:items-center gap-4 bg-surface/50 border border-surface rounded-lg px-6 min-h-[80px] py-4 justify-between transition-all duration-300 hover:border-primary/50 hover:bg-surface hover:shadow-2xl hover:shadow-primary/10">
+<div class="flex items-center gap-4">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-md size-12" data-alt="GitHub Logo" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDg3tyjfdUwU-AwQhhK_pnXLVt3g7dIMXHtCeFhFnQOqXhAiIg4oRWW5aMkQwam0H_fGlAEIUe71oJdp-VBibj383VO_IHwuZozCocT0LZMtARlRWaIxAw7xHFI18TfUnGHCScJPaW6AnIVGSo_OlMpCxA5eUElNPfsgtiR_-XzvoSkkjUDqBF72kgD_U3pqiP7xJgtLXL34c2tfh9VWy7kGC0S1evGRjt7pDaCf8pE8r1wlVAdsnDl03gxR_2r9Q2tsgYbuuNR9c5r");'></div>
+<div class="flex flex-col justify-center">
+<p class="text-base font-medium leading-normal text-text-primary">GitHub Actions</p>
+<p class="text-sm font-normal leading-normal text-text-secondary line-clamp-2">Integrate security scans into your CI/CD pipeline.</p>
+</div>
+</div>
+<div class="flex items-center gap-4 shrink-0">
+<div class="flex items-center gap-2">
+<div class="size-2 rounded-full bg-error shadow-[0_0_8px_theme(colors.error)]"></div>
+<span class="text-sm text-error">Requires Config</span>
+</div>
+<button class="flex h-9 w-9 items-center justify-center rounded-md bg-primary/20 text-primary transition-colors hover:bg-primary/30 glow-active">
+<span class="material-symbols-outlined text-xl">settings</span>
+</button>
+<label class="relative flex h-[28px] w-[50px] cursor-pointer items-center rounded-full bg-background-dark/50 border border-surface p-0.5 has-[:checked]:justify-end has-[:checked]:bg-primary has-[:checked]:glow-active">
+<div class="size-[20px] rounded-full bg-text-secondary transition-transform has-[:checked]:bg-background-dark" style="box-shadow: rgba(0, 0, 0, 0.15) 0px 3px 8px, rgba(0, 0, 0, 0.06) 0px 3px 1px;"></div>
+<input class="invisible absolute" type="checkbox"/>
+</label>
+</div>
+</div>
+<!-- ListItem 4: Splunk (Disconnected) -->
+<div class="flex flex-col md:flex-row md:items-center gap-4 bg-surface/50 border border-surface rounded-lg px-6 min-h-[80px] py-4 justify-between transition-all duration-300 hover:border-primary/50 hover:bg-surface hover:shadow-2xl hover:shadow-primary/10">
+<div class="flex items-center gap-4">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-md size-12" data-alt="Splunk Logo" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBzJN9E5Fe0d-09GU4f8L8idnAOmjrZwrWeDvWu0SeEmRwLa0vwfF5RpQp9M48hZZZrkEGt4SnfsAg-iqlbjndHq0n23AxQUfqW3e-B-ldy0KOFTVdcQFS42i3H8Iz6yJm7TZFNtXc3qroL2TWUDslmnzMcfhvF6N3WWvplz4mTw7BaQeig-o9OOo3pxLZbvf872AiOKr_aArqvCLhoH7RtHmAfz7mbH5Mm9mTT9HkrF_XhYLLvOZgs3CE5-fc6-NPXj57eJphlX7e2");'></div>
+<div class="flex flex-col justify-center">
+<p class="text-base font-medium leading-normal text-text-primary">Splunk</p>
+<p class="text-sm font-normal leading-normal text-text-secondary line-clamp-2">Send vulnerability data to your Splunk instance.</p>
+</div>
+</div>
+<div class="flex items-center gap-4 shrink-0">
+<div class="flex items-center gap-2">
+<div class="size-2 rounded-full bg-text-secondary"></div>
+<span class="text-sm text-text-secondary">Disconnected</span>
+</div>
+<button class="flex h-9 w-9 items-center justify-center rounded-md bg-surface text-text-secondary transition-colors hover:bg-primary/20 hover:text-primary">
+<span class="material-symbols-outlined text-xl">settings</span>
+</button>
+<label class="relative flex h-[28px] w-[50px] cursor-pointer items-center rounded-full bg-background-dark/50 border border-surface p-0.5 has-[:checked]:justify-end has-[:checked]:bg-primary has-[:checked]:glow-active">
+<div class="size-[20px] rounded-full bg-text-secondary transition-transform has-[:checked]:bg-background-dark" style="box-shadow: rgba(0, 0, 0, 0.15) 0px 3px 8px, rgba(0, 0, 0, 0.06) 0px 3px 1px;"></div>
+<input class="invisible absolute" type="checkbox"/>
+</label>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</div>
+</body></html>

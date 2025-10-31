@@ -1,0 +1,1040 @@
+-- =====================================================
+-- ENHANCED VULNERABILITY SCANNER - COMPLETE SCHEMA
+-- =====================================================
+-- Combined schema file for Supabase PostgreSQL database
+-- This file combines all schema components in proper execution order
+-- 
+-- Execution Order:
+-- 1. Extensions and Types
+-- 2. Core Tables (Users, Auth, System)
+-- 3. Project Tables
+-- 4. Scanning Tables
+-- 5. Vulnerability Tables
+-- 6. Reporting Tables
+-- 7. Integration Tables
+-- 8. Row Level Security Policies
+-- 9. Indexes and Constraints
+-- 10. Security Fixes
+-- =====================================================
+-- PURE CLEAN VERSION FOR INITIAL DEPLOYMENT
+-- =====================================================
+-- This version removes ALL DROP statements to completely avoid
+-- Supabase's "destructive operation" warning on fresh deployments.
+-- 
+-- IMPORTANT: Use this ONLY for initial deployment on fresh databases.
+-- For updates/re-deployments, use combined_schema.sql instead.
+-- =====================================================
+-- Combined schema file for Supabase PostgreSQL database
+-- This file combines all schema components in proper execution order
+-- 
+-- Execution Order:
+-- 1. Extensions and Types
+-- 2. Core Tables (Users, Auth, System)
+-- 3. Project Tables
+-- 4. Scanning Tables
+-- 5. Vulnerability Tables
+-- 6. Reporting Tables
+-- 7. Integration Tables
+-- 8. Row Level Security Policies
+-- 9. Indexes and Constraints
+-- 10. Security Fixes
+-- =====================================================
+-- ENHANCED VULNERABILITY SCANNER - COMPLETE SCHEMA
+-- =====================================================
+-- Combined schema file for Supabase PostgreSQL database
+-- This file combines all schema components in proper execution order
+-- 
+-- Execution Order:
+-- 1. Extensions and Types
+-- 2. Core Tables (Users, Auth, System)
+-- 3. Project Tables
+-- 4. Scanning Tables
+-- 5. Vulnerability Tables
+-- 6. Reporting Tables
+-- 7. Integration Tables
+-- 8. Row Level Security Policies
+-- 9. Indexes and Constraints
+-- 10. Security Fixes
+-- =====================================================
+-- PURE CLEAN VERSION FOR INITIAL DEPLOYMENT
+-- =====================================================
+-- This version removes ALL DROP statements to completely avoid
+-- Supabase's "destructive operation" warning on fresh deployments.
+-- 
+-- IMPORTANT: Use this ONLY for initial deployment on fresh databases.
+-- For updates/re-deployments, use combined_schema.sql instead.
+-- =====================================================
+-- PART 1: EXTENSIONS AND TYPES
+-- =====================================================
+-- ENHANCED VULNERABILITY SCANNER - COMPLETE SCHEMA
+-- =====================================================
+-- Combined schema file for Supabase PostgreSQL database
+-- This file combines all schema components in proper execution order
+-- 
+-- Execution Order:
+-- 1. Extensions and Types
+-- 2. Core Tables (Users, Auth, System)
+-- 3. Project Tables
+-- 4. Scanning Tables
+-- 5. Vulnerability Tables
+-- 6. Reporting Tables
+-- 7. Integration Tables
+-- 8. Row Level Security Policies
+-- 9. Indexes and Constraints
+-- 10. Security Fixes
+-- =====================================================
+-- PURE CLEAN VERSION FOR INITIAL DEPLOYMENT
+-- =====================================================
+-- This version removes ALL DROP statements to completely avoid
+-- Supabase's "destructive operation" warning on fresh deployments.
+-- 
+-- IMPORTANT: Use this ONLY for initial deployment on fresh databases.
+-- For updates/re-deployments, use combined_schema.sql instead.
+-- =====================================================
+-- CUSTOM ENUM TYPES
+-- =====================================================
+-- ENHANCED VULNERABILITY SCANNER - COMPLETE SCHEMA
+-- =====================================================
+-- Combined schema file for Supabase PostgreSQL database
+-- This file combines all schema components in proper execution order
+-- 
+-- Execution Order:
+-- 1. Extensions and Types
+-- 2. Core Tables (Users, Auth, System)
+-- 3. Project Tables
+-- 4. Scanning Tables
+-- 5. Vulnerability Tables
+-- 6. Reporting Tables
+-- 7. Integration Tables
+-- 8. Row Level Security Policies
+-- 9. Indexes and Constraints
+-- 10. Security Fixes
+-- =====================================================
+-- PURE CLEAN VERSION FOR INITIAL DEPLOYMENT
+-- =====================================================
+-- This version removes ALL DROP statements to completely avoid
+-- Supabase's "destructive operation" warning on fresh deployments.
+-- 
+-- IMPORTANT: Use this ONLY for initial deployment on fresh databases.
+-- For updates/re-deployments, use combined_schema.sql instead.
+-- =====================================================
+-- PART 2: CORE TABLES
+-- =====================================================
+-- ENHANCED VULNERABILITY SCANNER - COMPLETE SCHEMA
+-- =====================================================
+-- Combined schema file for Supabase PostgreSQL database
+-- This file combines all schema components in proper execution order
+-- 
+-- Execution Order:
+-- 1. Extensions and Types
+-- 2. Core Tables (Users, Auth, System)
+-- 3. Project Tables
+-- 4. Scanning Tables
+-- 5. Vulnerability Tables
+-- 6. Reporting Tables
+-- 7. Integration Tables
+-- 8. Row Level Security Policies
+-- 9. Indexes and Constraints
+-- 10. Security Fixes
+-- =====================================================
+-- PURE CLEAN VERSION FOR INITIAL DEPLOYMENT
+-- =====================================================
+-- This version removes ALL DROP statements to completely avoid
+-- Supabase's "destructive operation" warning on fresh deployments.
+-- 
+-- IMPORTANT: Use this ONLY for initial deployment on fresh databases.
+-- For updates/re-deployments, use combined_schema.sql instead.
+-- =====================================================
+-- TRIGGERS AND FUNCTIONS FOR CORE TABLES
+-- =====================================================
+-- ENHANCED VULNERABILITY SCANNER - COMPLETE SCHEMA
+-- =====================================================
+-- Combined schema file for Supabase PostgreSQL database
+-- This file combines all schema components in proper execution order
+-- 
+-- Execution Order:
+-- 1. Extensions and Types
+-- 2. Core Tables (Users, Auth, System)
+-- 3. Project Tables
+-- 4. Scanning Tables
+-- 5. Vulnerability Tables
+-- 6. Reporting Tables
+-- 7. Integration Tables
+-- 8. Row Level Security Policies
+-- 9. Indexes and Constraints
+-- 10. Security Fixes
+-- =====================================================
+-- PURE CLEAN VERSION FOR INITIAL DEPLOYMENT
+-- =====================================================
+-- This version removes ALL DROP statements to completely avoid
+-- Supabase's "destructive operation" warning on fresh deployments.
+-- 
+-- IMPORTANT: Use this ONLY for initial deployment on fresh databases.
+-- For updates/re-deployments, use combined_schema.sql instead.
+-- =====================================================
+-- INITIAL DATA FOR CORE TABLES
+-- =====================================================
+-- ENHANCED VULNERABILITY SCANNER - COMPLETE SCHEMA
+-- =====================================================
+-- Combined schema file for Supabase PostgreSQL database
+-- This file combines all schema components in proper execution order
+-- 
+-- Execution Order:
+-- 1. Extensions and Types
+-- 2. Core Tables (Users, Auth, System)
+-- 3. Project Tables
+-- 4. Scanning Tables
+-- 5. Vulnerability Tables
+-- 6. Reporting Tables
+-- 7. Integration Tables
+-- 8. Row Level Security Policies
+-- 9. Indexes and Constraints
+-- 10. Security Fixes
+-- =====================================================
+-- PURE CLEAN VERSION FOR INITIAL DEPLOYMENT
+-- =====================================================
+-- This version removes ALL DROP statements to completely avoid
+-- Supabase's "destructive operation" warning on fresh deployments.
+-- 
+-- IMPORTANT: Use this ONLY for initial deployment on fresh databases.
+-- For updates/re-deployments, use combined_schema.sql instead.
+-- =====================================================
+-- PART 3: PROJECT TABLES
+-- =====================================================
+-- ENHANCED VULNERABILITY SCANNER - COMPLETE SCHEMA
+-- =====================================================
+-- Combined schema file for Supabase PostgreSQL database
+-- This file combines all schema components in proper execution order
+-- 
+-- Execution Order:
+-- 1. Extensions and Types
+-- 2. Core Tables (Users, Auth, System)
+-- 3. Project Tables
+-- 4. Scanning Tables
+-- 5. Vulnerability Tables
+-- 6. Reporting Tables
+-- 7. Integration Tables
+-- 8. Row Level Security Policies
+-- 9. Indexes and Constraints
+-- 10. Security Fixes
+-- =====================================================
+-- PURE CLEAN VERSION FOR INITIAL DEPLOYMENT
+-- =====================================================
+-- This version removes ALL DROP statements to completely avoid
+-- Supabase's "destructive operation" warning on fresh deployments.
+-- 
+-- IMPORTANT: Use this ONLY for initial deployment on fresh databases.
+-- For updates/re-deployments, use combined_schema.sql instead.
+-- =====================================================
+-- TRIGGERS AND FUNCTIONS FOR PROJECT TABLES
+-- =====================================================
+-- ENHANCED VULNERABILITY SCANNER - COMPLETE SCHEMA
+-- =====================================================
+-- Combined schema file for Supabase PostgreSQL database
+-- This file combines all schema components in proper execution order
+-- 
+-- Execution Order:
+-- 1. Extensions and Types
+-- 2. Core Tables (Users, Auth, System)
+-- 3. Project Tables
+-- 4. Scanning Tables
+-- 5. Vulnerability Tables
+-- 6. Reporting Tables
+-- 7. Integration Tables
+-- 8. Row Level Security Policies
+-- 9. Indexes and Constraints
+-- 10. Security Fixes
+-- =====================================================
+-- PURE CLEAN VERSION FOR INITIAL DEPLOYMENT
+-- =====================================================
+-- This version removes ALL DROP statements to completely avoid
+-- Supabase's "destructive operation" warning on fresh deployments.
+-- 
+-- IMPORTANT: Use this ONLY for initial deployment on fresh databases.
+-- For updates/re-deployments, use combined_schema.sql instead.
+-- =====================================================
+-- VIEWS FOR PROJECT TABLES
+-- =====================================================
+-- ENHANCED VULNERABILITY SCANNER - COMPLETE SCHEMA
+-- =====================================================
+-- Combined schema file for Supabase PostgreSQL database
+-- This file combines all schema components in proper execution order
+-- 
+-- Execution Order:
+-- 1. Extensions and Types
+-- 2. Core Tables (Users, Auth, System)
+-- 3. Project Tables
+-- 4. Scanning Tables
+-- 5. Vulnerability Tables
+-- 6. Reporting Tables
+-- 7. Integration Tables
+-- 8. Row Level Security Policies
+-- 9. Indexes and Constraints
+-- 10. Security Fixes
+-- =====================================================
+-- PURE CLEAN VERSION FOR INITIAL DEPLOYMENT
+-- =====================================================
+-- This version removes ALL DROP statements to completely avoid
+-- Supabase's "destructive operation" warning on fresh deployments.
+-- 
+-- IMPORTANT: Use this ONLY for initial deployment on fresh databases.
+-- For updates/re-deployments, use combined_schema.sql instead.
+-- =====================================================
+-- PART 4: SCANNING TABLES
+-- =====================================================
+-- ENHANCED VULNERABILITY SCANNER - COMPLETE SCHEMA
+-- =====================================================
+-- Combined schema file for Supabase PostgreSQL database
+-- This file combines all schema components in proper execution order
+-- 
+-- Execution Order:
+-- 1. Extensions and Types
+-- 2. Core Tables (Users, Auth, System)
+-- 3. Project Tables
+-- 4. Scanning Tables
+-- 5. Vulnerability Tables
+-- 6. Reporting Tables
+-- 7. Integration Tables
+-- 8. Row Level Security Policies
+-- 9. Indexes and Constraints
+-- 10. Security Fixes
+-- =====================================================
+-- PURE CLEAN VERSION FOR INITIAL DEPLOYMENT
+-- =====================================================
+-- This version removes ALL DROP statements to completely avoid
+-- Supabase's "destructive operation" warning on fresh deployments.
+-- 
+-- IMPORTANT: Use this ONLY for initial deployment on fresh databases.
+-- For updates/re-deployments, use combined_schema.sql instead.
+-- =====================================================
+-- TRIGGERS AND FUNCTIONS FOR SCANNING TABLES
+-- =====================================================
+-- ENHANCED VULNERABILITY SCANNER - COMPLETE SCHEMA
+-- =====================================================
+-- Combined schema file for Supabase PostgreSQL database
+-- This file combines all schema components in proper execution order
+-- 
+-- Execution Order:
+-- 1. Extensions and Types
+-- 2. Core Tables (Users, Auth, System)
+-- 3. Project Tables
+-- 4. Scanning Tables
+-- 5. Vulnerability Tables
+-- 6. Reporting Tables
+-- 7. Integration Tables
+-- 8. Row Level Security Policies
+-- 9. Indexes and Constraints
+-- 10. Security Fixes
+-- =====================================================
+-- PURE CLEAN VERSION FOR INITIAL DEPLOYMENT
+-- =====================================================
+-- This version removes ALL DROP statements to completely avoid
+-- Supabase's "destructive operation" warning on fresh deployments.
+-- 
+-- IMPORTANT: Use this ONLY for initial deployment on fresh databases.
+-- For updates/re-deployments, use combined_schema.sql instead.
+-- =====================================================
+-- VIEWS FOR SCANNING TABLES
+-- =====================================================
+-- ENHANCED VULNERABILITY SCANNER - COMPLETE SCHEMA
+-- =====================================================
+-- Combined schema file for Supabase PostgreSQL database
+-- This file combines all schema components in proper execution order
+-- 
+-- Execution Order:
+-- 1. Extensions and Types
+-- 2. Core Tables (Users, Auth, System)
+-- 3. Project Tables
+-- 4. Scanning Tables
+-- 5. Vulnerability Tables
+-- 6. Reporting Tables
+-- 7. Integration Tables
+-- 8. Row Level Security Policies
+-- 9. Indexes and Constraints
+-- 10. Security Fixes
+-- =====================================================
+-- PURE CLEAN VERSION FOR INITIAL DEPLOYMENT
+-- =====================================================
+-- This version removes ALL DROP statements to completely avoid
+-- Supabase's "destructive operation" warning on fresh deployments.
+-- 
+-- IMPORTANT: Use this ONLY for initial deployment on fresh databases.
+-- For updates/re-deployments, use combined_schema.sql instead.
+-- =====================================================
+-- PART 5: VULNERABILITY TABLES
+-- =====================================================
+-- ENHANCED VULNERABILITY SCANNER - COMPLETE SCHEMA
+-- =====================================================
+-- Combined schema file for Supabase PostgreSQL database
+-- This file combines all schema components in proper execution order
+-- 
+-- Execution Order:
+-- 1. Extensions and Types
+-- 2. Core Tables (Users, Auth, System)
+-- 3. Project Tables
+-- 4. Scanning Tables
+-- 5. Vulnerability Tables
+-- 6. Reporting Tables
+-- 7. Integration Tables
+-- 8. Row Level Security Policies
+-- 9. Indexes and Constraints
+-- 10. Security Fixes
+-- =====================================================
+-- PURE CLEAN VERSION FOR INITIAL DEPLOYMENT
+-- =====================================================
+-- This version removes ALL DROP statements to completely avoid
+-- Supabase's "destructive operation" warning on fresh deployments.
+-- 
+-- IMPORTANT: Use this ONLY for initial deployment on fresh databases.
+-- For updates/re-deployments, use combined_schema.sql instead.
+-- =====================================================
+-- TRIGGERS AND FUNCTIONS FOR VULNERABILITY TABLES
+-- =====================================================
+-- ENHANCED VULNERABILITY SCANNER - COMPLETE SCHEMA
+-- =====================================================
+-- Combined schema file for Supabase PostgreSQL database
+-- This file combines all schema components in proper execution order
+-- 
+-- Execution Order:
+-- 1. Extensions and Types
+-- 2. Core Tables (Users, Auth, System)
+-- 3. Project Tables
+-- 4. Scanning Tables
+-- 5. Vulnerability Tables
+-- 6. Reporting Tables
+-- 7. Integration Tables
+-- 8. Row Level Security Policies
+-- 9. Indexes and Constraints
+-- 10. Security Fixes
+-- =====================================================
+-- PURE CLEAN VERSION FOR INITIAL DEPLOYMENT
+-- =====================================================
+-- This version removes ALL DROP statements to completely avoid
+-- Supabase's "destructive operation" warning on fresh deployments.
+-- 
+-- IMPORTANT: Use this ONLY for initial deployment on fresh databases.
+-- For updates/re-deployments, use combined_schema.sql instead.
+-- =====================================================
+-- VIEWS FOR VULNERABILITY TABLES
+-- =====================================================
+-- ENHANCED VULNERABILITY SCANNER - COMPLETE SCHEMA
+-- =====================================================
+-- Combined schema file for Supabase PostgreSQL database
+-- This file combines all schema components in proper execution order
+-- 
+-- Execution Order:
+-- 1. Extensions and Types
+-- 2. Core Tables (Users, Auth, System)
+-- 3. Project Tables
+-- 4. Scanning Tables
+-- 5. Vulnerability Tables
+-- 6. Reporting Tables
+-- 7. Integration Tables
+-- 8. Row Level Security Policies
+-- 9. Indexes and Constraints
+-- 10. Security Fixes
+-- =====================================================
+-- PURE CLEAN VERSION FOR INITIAL DEPLOYMENT
+-- =====================================================
+-- This version removes ALL DROP statements to completely avoid
+-- Supabase's "destructive operation" warning on fresh deployments.
+-- 
+-- IMPORTANT: Use this ONLY for initial deployment on fresh databases.
+-- For updates/re-deployments, use combined_schema.sql instead.
+-- =====================================================
+-- PART 6: REPORTING TABLES
+-- =====================================================
+-- ENHANCED VULNERABILITY SCANNER - COMPLETE SCHEMA
+-- =====================================================
+-- Combined schema file for Supabase PostgreSQL database
+-- This file combines all schema components in proper execution order
+-- 
+-- Execution Order:
+-- 1. Extensions and Types
+-- 2. Core Tables (Users, Auth, System)
+-- 3. Project Tables
+-- 4. Scanning Tables
+-- 5. Vulnerability Tables
+-- 6. Reporting Tables
+-- 7. Integration Tables
+-- 8. Row Level Security Policies
+-- 9. Indexes and Constraints
+-- 10. Security Fixes
+-- =====================================================
+-- PURE CLEAN VERSION FOR INITIAL DEPLOYMENT
+-- =====================================================
+-- This version removes ALL DROP statements to completely avoid
+-- Supabase's "destructive operation" warning on fresh deployments.
+-- 
+-- IMPORTANT: Use this ONLY for initial deployment on fresh databases.
+-- For updates/re-deployments, use combined_schema.sql instead.
+-- =====================================================
+-- INDEXES FOR REPORTING TABLES
+-- =====================================================
+-- ENHANCED VULNERABILITY SCANNER - COMPLETE SCHEMA
+-- =====================================================
+-- Combined schema file for Supabase PostgreSQL database
+-- This file combines all schema components in proper execution order
+-- 
+-- Execution Order:
+-- 1. Extensions and Types
+-- 2. Core Tables (Users, Auth, System)
+-- 3. Project Tables
+-- 4. Scanning Tables
+-- 5. Vulnerability Tables
+-- 6. Reporting Tables
+-- 7. Integration Tables
+-- 8. Row Level Security Policies
+-- 9. Indexes and Constraints
+-- 10. Security Fixes
+-- =====================================================
+-- PURE CLEAN VERSION FOR INITIAL DEPLOYMENT
+-- =====================================================
+-- This version removes ALL DROP statements to completely avoid
+-- Supabase's "destructive operation" warning on fresh deployments.
+-- 
+-- IMPORTANT: Use this ONLY for initial deployment on fresh databases.
+-- For updates/re-deployments, use combined_schema.sql instead.
+-- =====================================================
+-- TRIGGERS AND FUNCTIONS FOR REPORTING TABLES
+-- =====================================================
+-- ENHANCED VULNERABILITY SCANNER - COMPLETE SCHEMA
+-- =====================================================
+-- Combined schema file for Supabase PostgreSQL database
+-- This file combines all schema components in proper execution order
+-- 
+-- Execution Order:
+-- 1. Extensions and Types
+-- 2. Core Tables (Users, Auth, System)
+-- 3. Project Tables
+-- 4. Scanning Tables
+-- 5. Vulnerability Tables
+-- 6. Reporting Tables
+-- 7. Integration Tables
+-- 8. Row Level Security Policies
+-- 9. Indexes and Constraints
+-- 10. Security Fixes
+-- =====================================================
+-- PURE CLEAN VERSION FOR INITIAL DEPLOYMENT
+-- =====================================================
+-- This version removes ALL DROP statements to completely avoid
+-- Supabase's "destructive operation" warning on fresh deployments.
+-- 
+-- IMPORTANT: Use this ONLY for initial deployment on fresh databases.
+-- For updates/re-deployments, use combined_schema.sql instead.
+-- =====================================================
+-- MATERIALIZED VIEWS FOR ANALYTICS
+-- =====================================================
+-- ENHANCED VULNERABILITY SCANNER - COMPLETE SCHEMA
+-- =====================================================
+-- Combined schema file for Supabase PostgreSQL database
+-- This file combines all schema components in proper execution order
+-- 
+-- Execution Order:
+-- 1. Extensions and Types
+-- 2. Core Tables (Users, Auth, System)
+-- 3. Project Tables
+-- 4. Scanning Tables
+-- 5. Vulnerability Tables
+-- 6. Reporting Tables
+-- 7. Integration Tables
+-- 8. Row Level Security Policies
+-- 9. Indexes and Constraints
+-- 10. Security Fixes
+-- =====================================================
+-- PURE CLEAN VERSION FOR INITIAL DEPLOYMENT
+-- =====================================================
+-- This version removes ALL DROP statements to completely avoid
+-- Supabase's "destructive operation" warning on fresh deployments.
+-- 
+-- IMPORTANT: Use this ONLY for initial deployment on fresh databases.
+-- For updates/re-deployments, use combined_schema.sql instead.
+-- =====================================================
+-- INITIAL DATA FOR REPORTING TABLES
+-- =====================================================
+-- ENHANCED VULNERABILITY SCANNER - COMPLETE SCHEMA
+-- =====================================================
+-- Combined schema file for Supabase PostgreSQL database
+-- This file combines all schema components in proper execution order
+-- 
+-- Execution Order:
+-- 1. Extensions and Types
+-- 2. Core Tables (Users, Auth, System)
+-- 3. Project Tables
+-- 4. Scanning Tables
+-- 5. Vulnerability Tables
+-- 6. Reporting Tables
+-- 7. Integration Tables
+-- 8. Row Level Security Policies
+-- 9. Indexes and Constraints
+-- 10. Security Fixes
+-- =====================================================
+-- PURE CLEAN VERSION FOR INITIAL DEPLOYMENT
+-- =====================================================
+-- This version removes ALL DROP statements to completely avoid
+-- Supabase's "destructive operation" warning on fresh deployments.
+-- 
+-- IMPORTANT: Use this ONLY for initial deployment on fresh databases.
+-- For updates/re-deployments, use combined_schema.sql instead.
+-- =====================================================
+-- PART 7: INTEGRATION TABLES
+-- =====================================================
+-- ENHANCED VULNERABILITY SCANNER - COMPLETE SCHEMA
+-- =====================================================
+-- Combined schema file for Supabase PostgreSQL database
+-- This file combines all schema components in proper execution order
+-- 
+-- Execution Order:
+-- 1. Extensions and Types
+-- 2. Core Tables (Users, Auth, System)
+-- 3. Project Tables
+-- 4. Scanning Tables
+-- 5. Vulnerability Tables
+-- 6. Reporting Tables
+-- 7. Integration Tables
+-- 8. Row Level Security Policies
+-- 9. Indexes and Constraints
+-- 10. Security Fixes
+-- =====================================================
+-- PURE CLEAN VERSION FOR INITIAL DEPLOYMENT
+-- =====================================================
+-- This version removes ALL DROP statements to completely avoid
+-- Supabase's "destructive operation" warning on fresh deployments.
+-- 
+-- IMPORTANT: Use this ONLY for initial deployment on fresh databases.
+-- For updates/re-deployments, use combined_schema.sql instead.
+-- =====================================================
+-- INDEXES FOR INTEGRATION TABLES
+-- =====================================================
+-- ENHANCED VULNERABILITY SCANNER - COMPLETE SCHEMA
+-- =====================================================
+-- Combined schema file for Supabase PostgreSQL database
+-- This file combines all schema components in proper execution order
+-- 
+-- Execution Order:
+-- 1. Extensions and Types
+-- 2. Core Tables (Users, Auth, System)
+-- 3. Project Tables
+-- 4. Scanning Tables
+-- 5. Vulnerability Tables
+-- 6. Reporting Tables
+-- 7. Integration Tables
+-- 8. Row Level Security Policies
+-- 9. Indexes and Constraints
+-- 10. Security Fixes
+-- =====================================================
+-- PURE CLEAN VERSION FOR INITIAL DEPLOYMENT
+-- =====================================================
+-- This version removes ALL DROP statements to completely avoid
+-- Supabase's "destructive operation" warning on fresh deployments.
+-- 
+-- IMPORTANT: Use this ONLY for initial deployment on fresh databases.
+-- For updates/re-deployments, use combined_schema.sql instead.
+-- =====================================================
+-- TRIGGERS AND FUNCTIONS FOR INTEGRATION TABLES
+-- =====================================================
+-- ENHANCED VULNERABILITY SCANNER - COMPLETE SCHEMA
+-- =====================================================
+-- Combined schema file for Supabase PostgreSQL database
+-- This file combines all schema components in proper execution order
+-- 
+-- Execution Order:
+-- 1. Extensions and Types
+-- 2. Core Tables (Users, Auth, System)
+-- 3. Project Tables
+-- 4. Scanning Tables
+-- 5. Vulnerability Tables
+-- 6. Reporting Tables
+-- 7. Integration Tables
+-- 8. Row Level Security Policies
+-- 9. Indexes and Constraints
+-- 10. Security Fixes
+-- =====================================================
+-- PURE CLEAN VERSION FOR INITIAL DEPLOYMENT
+-- =====================================================
+-- This version removes ALL DROP statements to completely avoid
+-- Supabase's "destructive operation" warning on fresh deployments.
+-- 
+-- IMPORTANT: Use this ONLY for initial deployment on fresh databases.
+-- For updates/re-deployments, use combined_schema.sql instead.
+-- =====================================================
+-- INITIAL DATA FOR INTEGRATION TABLES
+-- =====================================================
+-- ENHANCED VULNERABILITY SCANNER - COMPLETE SCHEMA
+-- =====================================================
+-- Combined schema file for Supabase PostgreSQL database
+-- This file combines all schema components in proper execution order
+-- 
+-- Execution Order:
+-- 1. Extensions and Types
+-- 2. Core Tables (Users, Auth, System)
+-- 3. Project Tables
+-- 4. Scanning Tables
+-- 5. Vulnerability Tables
+-- 6. Reporting Tables
+-- 7. Integration Tables
+-- 8. Row Level Security Policies
+-- 9. Indexes and Constraints
+-- 10. Security Fixes
+-- =====================================================
+-- PURE CLEAN VERSION FOR INITIAL DEPLOYMENT
+-- =====================================================
+-- This version removes ALL DROP statements to completely avoid
+-- Supabase's "destructive operation" warning on fresh deployments.
+-- 
+-- IMPORTANT: Use this ONLY for initial deployment on fresh databases.
+-- For updates/re-deployments, use combined_schema.sql instead.
+-- =====================================================
+-- PART 8: ROW LEVEL SECURITY POLICIES
+-- =====================================================
+-- ENHANCED VULNERABILITY SCANNER - COMPLETE SCHEMA
+-- =====================================================
+-- Combined schema file for Supabase PostgreSQL database
+-- This file combines all schema components in proper execution order
+-- 
+-- Execution Order:
+-- 1. Extensions and Types
+-- 2. Core Tables (Users, Auth, System)
+-- 3. Project Tables
+-- 4. Scanning Tables
+-- 5. Vulnerability Tables
+-- 6. Reporting Tables
+-- 7. Integration Tables
+-- 8. Row Level Security Policies
+-- 9. Indexes and Constraints
+-- 10. Security Fixes
+-- =====================================================
+-- PURE CLEAN VERSION FOR INITIAL DEPLOYMENT
+-- =====================================================
+-- This version removes ALL DROP statements to completely avoid
+-- Supabase's "destructive operation" warning on fresh deployments.
+-- 
+-- IMPORTANT: Use this ONLY for initial deployment on fresh databases.
+-- For updates/re-deployments, use combined_schema.sql instead.
+-- =====================================================
+-- RLS HELPER FUNCTIONS
+-- =====================================================
+-- ENHANCED VULNERABILITY SCANNER - COMPLETE SCHEMA
+-- =====================================================
+-- Combined schema file for Supabase PostgreSQL database
+-- This file combines all schema components in proper execution order
+-- 
+-- Execution Order:
+-- 1. Extensions and Types
+-- 2. Core Tables (Users, Auth, System)
+-- 3. Project Tables
+-- 4. Scanning Tables
+-- 5. Vulnerability Tables
+-- 6. Reporting Tables
+-- 7. Integration Tables
+-- 8. Row Level Security Policies
+-- 9. Indexes and Constraints
+-- 10. Security Fixes
+-- =====================================================
+-- PURE CLEAN VERSION FOR INITIAL DEPLOYMENT
+-- =====================================================
+-- This version removes ALL DROP statements to completely avoid
+-- Supabase's "destructive operation" warning on fresh deployments.
+-- 
+-- IMPORTANT: Use this ONLY for initial deployment on fresh databases.
+-- For updates/re-deployments, use combined_schema.sql instead.
+-- =====================================================
+-- RLS POLICIES FOR CORE TABLES
+-- =====================================================
+-- ENHANCED VULNERABILITY SCANNER - COMPLETE SCHEMA
+-- =====================================================
+-- Combined schema file for Supabase PostgreSQL database
+-- This file combines all schema components in proper execution order
+-- 
+-- Execution Order:
+-- 1. Extensions and Types
+-- 2. Core Tables (Users, Auth, System)
+-- 3. Project Tables
+-- 4. Scanning Tables
+-- 5. Vulnerability Tables
+-- 6. Reporting Tables
+-- 7. Integration Tables
+-- 8. Row Level Security Policies
+-- 9. Indexes and Constraints
+-- 10. Security Fixes
+-- =====================================================
+-- PURE CLEAN VERSION FOR INITIAL DEPLOYMENT
+-- =====================================================
+-- This version removes ALL DROP statements to completely avoid
+-- Supabase's "destructive operation" warning on fresh deployments.
+-- 
+-- IMPORTANT: Use this ONLY for initial deployment on fresh databases.
+-- For updates/re-deployments, use combined_schema.sql instead.
+-- =====================================================
+-- RLS POLICIES FOR PROJECT TABLES
+-- =====================================================
+-- ENHANCED VULNERABILITY SCANNER - COMPLETE SCHEMA
+-- =====================================================
+-- Combined schema file for Supabase PostgreSQL database
+-- This file combines all schema components in proper execution order
+-- 
+-- Execution Order:
+-- 1. Extensions and Types
+-- 2. Core Tables (Users, Auth, System)
+-- 3. Project Tables
+-- 4. Scanning Tables
+-- 5. Vulnerability Tables
+-- 6. Reporting Tables
+-- 7. Integration Tables
+-- 8. Row Level Security Policies
+-- 9. Indexes and Constraints
+-- 10. Security Fixes
+-- =====================================================
+-- PURE CLEAN VERSION FOR INITIAL DEPLOYMENT
+-- =====================================================
+-- This version removes ALL DROP statements to completely avoid
+-- Supabase's "destructive operation" warning on fresh deployments.
+-- 
+-- IMPORTANT: Use this ONLY for initial deployment on fresh databases.
+-- For updates/re-deployments, use combined_schema.sql instead.
+-- =====================================================
+-- RLS POLICIES FOR SCANNING TABLES
+-- =====================================================
+-- ENHANCED VULNERABILITY SCANNER - COMPLETE SCHEMA
+-- =====================================================
+-- Combined schema file for Supabase PostgreSQL database
+-- This file combines all schema components in proper execution order
+-- 
+-- Execution Order:
+-- 1. Extensions and Types
+-- 2. Core Tables (Users, Auth, System)
+-- 3. Project Tables
+-- 4. Scanning Tables
+-- 5. Vulnerability Tables
+-- 6. Reporting Tables
+-- 7. Integration Tables
+-- 8. Row Level Security Policies
+-- 9. Indexes and Constraints
+-- 10. Security Fixes
+-- =====================================================
+-- PURE CLEAN VERSION FOR INITIAL DEPLOYMENT
+-- =====================================================
+-- This version removes ALL DROP statements to completely avoid
+-- Supabase's "destructive operation" warning on fresh deployments.
+-- 
+-- IMPORTANT: Use this ONLY for initial deployment on fresh databases.
+-- For updates/re-deployments, use combined_schema.sql instead.
+-- =====================================================
+-- RLS POLICIES FOR VULNERABILITY TABLES
+-- =====================================================
+-- ENHANCED VULNERABILITY SCANNER - COMPLETE SCHEMA
+-- =====================================================
+-- Combined schema file for Supabase PostgreSQL database
+-- This file combines all schema components in proper execution order
+-- 
+-- Execution Order:
+-- 1. Extensions and Types
+-- 2. Core Tables (Users, Auth, System)
+-- 3. Project Tables
+-- 4. Scanning Tables
+-- 5. Vulnerability Tables
+-- 6. Reporting Tables
+-- 7. Integration Tables
+-- 8. Row Level Security Policies
+-- 9. Indexes and Constraints
+-- 10. Security Fixes
+-- =====================================================
+-- PURE CLEAN VERSION FOR INITIAL DEPLOYMENT
+-- =====================================================
+-- This version removes ALL DROP statements to completely avoid
+-- Supabase's "destructive operation" warning on fresh deployments.
+-- 
+-- IMPORTANT: Use this ONLY for initial deployment on fresh databases.
+-- For updates/re-deployments, use combined_schema.sql instead.
+-- =====================================================
+-- RLS POLICIES FOR REPORTING TABLES
+-- =====================================================
+-- ENHANCED VULNERABILITY SCANNER - COMPLETE SCHEMA
+-- =====================================================
+-- Combined schema file for Supabase PostgreSQL database
+-- This file combines all schema components in proper execution order
+-- 
+-- Execution Order:
+-- 1. Extensions and Types
+-- 2. Core Tables (Users, Auth, System)
+-- 3. Project Tables
+-- 4. Scanning Tables
+-- 5. Vulnerability Tables
+-- 6. Reporting Tables
+-- 7. Integration Tables
+-- 8. Row Level Security Policies
+-- 9. Indexes and Constraints
+-- 10. Security Fixes
+-- =====================================================
+-- PURE CLEAN VERSION FOR INITIAL DEPLOYMENT
+-- =====================================================
+-- This version removes ALL DROP statements to completely avoid
+-- Supabase's "destructive operation" warning on fresh deployments.
+-- 
+-- IMPORTANT: Use this ONLY for initial deployment on fresh databases.
+-- For updates/re-deployments, use combined_schema.sql instead.
+-- =====================================================
+-- RLS POLICIES FOR INTEGRATION TABLES
+-- =====================================================
+-- ENHANCED VULNERABILITY SCANNER - COMPLETE SCHEMA
+-- =====================================================
+-- Combined schema file for Supabase PostgreSQL database
+-- This file combines all schema components in proper execution order
+-- 
+-- Execution Order:
+-- 1. Extensions and Types
+-- 2. Core Tables (Users, Auth, System)
+-- 3. Project Tables
+-- 4. Scanning Tables
+-- 5. Vulnerability Tables
+-- 6. Reporting Tables
+-- 7. Integration Tables
+-- 8. Row Level Security Policies
+-- 9. Indexes and Constraints
+-- 10. Security Fixes
+-- =====================================================
+-- PURE CLEAN VERSION FOR INITIAL DEPLOYMENT
+-- =====================================================
+-- This version removes ALL DROP statements to completely avoid
+-- Supabase's "destructive operation" warning on fresh deployments.
+-- 
+-- IMPORTANT: Use this ONLY for initial deployment on fresh databases.
+-- For updates/re-deployments, use combined_schema.sql instead.
+-- =====================================================
+-- PART 9: PERFORMANCE INDEXES
+-- =====================================================
+-- ENHANCED VULNERABILITY SCANNER - COMPLETE SCHEMA
+-- =====================================================
+-- Combined schema file for Supabase PostgreSQL database
+-- This file combines all schema components in proper execution order
+-- 
+-- Execution Order:
+-- 1. Extensions and Types
+-- 2. Core Tables (Users, Auth, System)
+-- 3. Project Tables
+-- 4. Scanning Tables
+-- 5. Vulnerability Tables
+-- 6. Reporting Tables
+-- 7. Integration Tables
+-- 8. Row Level Security Policies
+-- 9. Indexes and Constraints
+-- 10. Security Fixes
+-- =====================================================
+-- PURE CLEAN VERSION FOR INITIAL DEPLOYMENT
+-- =====================================================
+-- This version removes ALL DROP statements to completely avoid
+-- Supabase's "destructive operation" warning on fresh deployments.
+-- 
+-- IMPORTANT: Use this ONLY for initial deployment on fresh databases.
+-- For updates/re-deployments, use combined_schema.sql instead.
+-- =====================================================
+-- PART 10: VIEWS AND MATERIALIZED VIEWS
+-- =====================================================
+-- ENHANCED VULNERABILITY SCANNER - COMPLETE SCHEMA
+-- =====================================================
+-- Combined schema file for Supabase PostgreSQL database
+-- This file combines all schema components in proper execution order
+-- 
+-- Execution Order:
+-- 1. Extensions and Types
+-- 2. Core Tables (Users, Auth, System)
+-- 3. Project Tables
+-- 4. Scanning Tables
+-- 5. Vulnerability Tables
+-- 6. Reporting Tables
+-- 7. Integration Tables
+-- 8. Row Level Security Policies
+-- 9. Indexes and Constraints
+-- 10. Security Fixes
+-- =====================================================
+-- PURE CLEAN VERSION FOR INITIAL DEPLOYMENT
+-- =====================================================
+-- This version removes ALL DROP statements to completely avoid
+-- Supabase's "destructive operation" warning on fresh deployments.
+-- 
+-- IMPORTANT: Use this ONLY for initial deployment on fresh databases.
+-- For updates/re-deployments, use combined_schema.sql instead.
+-- =====================================================
+-- PART 11: SECURITY FIXES AND FINAL SETUP
+-- =====================================================
+-- ENHANCED VULNERABILITY SCANNER - COMPLETE SCHEMA
+-- =====================================================
+-- Combined schema file for Supabase PostgreSQL database
+-- This file combines all schema components in proper execution order
+-- 
+-- Execution Order:
+-- 1. Extensions and Types
+-- 2. Core Tables (Users, Auth, System)
+-- 3. Project Tables
+-- 4. Scanning Tables
+-- 5. Vulnerability Tables
+-- 6. Reporting Tables
+-- 7. Integration Tables
+-- 8. Row Level Security Policies
+-- 9. Indexes and Constraints
+-- 10. Security Fixes
+-- =====================================================
+-- PURE CLEAN VERSION FOR INITIAL DEPLOYMENT
+-- =====================================================
+-- This version removes ALL DROP statements to completely avoid
+-- Supabase's "destructive operation" warning on fresh deployments.
+-- 
+-- IMPORTANT: Use this ONLY for initial deployment on fresh databases.
+-- For updates/re-deployments, use combined_schema.sql instead.
+-- =====================================================
+-- VERIFICATION QUERIES
+-- =====================================================
+-- ENHANCED VULNERABILITY SCANNER - COMPLETE SCHEMA
+-- =====================================================
+-- Combined schema file for Supabase PostgreSQL database
+-- This file combines all schema components in proper execution order
+-- 
+-- Execution Order:
+-- 1. Extensions and Types
+-- 2. Core Tables (Users, Auth, System)
+-- 3. Project Tables
+-- 4. Scanning Tables
+-- 5. Vulnerability Tables
+-- 6. Reporting Tables
+-- 7. Integration Tables
+-- 8. Row Level Security Policies
+-- 9. Indexes and Constraints
+-- 10. Security Fixes
+-- =====================================================
+-- PURE CLEAN VERSION FOR INITIAL DEPLOYMENT
+-- =====================================================
+-- This version removes ALL DROP statements to completely avoid
+-- Supabase's "destructive operation" warning on fresh deployments.
+-- 
+-- IMPORTANT: Use this ONLY for initial deployment on fresh databases.
+-- For updates/re-deployments, use combined_schema.sql instead.
+-- =====================================================
+-- COMMENTS FOR DOCUMENTATION
+-- =====================================================
+-- ENHANCED VULNERABILITY SCANNER - COMPLETE SCHEMA
+-- =====================================================
+-- Combined schema file for Supabase PostgreSQL database
+-- This file combines all schema components in proper execution order
+-- 
+-- Execution Order:
+-- 1. Extensions and Types
+-- 2. Core Tables (Users, Auth, System)
+-- 3. Project Tables
+-- 4. Scanning Tables
+-- 5. Vulnerability Tables
+-- 6. Reporting Tables
+-- 7. Integration Tables
+-- 8. Row Level Security Policies
+-- 9. Indexes and Constraints
+-- 10. Security Fixes
+-- =====================================================
+-- PURE CLEAN VERSION FOR INITIAL DEPLOYMENT
+-- =====================================================
+-- This version removes ALL DROP statements to completely avoid
+-- Supabase's "destructive operation" warning on fresh deployments.
+-- 
+-- IMPORTANT: Use this ONLY for initial deployment on fresh databases.
+-- For updates/re-deployments, use combined_schema.sql instead.
+-- =====================================================
+-- END OF COMBINED SCHEMA
+-- =====================================================

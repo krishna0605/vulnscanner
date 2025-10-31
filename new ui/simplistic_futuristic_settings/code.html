@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VulnScanner • Settings</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/modern-normalize/2.0.0/modern-normalize.min.css" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@400&display=swap" />
+  <style>
+    body { background:#0A0B14; color:#E0E0E0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, 'Helvetica Neue', sans-serif; }
+    .container { max-width: 1120px; margin: 0 auto; padding: 24px; }
+    .card { background:#1A1B23; border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:24px; }
+    .grid { display:grid; gap:24px; }
+    @media (min-width: 1024px) { .grid-4 { grid-template-columns: 280px 1fr 1fr 1fr; } }
+    .nav { display:flex; gap:16px; align-items:center; }
+    .nav a, .nav span { display:inline-flex; gap:8px; align-items:center; padding:8px 10px; border-radius:8px; color:#888; text-decoration:none; }
+    .nav a:hover { color:#fff; background:rgba(255,255,255,0.06); }
+    .nav .active { color:#00FFFF; }
+    .sidebar a { display:flex; gap:10px; align-items:center; padding:10px 12px; border-radius:10px; color:#bbb; text-decoration:none; }
+    .sidebar a:hover { color:#fff; background:rgba(255,255,255,0.06); }
+    .sidebar a.active { color:#fff; background:rgba(255,255,255,0.08); }
+    .pill { display:inline-flex; gap:8px; align-items:center; padding:8px 12px; border-radius:999px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); }
+    .cards { display:grid; gap:24px; }
+    @media (min-width:768px){ .cards { grid-template-columns: repeat(3, 1fr); } }
+    .material-symbols-outlined { font-size:18px; }
+  </style>
+</head>
+<body>
+  <header style="position:sticky;top:0;z-index:30;border-bottom:1px solid rgba(46,46,63,0.5);background:rgba(10,11,20,0.8);backdrop-filter: blur(6px);">
+    <div class="container" style="display:flex;justify-content:space-between;align-items:center;">
+      <div class="nav">
+        <a href="#" onclick="location.href='../../frontend/index.html'" style="gap:12px;">
+          <span class="material-symbols-outlined">grid_view</span><strong style="color:#E0E0E0;">VulnScanner</strong>
+        </a>
+        <a href="../dashboard/code.html"><span class="material-symbols-outlined">dashboard</span>Dashboard</a>
+        <a href="../project_list_page/code.html"><span class="material-symbols-outlined">folder</span>Projects</a>
+        <a href="../simplistic_futuristic_scan_config/code.html"><span class="material-symbols-outlined">radar</span>Scans</a>
+        <a href="../simplistic_futuristic_reports/code.html"><span class="material-symbols-outlined">bar_chart</span>Reports</a>
+        <span class="active"><span class="material-symbols-outlined">settings</span>Settings</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="grid">
+      <section class="card">
+        <!-- Sub-navbar -->
+        <div style="display:flex;gap:24px;align-items:center;border-bottom:1px solid rgba(255,255,255,0.08);padding:0 4px;position:relative;">
+          <span style="padding:12px 8px;font-weight:600;color:#4A90E2;">General</span>
+          <a href="../futuristic_api_management/code.html" style="padding:12px 8px;color:#888;text-decoration:none;">API</a>
+          <a href="../futuristic_notification_settings/code.html" style="padding:12px 8px;color:#888;text-decoration:none;">Notifications</a>
+          <a href="../futuristic_security_settings/code.html" style="padding:12px 8px;color:#888;text-decoration:none;">Security</a>
+          <div style="position:absolute;bottom:-1px;left:8px;height:2px;width:64px;background:#4A90E2;box-shadow:0 0 10px #4A90E2;"></div>
+        </div>
+
+        <!-- General content -->
+        <h1 style="color:#fff;font-size:24px;margin:16px 0 6px 0;">General Settings</h1>
+        <p style="color:#bbb;font-size:13px;">Configure basic preferences, appearance, and localization.</p>
+
+        <div class="card" style="margin-top:16px;display:grid;gap:12px;grid-template-columns: 1fr 1fr;">
+          <div>
+            <label style="font-size:13px;color:#bbb;">Display Name</label>
+            <input class="input" placeholder="Jane Admin" />
+          </div>
+          <div>
+            <label style="font-size:13px;color:#bbb;">Email</label>
+            <input class="input" placeholder="jane@example.com" />
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:16px;display:grid;gap:12px;grid-template-columns: 1fr 1fr;">
+          <div>
+            <label style="font-size:13px;color:#bbb;">Theme</label>
+            <select class="input"><option>Dark</option><option>Light</option></select>
+          </div>
+          <div>
+            <label style="font-size:13px;color:#bbb;">Density</label>
+            <select class="input"><option>Comfortable</option><option>Compact</option></select>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:16px;display:grid;gap:12px;grid-template-columns: 1fr 1fr;">
+          <div>
+            <label style="font-size:13px;color:#bbb;">Language</label>
+            <select class="input"><option>English</option><option>French</option><option>German</option></select>
+          </div>
+          <div>
+            <label style="font-size:13px;color:#bbb;">Timezone</label>
+            <select class="input"><option>UTC</option><option>Local</option></select>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

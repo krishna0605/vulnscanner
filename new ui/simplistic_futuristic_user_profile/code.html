@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>VulnScanner - Profile &amp; Settings</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+<style>
+        .glow-on-focus:focus-within {
+            box-shadow: 0 0 8px 1px #00DFFC;
+            border-color: #00DFFC;
+        }
+        .glow-on-hover:hover {
+            box-shadow: 0 0 12px 2px #00DFFC;
+        }
+        .btn-glow-on-hover:hover {
+            box-shadow: 0 0 15px 3px rgba(0, 223, 252, 0.4);
+        }
+    </style>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#00DFFC",
+              "background-light": "#f6f6f8",
+              "background-dark": "#0A0F1A",
+              "card-dark": "#161B29",
+              "text-primary-dark": "#E1E8F7",
+              "text-secondary-dark": "#7A89A3",
+              "border-dark": "#2a3145",
+              "success": "#33FF99",
+              "danger": "#FF455F",
+            },
+            fontFamily: {
+              "display": ["Space Grotesk", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.5rem", "lg": "0.75rem", "xl": "1rem", "full": "9999px"},
+            boxShadow: {
+              'glow': '0 0 15px 0 rgba(0, 223, 252, 0.3)',
+            }
+          },
+        },
+      }
+    </script>
+</head>
+<body class="font-display bg-background-dark text-text-primary-dark">
+<div class="relative min-h-screen w-full overflow-x-hidden">
+<!-- Animated Background -->
+<div class="absolute top-0 left-0 w-full h-full z-0 overflow-hidden">
+<div class="absolute w-[200%] h-[200%] bg-[url('https://res.cloudinary.com/dy8bgs0mf/image/upload/v1716386461/grid_ffovmf.svg')] bg-repeat animate-[spin_120s_linear_infinite]"></div>
+</div>
+<div class="relative z-10 flex h-full grow flex-col">
+<!-- TopNavBar -->
+<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-border-dark px-6 sm:px-10 lg:px-20 py-4 bg-background-dark/80 backdrop-blur-sm sticky top-0">
+<div class="flex items-center gap-4">
+<div class="size-6 text-primary">
+<svg fill="currentColor" viewbox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<path clip-rule="evenodd" d="M39.475 21.6262C40.358 21.4363 40.6863 21.5589 40.7581 21.5934C40.7876 21.655 40.8547 21.857 40.8082 22.3336C40.7408 23.0255 40.4502 24.0046 39.8572 25.2301C38.6799 27.6631 36.5085 30.6631 33.5858 33.5858C30.6631 36.5085 27.6632 38.6799 25.2301 39.8572C24.0046 40.4502 23.0255 40.7407 22.3336 40.8082C21.8571 40.8547 21.6551 40.7875 21.5934 40.7581C21.5589 40.6863 21.4363 40.358 21.6262 39.475C21.8562 38.4054 22.4689 36.9657 23.5038 35.2817C24.7575 33.2417 26.5497 30.9744 28.7621 28.762C30.9744 26.5497 33.2417 24.7574 35.2817 23.5037C36.9657 22.4689 38.4054 21.8562 39.475 21.6262ZM4.41189 29.2403L18.7597 43.5881C19.8813 44.7097 21.4027 44.9179 22.7217 44.7893C24.0585 44.659 25.5148 44.1631 26.9723 43.4579C29.9052 42.0387 33.2618 39.5667 36.4142 36.4142C39.5667 33.2618 42.0387 29.9052 43.4579 26.9723C44.1631 25.5148 44.659 24.0585 44.7893 22.7217C44.9179 21.4027 44.7097 19.8813 43.5881 18.7597L29.2403 4.41187C27.8527 3.02428 25.8765 3.02573 24.2861 3.36776C22.6081 3.72863 20.7334 4.58419 18.8396 5.74801C16.4978 7.18716 13.9881 9.18353 11.5858 11.5858C9.18354 13.988 7.18717 16.4978 5.74802 18.8396C4.58421 20.7334 3.72865 22.6081 3.36778 24.2861C3.02574 25.8765 3.02429 27.8527 4.41189 29.2403Z" fill-rule="evenodd"></path>
+</svg>
+</div>
+<h2 class="text-white text-xl font-bold leading-tight tracking-[-0.015em]">VulnScanner</h2>
+</div>
+<div class="hidden md:flex flex-1 justify-center gap-8">
+<div class="flex items-center gap-9">
+<a class="text-text-secondary-dark hover:text-white text-sm font-medium leading-normal transition-colors" href="#">Dashboard</a>
+<a class="text-text-secondary-dark hover:text-white text-sm font-medium leading-normal transition-colors" href="#">Scans</a>
+<a class="text-text-secondary-dark hover:text-white text-sm font-medium leading-normal transition-colors" href="#">Projects</a>
+<a class="text-text-primary-dark hover:text-white text-sm font-bold leading-normal transition-colors" href="#">Settings</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 w-10 bg-card-dark text-text-secondary-dark hover:text-white transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" data-alt="User avatar placeholder" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAHfrmUAygQFu0IYf15YygLz1M-mFmnyP5WykkDqeELmtLtxAVBzAMQk43miTHIotrguAKBeiuU4KX8U1ZKG_dFjMejJ84ikM_rq7yR8Ss4nR1lfPj0KnhtHH_5HWGg6nJgs74Bg_s8SDjLD_wMh6FFMEJQlmTrQos_Fm-62FS_Cd6g-tNcGAvltwt5yInrDMY4kB7Q3nM3IzFRJGkeWvV3zitN6Ol7FFIH2XhLSYnShvhhqEy5uipUYVMH_tnOrUup9UA6X6Mwgtez");'></div>
+</div>
+</header>
+<!-- Main Content -->
+<main class="flex flex-1 justify-center py-10 px-4 sm:px-6 lg:px-8">
+<div class="flex flex-col w-full max-w-4xl flex-1 gap-8">
+<!-- PageHeading -->
+<div>
+<h1 class="text-white text-4xl font-black leading-tight tracking-[-0.033em]">Profile &amp; Settings</h1>
+</div>
+<!-- Account Information Card -->
+<section class="flex flex-col gap-6 rounded-xl border border-border-dark bg-card-dark/80 p-6 backdrop-blur-sm">
+<div class="flex items-center gap-6">
+<div class="relative">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-20" data-alt="User avatar" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuD1uVDcZeylK1xUbVAeGGJzVoIH8-5OUi5Pvx2oxzxmeam_zZWmcj7zE5kp5nYb6trhFCYsAhpic8yILSiYeq8M8iIY54LbNGqPFDe6DKWy05uCGVJXIAzDfRVkGXFba0xM6zSB5gT_e_U7xNRsFfnBzCMMqgNdPKTM3IJhPmiXM62LXYUP6XpwlD2Odr-rxbmdWPt8ZMnzNlZGspikGuaN6HgKSJbEOqaa5235QitxfUIoq5-ds8ppP_H0lpBaOCoGAHMXsbAa5HhS");'></div>
+<button class="absolute bottom-0 right-0 flex items-center justify-center size-7 rounded-full bg-primary text-background-dark hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-base">edit</span>
+</button>
+</div>
+<h2 class="text-white text-[22px] font-bold leading-tight tracking-[-0.015em]">Account Information</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<label class="flex flex-col w-full">
+<p class="text-text-secondary-dark text-sm font-medium leading-normal pb-2">Full Name</p>
+<div class="rounded-lg border border-border-dark bg-background-dark focus-within:border-primary transition-all glow-on-focus">
+<input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-primary-dark focus:outline-0 focus:ring-0 border-none bg-transparent h-12 placeholder:text-text-secondary-dark px-4 text-base font-normal leading-normal" value="Alex Volkov"/>
+</div>
+</label>
+<label class="flex flex-col w-full">
+<p class="text-text-secondary-dark text-sm font-medium leading-normal pb-2">Email Address</p>
+<div class="rounded-lg border border-border-dark bg-background-dark">
+<input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-secondary-dark focus:outline-0 focus:ring-0 border-none bg-transparent h-12 placeholder:text-text-secondary-dark px-4 text-base font-normal leading-normal" readonly="" value="alex.v@securenet.io"/>
+</div>
+</label>
+</div>
+<div class="flex justify-end">
+<button class="flex items-center justify-center rounded-lg h-10 bg-primary text-background-dark gap-2 text-sm font-bold leading-normal px-5 transition-all btn-glow-on-hover hover:bg-opacity-90">Save Changes</button>
+</div>
+</section>
+<!-- Preferences Card -->
+<section class="flex flex-col gap-6 rounded-xl border border-border-dark bg-card-dark/80 p-6 backdrop-blur-sm">
+<h2 class="text-white text-[22px] font-bold leading-tight tracking-[-0.015em]">Preferences</h2>
+<div class="flex flex-col gap-4">
+<div class="flex justify-between items-center p-3 rounded-lg hover:bg-background-dark/50">
+<div>
+<p class="text-text-primary-dark font-medium">Dark Theme</p>
+<p class="text-text-secondary-dark text-sm">Embrace the darkness for a focused experience.</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox" value=""/>
+<div class="w-11 h-6 bg-border-dark rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<div class="flex justify-between items-center p-3 rounded-lg hover:bg-background-dark/50">
+<div>
+<p class="text-text-primary-dark font-medium">Email on Scan Completion</p>
+<p class="text-text-secondary-dark text-sm">Get notified when your security scans are complete.</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox" value=""/>
+<div class="w-11 h-6 bg-border-dark rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<div class="flex justify-between items-center p-3 rounded-lg hover:bg-background-dark/50">
+<div>
+<p class="text-text-primary-dark font-medium">In-App Alerts</p>
+<p class="text-text-secondary-dark text-sm">Receive real-time notifications within the app.</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox" value=""/>
+<div class="w-11 h-6 bg-border-dark rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+</div>
+<div class="flex justify-end mt-2">
+<button class="flex items-center justify-center rounded-lg h-10 bg-primary text-background-dark gap-2 text-sm font-bold leading-normal px-5 transition-all btn-glow-on-hover hover:bg-opacity-90">Save Changes</button>
+</div>
+</section>
+<!-- API Management Card -->
+<section class="flex flex-col gap-6 rounded-xl border border-border-dark bg-card-dark/80 p-6 backdrop-blur-sm">
+<div class="flex justify-between items-start">
+<div>
+<h2 class="text-white text-[22px] font-bold leading-tight tracking-[-0.015em]">API Management</h2>
+<p class="text-text-secondary-dark text-sm mt-1">Manage your API keys for programmatic access.</p>
+</div>
+<button class="flex items-center justify-center rounded-lg h-10 bg-primary/20 text-primary border border-primary/50 gap-2 text-sm font-bold leading-normal px-4 transition-all hover:bg-primary/30 glow-on-hover">
+<span class="material-symbols-outlined text-lg">add</span>
+                               Generate New Key
+                           </button>
+</div>
+<div class="flex flex-col gap-3">
+<div class="flex justify-between items-center p-3 rounded-lg bg-background-dark">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary">key</span>
+<p class="font-mono text-sm text-text-primary-dark">prod_key_•••••••••••••••••••••••••a4f2</p>
+</div>
+<div class="flex items-center gap-2">
+<button class="flex items-center justify-center rounded-md h-8 w-8 text-text-secondary-dark hover:text-white hover:bg-border-dark transition-colors">
+<span class="material-symbols-outlined text-xl">content_copy</span>
+</button>
+<button class="flex items-center justify-center rounded-md h-8 w-8 text-danger/70 hover:text-danger hover:bg-danger/10 transition-colors">
+<span class="material-symbols-outlined text-xl">delete</span>
+</button>
+</div>
+</div>
+<div class="flex justify-between items-center p-3 rounded-lg bg-background-dark">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary">key</span>
+<p class="font-mono text-sm text-text-primary-dark">dev_key_••••••••••••••••••••••••••b1c8</p>
+</div>
+<div class="flex items-center gap-2">
+<button class="flex items-center justify-center rounded-md h-8 w-8 text-text-secondary-dark hover:text-white hover:bg-border-dark transition-colors">
+<span class="material-symbols-outlined text-xl">content_copy</span>
+</button>
+<button class="flex items-center justify-center rounded-md h-8 w-8 text-danger/70 hover:text-danger hover:bg-danger/10 transition-colors">
+<span class="material-symbols-outlined text-xl">delete</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Security Card -->
+<section class="flex flex-col gap-6 rounded-xl border border-border-dark bg-card-dark/80 p-6 backdrop-blur-sm">
+<h2 class="text-white text-[22px] font-bold leading-tight tracking-[-0.015em]">Security</h2>
+<div class="flex flex-col gap-4">
+<div class="flex justify-between items-center p-3 rounded-lg hover:bg-background-dark/50">
+<div>
+<p class="text-text-primary-dark font-medium">Change Password</p>
+<p class="text-text-secondary-dark text-sm">Last changed 3 months ago.</p>
+</div>
+<button class="flex items-center justify-center rounded-lg h-10 bg-background-dark border border-border-dark text-text-primary-dark gap-2 text-sm font-bold leading-normal px-4 transition-colors hover:border-text-secondary-dark">Change Password</button>
+</div>
+<div class="flex justify-between items-center p-3 rounded-lg hover:bg-background-dark/50">
+<div>
+<p class="text-text-primary-dark font-medium">Two-Factor Authentication (2FA)</p>
+<p class="text-text-secondary-dark text-sm">Add an extra layer of security to your account.</p>
+</div>
+<button class="flex items-center justify-center rounded-lg h-10 bg-success/10 border border-success/30 text-success gap-2 text-sm font-bold leading-normal px-4 transition-colors hover:bg-success/20">
+<span class="material-symbols-outlined text-lg">verified_user</span>
+                                    Enable 2FA
+                                </button>
+</div>
+</div>
+</section>
+</div>
+</main>
+</div>
+</div>
+</body></html>

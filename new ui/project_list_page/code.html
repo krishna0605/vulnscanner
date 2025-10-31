@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Projects - Web Vulnerability Scanner</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+<style type="text/tailwindcss">
+        @layer base {
+            :root {
+                --primary: #00BFFF;
+                --background-dark: #111321;
+                --status-green: #00D1B2;
+                --status-blue: #00BFFF;
+                --status-red: #FF4545;
+                --status-gray: #9da1b8;
+                --status-orange: #FFA500;
+            }
+        }
+        @layer utilities {
+            .bg-grid-glow {
+                background-image:
+                    radial-gradient(circle at 25% 25%, rgba(0, 191, 255, 0.1) 0%, transparent 40%),
+                    radial-gradient(circle at 75% 75%, rgba(0, 191, 255, 0.1) 0%, transparent 40%);
+                background-size: 200% 200%;
+                animation: move-glow 15s linear infinite;
+            }
+            .glow-sm {
+                filter: drop-shadow(0 0 3px currentColor);
+            }
+            .glow {
+                filter: drop-shadow(0 0 5px currentColor);
+            }
+             .glow-lg {
+                filter: drop-shadow(0 0 10px currentColor);
+            }
+            @keyframes move-glow {
+                0% { background-position: 0% 0%; }
+                50% { background-position: 100% 100%; }
+                100% { background-position: 0% 0%; }
+            }
+            @keyframes pulse-dot {
+                0%, 100% { box-shadow: 0 0 0 0px currentColor; }
+                50% { box-shadow: 0 0 0 4px currentColor; }
+            }
+            .animate-pulse-dot {
+                animation: pulse-dot 2s infinite;
+            }
+        }
+        .material-symbols-outlined {
+            font-variation-settings:
+                'FILL' 0,
+                'wght' 400,
+                'GRAD' 0,
+                'opsz' 24;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "var(--primary)",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "var(--background-dark)",
+                        "status-green": "var(--status-green)",
+                        "status-blue": "var(--status-blue)",
+                        "status-red": "var(--status-red)",
+                        "status-gray": "var(--status-gray)",
+                        "status-orange": "var(--status-orange)"
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                     boxShadow: {
+                        'glow-primary': '0 0 15px 0px rgba(0, 191, 255, 0.5)',
+                        'glow-red': '0 0 10px 0px rgba(255, 69, 69, 0.4)',
+                        'glow-green': '0 0 10px 0px rgba(0, 209, 178, 0.4)',
+                        'glow-blue': '0 0 10px 0px rgba(0, 191, 255, 0.4)',
+                        'glow-orange': '0 0 10px 0px rgba(255, 165, 0, 0.4)',
+                        'glow-gray': '0 0 10px 0px rgba(157, 161, 184, 0.4)',
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background-dark font-display text-slate-300">
+<div class="relative flex h-auto min-h-screen w-full flex-col group/design-root overflow-x-hidden">
+<div class="absolute inset-0 bg-grid-glow -z-10"></div>
+<div class="flex flex-1">
+<aside class="flex flex-col w-64 bg-background-dark/50 backdrop-blur-sm border-r border-slate-800/50 p-4">
+<div class="flex items-center gap-3 mb-8">
+<span class="material-symbols-outlined text-primary glow-lg" style="font-size: 32px;">shield</span>
+<h1 class="text-white text-xl font-bold leading-normal">SecuriScan</h1>
+</div>
+<div class="flex flex-col gap-4 flex-grow">
+<div class="flex flex-col gap-2">
+<a class="flex items-center gap-3 px-3 py-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<p class="text-sm font-medium leading-normal">Dashboard</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/10 text-primary border border-primary/30 shadow-glow-primary" href="#">
+<span class="material-symbols-outlined">folder</span>
+<p class="text-sm font-medium leading-normal">Projects</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">settings</span>
+<p class="text-sm font-medium leading-normal">Settings</p>
+</a>
+</div>
+</div>
+<div class="flex flex-col gap-4">
+<div class="border-t border-slate-800/50 my-2"></div>
+<div class="flex gap-3 items-center px-3">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" data-alt="User avatar image" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCqgx06TDlL1pZkl1505QT8LBuTI4aq5rfZ8o0_3AsMwGvqNqs2intv5kdkqSjEbcWBeLzs8fT0DL1JF6fZzZA2HfbfDulQvBvEtZ0cvaQScowjn2acPYvbQTnpiCDByTvtw3PPhjY0litXkYFz7NWB-XtAWi3xB_Zqh6d2N8rXj_1_l3f7K-TLXphHoMXlsBxCi_atI5l1lKorTaVLA6kCHv7EoAphRRbBI9Qmjc0V8rQz_vIHmfMj4tfqMgKDFvVjNF7_b4fnvaug");'></div>
+<div class="flex flex-col">
+<h1 class="text-white text-sm font-medium leading-normal">Alex Duran</h1>
+<p class="text-slate-400 text-xs font-normal leading-normal">Security Analyst</p>
+</div>
+</div>
+<button class="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-slate-800/50 hover:bg-slate-700/50 border border-slate-700 text-slate-300 hover:text-white text-sm font-bold leading-normal tracking-[0.015em] transition-all">
+<span class="truncate">Log Out</span>
+</button>
+</div>
+</aside>
+<main class="flex-1 p-8">
+<div class="w-full max-w-7xl mx-auto">
+<div class="flex flex-wrap justify-between items-center gap-4 mb-8">
+<h1 class="text-white text-4xl font-black leading-tight tracking-[-0.033em]">Projects</h1>
+<button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-5 bg-primary hover:bg-primary/90 text-background-dark text-sm font-bold leading-normal tracking-[0.015em] gap-2 transition-all shadow-glow-primary hover:scale-105">
+<span class="material-symbols-outlined text-lg">add_circle</span>
+<span class="truncate">New Project</span>
+</button>
+</div>
+<div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+<div class="flex items-center gap-3 flex-grow">
+<div class="relative w-full max-w-xs group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-primary transition-colors">search</span>
+<input class="w-full bg-background-dark/50 text-white rounded-lg border border-slate-800/50 focus:border-primary/50 focus:ring-primary/20 focus:ring-2 pl-10 h-10 text-sm transition-all" placeholder="Search projects..." type="text"/>
+</div>
+<div class="relative group">
+<button class="flex h-10 items-center justify-center gap-x-2 rounded-lg bg-background-dark/50 border border-slate-800/50 hover:border-primary/50 hover:text-white px-4 transition-all group-focus-within:border-primary/50">
+<span class="material-symbols-outlined text-slate-500 text-base group-hover:text-primary transition-colors">public</span>
+<p class="text-slate-300 text-sm font-medium leading-normal group-hover:text-white transition-colors">Status: All</p>
+<span class="material-symbols-outlined text-slate-500 text-base group-hover:text-primary transition-transform group-focus-within:rotate-180">expand_more</span>
+</button>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-sm text-slate-400">Sort by:</span>
+<button class="flex h-10 items-center justify-center gap-x-2 rounded-lg bg-background-dark/50 border border-slate-800/50 hover:border-primary/50 hover:text-white px-4 transition-all">
+<p class="text-slate-300 text-sm font-medium leading-normal">Last Scan</p>
+<span class="material-symbols-outlined text-slate-500 text-base">arrow_downward</span>
+</button>
+</div>
+</div>
+<div class="overflow-hidden rounded-xl border border-slate-800/50 bg-background-dark/30 backdrop-blur-sm">
+<div class="overflow-x-auto">
+<table class="w-full text-sm text-left">
+<thead class="border-b border-slate-800/50">
+<tr>
+<th class="px-6 py-4 font-medium text-slate-400 uppercase tracking-wider" scope="col">Project Name</th>
+<th class="px-6 py-4 font-medium text-slate-400 uppercase tracking-wider" scope="col">Target URL</th>
+<th class="px-6 py-4 font-medium text-slate-400 uppercase tracking-wider" scope="col">Last Scan</th>
+<th class="px-6 py-4 font-medium text-slate-400 uppercase tracking-wider" scope="col">Status</th>
+<th class="px-6 py-4 font-medium text-slate-400 uppercase tracking-wider whitespace-nowrap" scope="col">Vulnerabilities</th>
+<th class="px-6 py-4 font-medium text-slate-400 uppercase tracking-wider" scope="col"><span class="sr-only">Actions</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="border-t border-slate-800/50 hover:bg-primary/5 transition-colors duration-300">
+<td class="px-6 py-4 font-medium text-white whitespace-nowrap">E-commerce Platform Scan</td>
+<td class="px-6 py-4 text-slate-400">https://example-shop.com</td>
+<td class="px-6 py-4 text-slate-400">2023-10-26 14:30</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2.5">
+<span class="h-2 w-2 rounded-full bg-status-green glow-sm text-status-green"></span>
+<span class="text-status-green">Completed</span>
+</div>
+</td>
+<td class="px-6 py-4 text-white font-medium flex items-center gap-4"><div class="flex items-center gap-2"><span class="text-status-red glow">5</span> <span class="text-slate-400 text-xs">Critical</span></div> <div class="flex items-center gap-2"><span class="text-status-orange glow">12</span> <span class="text-slate-400 text-xs">High</span></div></td>
+<td class="px-6 py-4 text-right">
+<button class="text-slate-400 hover:text-primary transition-colors"><span class="material-symbols-outlined">more_horiz</span></button>
+</td>
+</tr>
+<tr class="border-t border-slate-800/50 hover:bg-primary/5 transition-colors duration-300">
+<td class="px-6 py-4 font-medium text-white whitespace-nowrap">Corporate Website Audit</td>
+<td class="px-6 py-4 text-slate-400">https://ourbusiness.com</td>
+<td class="px-6 py-4 text-slate-400">2023-10-26 11:00</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2.5">
+<span class="h-2 w-2 rounded-full bg-status-blue glow-sm text-status-blue animate-pulse-dot"></span>
+<span class="text-status-blue">In Progress</span>
+</div>
+</td>
+<td class="px-6 py-4 text-white font-medium flex items-center gap-4"><div class="flex items-center gap-2"><span class="text-status-red glow">2</span> <span class="text-slate-400 text-xs">Critical</span></div> <div class="flex items-center gap-2"><span class="text-status-orange glow">8</span> <span class="text-slate-400 text-xs">High</span></div></td>
+<td class="px-6 py-4 text-right">
+<button class="text-slate-400 hover:text-primary transition-colors"><span class="material-symbols-outlined">more_horiz</span></button>
+</td>
+</tr>
+<tr class="border-t border-slate-800/50 hover:bg-primary/5 transition-colors duration-300">
+<td class="px-6 py-4 font-medium text-white whitespace-nowrap">Marketing Landing Page</td>
+<td class="px-6 py-4 text-slate-400">https://promo.example.com</td>
+<td class="px-6 py-4 text-slate-400">2023-10-25 09:00</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2.5">
+<span class="h-2 w-2 rounded-full bg-status-green glow-sm text-status-green"></span>
+<span class="text-status-green">Completed</span>
+</div>
+</td>
+<td class="px-6 py-4 text-white font-medium flex items-center gap-4"><div class="flex items-center gap-2"><span class="text-status-red glow">0</span> <span class="text-slate-400 text-xs">Critical</span></div> <div class="flex items-center gap-2"><span class="text-status-orange glow">1</span> <span class="text-slate-400 text-xs">High</span></div></td>
+<td class="px-6 py-4 text-right">
+<button class="text-slate-400 hover:text-primary transition-colors"><span class="material-symbols-outlined">more_horiz</span></button>
+</td>
+</tr>
+<tr class="border-t border-slate-800/50 hover:bg-primary/5 transition-colors duration-300">
+<td class="px-6 py-4 font-medium text-white whitespace-nowrap">Internal Dashboard</td>
+<td class="px-6 py-4 text-slate-400">https://internal.ourbusiness.com</td>
+<td class="px-6 py-4 text-slate-400">2023-10-24 18:00</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2.5">
+<span class="h-2 w-2 rounded-full bg-status-red glow-sm text-status-red"></span>
+<span class="text-status-red">Error</span>
+</div>
+</td>
+<td class="px-6 py-4 text-slate-400">N/A</td>
+<td class="px-6 py-4 text-right">
+<button class="text-slate-400 hover:text-primary transition-colors"><span class="material-symbols-outlined">more_horiz</span></button>
+</td>
+</tr>
+<tr class="border-t border-slate-800/50 hover:bg-primary/5 transition-colors duration-300">
+<td class="px-6 py-4 font-medium text-white whitespace-nowrap">API Security Test</td>
+<td class="px-6 py-4 text-slate-400">https://api.example-shop.com/v2</td>
+<td class="px-6 py-4 text-slate-400">Not yet run</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2.5">
+<span class="h-2 w-2 rounded-full bg-status-gray glow-sm text-status-gray"></span>
+<span class="text-status-gray">Scheduled</span>
+</div>
+</td>
+<td class="px-6 py-4 text-white font-medium flex items-center gap-4"><div class="flex items-center gap-2"><span class="text-status-red glow">0</span> <span class="text-slate-400 text-xs">Critical</span></div> <div class="flex items-center gap-2"><span class="text-status-orange glow">0</span> <span class="text-slate-400 text-xs">High</span></div></td>
+<td class="px-6 py-4 text-right">
+<button class="text-slate-400 hover:text-primary transition-colors"><span class="material-symbols-outlined">more_horiz</span></button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="flex items-center justify-between p-4">
+<span class="text-sm text-slate-400">Showing 1 to 5 of 25 results</span>
+<div class="inline-flex items-center -space-x-px text-sm">
+<button class="px-3 py-2 ml-0 leading-tight text-slate-400 bg-transparent border border-slate-700 rounded-l-lg hover:bg-slate-700/50 hover:text-white transition-colors">Previous</button>
+<button class="px-3 py-2 leading-tight text-slate-400 bg-transparent border border-slate-700 hover:bg-slate-700/50 hover:text-white transition-colors">1</button>
+<button class="px-3 py-2 leading-tight text-white bg-primary/20 border border-primary/50 hover:bg-primary/30 transition-colors">2</button>
+<button class="px-3 py-2 leading-tight text-slate-400 bg-transparent border border-slate-700 hover:bg-slate-700/50 hover:text-white transition-colors">3</button>
+<button class="px-3 py-2 leading-tight text-slate-400 bg-transparent border border-slate-700 rounded-r-lg hover:bg-slate-700/50 hover:text-white transition-colors">Next</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</div>
+
+</body></html>

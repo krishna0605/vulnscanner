@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Billing &amp; Subscription - CyberSec Inc.</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings:
+        'FILL' 0,
+        'wght' 400,
+        'GRAD' 0,
+        'opsz' 24
+      }
+    </style>
+<script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#101e84",
+              "background-light": "#f6f6f8",
+              "background-dark": "#111321",
+            },
+            fontFamily: {
+              "display": ["Space Grotesk", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-gray-800 dark:text-gray-200">
+<div class="relative flex min-h-screen w-full">
+<!-- Side Navigation -->
+<aside class="w-64 flex-shrink-0 bg-[#0A0F1A] p-4 flex flex-col justify-between border-r border-gray-800">
+<div class="flex flex-col gap-4">
+<div class="flex items-center gap-3 p-2">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" data-alt="CyberSec Inc. abstract logo" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAR9lHRjvi3SrvGM_jFBnmEfJiBIlEctO3sdRQoBtj3e0eRIFXTq9IoNOwY-tjuoZnCCaDgecRd1Spo-bfCwdcMYqGk3Cca84GkyOJmu-Xr9IDD_pf8VOk7QRH7TSaEwppBfbDeI743oAaH1Q3iLCOlWwCyChrZkHn9OEMIsURTRcLGSJkabEfNee38dXgJ5wto8xWwns88wHKCYhD_00nbWJjoEixAGHtG7MEuRd3C8SlzwPVT9CzWRQ9NZFWYfb5Lt3_wnpDJnxbd");'></div>
+<div class="flex flex-col">
+<h1 class="text-white text-base font-medium leading-normal">CyberSec Inc.</h1>
+<p class="text-gray-400 text-sm font-normal leading-normal">Vulnerability Scanner</p>
+</div>
+</div>
+<nav class="flex flex-col gap-2 mt-4">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<p class="text-sm font-medium leading-normal">Dashboard</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">folder_open</span>
+<p class="text-sm font-medium leading-normal">Projects</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">shield</span>
+<p class="text-sm font-medium leading-normal">Scans</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">bar_chart</span>
+<p class="text-sm font-medium leading-normal">Reports</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-[#00BFFF]/10 border border-[#00BFFF]/50 text-[#00BFFF]" href="#">
+<span class="material-symbols-outlined">receipt_long</span>
+<p class="text-sm font-medium leading-normal">Billing</p>
+</a>
+</nav>
+</div>
+<div class="flex flex-col gap-1">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">settings</span>
+<p class="text-sm font-medium leading-normal">Settings</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">logout</span>
+<p class="text-sm font-medium leading-normal">Logout</p>
+</a>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 p-8 overflow-y-auto">
+<div class="max-w-6xl mx-auto">
+<!-- Page Heading -->
+<div class="flex flex-wrap justify-between gap-3 mb-10">
+<div class="flex flex-col gap-2">
+<h1 class="text-4xl font-bold leading-tight tracking-tighter text-gray-100">Billing &amp; Subscription</h1>
+<p class="text-gray-400 text-base font-normal leading-normal">Manage your plan, payment methods, and view your invoice history.</p>
+</div>
+</div>
+<!-- Current Plan & Payment Method -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+<div class="lg:col-span-2 bg-[#161B29]/80 border border-gray-800 rounded-xl p-6">
+<h2 class="text-2xl font-bold leading-tight tracking-tight text-white mb-6">Current Plan</h2>
+<div class="grid grid-cols-[150px_1fr] gap-x-6 gap-y-5">
+<p class="text-gray-400 text-sm font-normal">Plan</p>
+<p class="text-white text-sm font-medium flex items-center gap-2">Pro Plan <span class="bg-[#2EFFB8]/10 text-[#2EFFB8] text-xs font-semibold px-2 py-0.5 rounded-full">Active</span></p>
+<p class="text-gray-400 text-sm font-normal">Price</p>
+<p class="text-white text-sm font-medium">$99 / month</p>
+<p class="text-gray-400 text-sm font-normal">Next Renewal</p>
+<p class="text-white text-sm font-medium">July 31, 2024</p>
+</div>
+<div class="mt-6 pt-6 border-t border-gray-800 flex items-center justify-end">
+<button class="text-sm font-medium text-gray-400 hover:text-white transition-colors">Cancel Subscription</button>
+</div>
+</div>
+<div class="bg-[#161B29]/80 border border-gray-800 rounded-xl p-6">
+<h2 class="text-2xl font-bold leading-tight tracking-tight text-white mb-6">Payment Method</h2>
+<div class="flex items-center gap-4 bg-gray-900/50 p-4 rounded-lg">
+<div class="bg-white rounded-md p-1 flex items-center justify-center">
+<img class="h-4" data-alt="Visa logo" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDzgFstosYIGFE8gbJEhQ-84mY33cw8VmhpfMmLwoY-a1Ty6_jStBIMUcWGfB3oPBVwne8nzABj_KKWCGUHbI0RaAmj2BS8HXBDX7gQkZ67ccF9uEQUb8YTlEfXo7o7Z0l87LGM9U2tbkeR5CbcF7_cLzWPO0wq75a4Y8bS7c_RGcgoH0pa45zqvgi2GlVNi9E7__kdfIsViFEa06IT4tWpEGNYaIxhzIH5KxoOW3qJP6YaIZ905Es1CKOgBREd37Lr6YDfOd7UQne5"/>
+</div>
+<div>
+<p class="text-white font-medium">Visa ending in 1234</p>
+<p class="text-gray-400 text-sm">Expires 08/2026</p>
+</div>
+</div>
+<button class="mt-6 w-full text-center bg-gray-700 hover:bg-gray-600 text-white text-sm font-medium py-2 px-4 rounded-lg transition-colors">Update Payment Method</button>
+</div>
+</div>
+<!-- Choose Your Plan -->
+<div>
+<h2 class="text-2xl font-bold leading-tight tracking-tight text-white mb-6">Choose Your Plan</h2>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+<!-- Plan Card: Developer -->
+<div class="bg-[#161B29]/80 border border-gray-800 rounded-xl p-6 flex flex-col hover:border-[#00BFFF]/50 transition-all duration-300">
+<h3 class="text-xl font-semibold text-white">Developer</h3>
+<p class="text-gray-400 mt-1 mb-4 flex-grow">For individual developers and small projects.</p>
+<p class="text-4xl font-bold text-white mb-1">$29<span class="text-base font-normal text-gray-400"> / month</span></p>
+<ul class="space-y-2 my-6 text-sm text-gray-300">
+<li class="flex items-center gap-3"><span class="material-symbols-outlined text-[#2EFFB8]">check_circle</span> 5 Projects</li>
+<li class="flex items-center gap-3"><span class="material-symbols-outlined text-[#2EFFB8]">check_circle</span> 50 Monthly Scans</li>
+<li class="flex items-center gap-3"><span class="material-symbols-outlined text-[#2EFFB8]">check_circle</span> Standard Reporting</li>
+</ul>
+<button class="mt-auto w-full text-center bg-gray-700 hover:bg-gray-600 text-white text-sm font-medium py-2.5 px-4 rounded-lg transition-colors">Select Plan</button>
+</div>
+<!-- Plan Card: Pro -->
+<div class="bg-[#161B29]/80 border-2 border-[#00BFFF] rounded-xl p-6 flex flex-col relative shadow-[0_0_20px_rgba(0,191,255,0.2)]">
+<div class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#00BFFF] text-background-dark text-xs font-bold px-3 py-1 rounded-full">CURRENT PLAN</div>
+<h3 class="text-xl font-semibold text-white">Pro</h3>
+<p class="text-gray-400 mt-1 mb-4 flex-grow">For professional teams and growing businesses.</p>
+<p class="text-4xl font-bold text-white mb-1">$99<span class="text-base font-normal text-gray-400"> / month</span></p>
+<ul class="space-y-2 my-6 text-sm text-gray-300">
+<li class="flex items-center gap-3"><span class="material-symbols-outlined text-[#2EFFB8]">check_circle</span> 50 Projects</li>
+<li class="flex items-center gap-3"><span class="material-symbols-outlined text-[#2EFFB8]">check_circle</span> Unlimited Scans</li>
+<li class="flex items-center gap-3"><span class="material-symbols-outlined text-[#2EFFB8]">check_circle</span> Advanced Reporting</li>
+<li class="flex items-center gap-3"><span class="material-symbols-outlined text-[#2EFFB8]">check_circle</span> Priority Support</li>
+</ul>
+<button class="mt-auto w-full text-center bg-[#00BFFF] hover:bg-[#00a6d9] text-background-dark text-sm font-bold py-2.5 px-4 rounded-lg transition-colors">Your Plan</button>
+</div>
+<!-- Plan Card: Enterprise -->
+<div class="bg-[#161B29]/80 border border-gray-800 rounded-xl p-6 flex flex-col hover:border-[#00BFFF]/50 transition-all duration-300">
+<h3 class="text-xl font-semibold text-white">Enterprise</h3>
+<p class="text-gray-400 mt-1 mb-4 flex-grow">For large organizations with custom needs.</p>
+<p class="text-4xl font-bold text-white mb-1">Custom</p>
+<ul class="space-y-2 my-6 text-sm text-gray-300">
+<li class="flex items-center gap-3"><span class="material-symbols-outlined text-[#2EFFB8]">check_circle</span> Unlimited Projects</li>
+<li class="flex items-center gap-3"><span class="material-symbols-outlined text-[#2EFFB8]">check_circle</span> API Access</li>
+<li class="flex items-center gap-3"><span class="material-symbols-outlined text-[#2EFFB8]">check_circle</span> SSO Integration</li>
+<li class="flex items-center gap-3"><span class="material-symbols-outlined text-[#2EFFB8]">check_circle</span> Dedicated Support</li>
+</ul>
+<button class="mt-auto w-full text-center bg-gray-700 hover:bg-gray-600 text-white text-sm font-medium py-2.5 px-4 rounded-lg transition-colors">Contact Sales</button>
+</div>
+</div>
+</div>
+<!-- Invoice History -->
+<div class="mt-12">
+<h2 class="text-2xl font-bold leading-tight tracking-tight text-white mb-6">Billing History</h2>
+<div class="bg-[#161B29]/80 border border-gray-800 rounded-xl overflow-hidden">
+<table class="w-full text-sm text-left">
+<thead class="text-xs text-gray-400 uppercase bg-gray-900/50">
+<tr>
+<th class="px-6 py-3" scope="col">Invoice ID</th>
+<th class="px-6 py-3" scope="col">Date</th>
+<th class="px-6 py-3" scope="col">Amount</th>
+<th class="px-6 py-3" scope="col">Status</th>
+<th class="px-6 py-3 text-right" scope="col">Action</th>
+</tr>
+</thead>
+<tbody>
+<tr class="border-b border-gray-800">
+<td class="px-6 py-4 font-medium text-white whitespace-nowrap">#INV-2024-005</td>
+<td class="px-6 py-4 text-gray-300">June 30, 2024</td>
+<td class="px-6 py-4 text-gray-300">$99.00</td>
+<td class="px-6 py-4"><span class="bg-green-500/10 text-green-400 text-xs font-medium me-2 px-2.5 py-0.5 rounded">Paid</span></td>
+<td class="px-6 py-4 text-right">
+<a class="font-medium text-[#00BFFF] hover:underline inline-flex items-center gap-2" href="#">
+<span class="material-symbols-outlined text-base">download</span> Download
+                                        </a>
+</td>
+</tr>
+<tr class="border-b border-gray-800">
+<td class="px-6 py-4 font-medium text-white whitespace-nowrap">#INV-2024-004</td>
+<td class="px-6 py-4 text-gray-300">May 31, 2024</td>
+<td class="px-6 py-4 text-gray-300">$99.00</td>
+<td class="px-6 py-4"><span class="bg-green-500/10 text-green-400 text-xs font-medium me-2 px-2.5 py-0.5 rounded">Paid</span></td>
+<td class="px-6 py-4 text-right">
+<a class="font-medium text-[#00BFFF] hover:underline inline-flex items-center gap-2" href="#">
+<span class="material-symbols-outlined text-base">download</span> Download
+                                        </a>
+</td>
+</tr>
+<tr class="border-b border-gray-800">
+<td class="px-6 py-4 font-medium text-white whitespace-nowrap">#INV-2024-003</td>
+<td class="px-6 py-4 text-gray-300">April 30, 2024</td>
+<td class="px-6 py-4 text-gray-300">$99.00</td>
+<td class="px-6 py-4"><span class="bg-green-500/10 text-green-400 text-xs font-medium me-2 px-2.5 py-0.5 rounded">Paid</span></td>
+<td class="px-6 py-4 text-right">
+<a class="font-medium text-[#00BFFF] hover:underline inline-flex items-center gap-2" href="#">
+<span class="material-symbols-outlined text-base">download</span> Download
+                                        </a>
+</td>
+</tr>
+<tr>
+<td class="px-6 py-4 font-medium text-white whitespace-nowrap">#INV-2024-002</td>
+<td class="px-6 py-4 text-gray-300">March 31, 2024</td>
+<td class="px-6 py-4 text-gray-300">$99.00</td>
+<td class="px-6 py-4"><span class="bg-green-500/10 text-green-400 text-xs font-medium me-2 px-2.5 py-0.5 rounded">Paid</span></td>
+<td class="px-6 py-4 text-right">
+<a class="font-medium text-[#00BFFF] hover:underline inline-flex items-center gap-2" href="#">
+<span class="material-symbols-outlined text-base">download</span> Download
+                                        </a>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

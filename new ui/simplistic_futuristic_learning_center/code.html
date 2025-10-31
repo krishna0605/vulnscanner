@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Vulnerability Scanner - Learning Center</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#00BFFF",
+              "background-light": "#f6f6f8",
+              "background-dark": "#0A0F1E",
+              "component-dark": "#1E1E1E",
+              "text-light": "#EAEAEA",
+              "text-muted": "#888888"
+            },
+            fontFamily: {
+              "display": ["Space Grotesk", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings:
+            'FILL' 0,
+            'wght' 400,
+            'GRAD' 0,
+            'opsz' 24
+        }
+        .glow-border {
+            border-color: transparent;
+            transition: border-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+        }
+        .glow-border:hover, .glow-border:focus-within {
+            border-color: #00BFFF;
+            box-shadow: 0 0 8px 0 rgba(0, 191, 255, 0.5);
+        }
+        .chip-active {
+            background-color: #00BFFF;
+            color: #0A0F1E;
+        }
+    </style>
+</head>
+<body class="font-display bg-background-dark text-text-light">
+<div class="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden">
+<div class="layout-container flex h-full grow flex-col">
+<div class="px-4 sm:px-10 md:px-20 lg:px-40 flex flex-1 justify-center py-5">
+<div class="layout-content-container flex flex-col max-w-[960px] flex-1">
+<!-- TopNavBar -->
+<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-b-white/10 px-4 sm:px-10 py-3">
+<div class="flex items-center gap-4 text-text-light">
+<div class="size-6 text-primary">
+<svg fill="none" viewbox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_6_330)">
+<path clip-rule="evenodd" d="M24 0.757355L47.2426 24L24 47.2426L0.757355 24L24 0.757355ZM21 35.7574V12.2426L9.24264 24L21 35.7574Z" fill="currentColor" fill-rule="evenodd"></path>
+</g>
+<defs>
+<clippath id="clip0_6_330"><rect fill="white" height="48" width="48"></rect></clippath>
+</defs>
+</svg>
+</div>
+<h2 class="text-text-light text-lg font-bold leading-tight tracking-[-0.015em]">Vulnerability Scanner</h2>
+</div>
+<div class="hidden md:flex flex-1 justify-end gap-8">
+<div class="flex items-center gap-9">
+<a class="text-text-muted hover:text-primary text-sm font-medium leading-normal transition-colors" href="#">Dashboard</a>
+<a class="text-text-muted hover:text-primary text-sm font-medium leading-normal transition-colors" href="#">Scans</a>
+<a class="text-text-muted hover:text-primary text-sm font-medium leading-normal transition-colors" href="#">Projects</a>
+<a class="text-primary text-sm font-bold leading-normal" href="#">Learning Center</a>
+</div>
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 border-2 border-primary" data-alt="User profile avatar with an abstract geometric pattern" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCCjqrR7fxAN5vgsWFtuuBND5er4azt6SfDszC7e-x-pfSiuA-fLE23ntJZcTo25RleypgbI4YqaRKcVZPyCWeLUnnf2VA49MkpVHNQFacXJGuWUjhbU4ozmkDlY9Qmk4bGhCV-nnKXKvFPWrKK28WZq4pOblpMdLdOlfDvfPUX5X-O1QF-5jv0stv3BBRFNRKcxJ9EKJKvrDN_g53xOHVjBJwH9gmHWgLPH7byswuQnHJlJVtLCn5OcsbN0FgTmd-Y_Ruvl3FvQmAX");'></div>
+</div>
+<button class="md:hidden flex items-center justify-center text-text-light">
+<span class="material-symbols-outlined text-3xl">menu</span>
+</button>
+</header>
+<main class="flex-1 flex flex-col gap-8 mt-8 px-4">
+<!-- PageHeading & SearchBar -->
+<div class="flex flex-col items-center text-center gap-6">
+<p class="text-text-light text-4xl sm:text-5xl font-black leading-tight tracking-[-0.033em]">Learning Center</p>
+<p class="text-text-muted text-base font-normal leading-normal max-w-lg">Your central hub for security knowledge. Search for CVEs, remediation guides, and best practices.</p>
+<div class="w-full max-w-2xl mt-4">
+<label class="flex flex-col min-w-40 h-14 w-full">
+<div class="flex w-full flex-1 items-stretch rounded-lg h-full border glow-border bg-component-dark">
+<div class="text-text-muted flex items-center justify-center pl-4">
+<span class="material-symbols-outlined text-2xl">search</span>
+</div>
+<input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-light focus:outline-0 focus:ring-0 border-none bg-transparent h-full placeholder:text-text-muted px-4 text-base font-normal leading-normal" placeholder="Search vulnerabilities, tutorials, best practices..."/>
+</div>
+</label>
+</div>
+</div>
+<!-- Chips -->
+<div class="flex justify-center gap-2 sm:gap-3 p-3 overflow-x-auto">
+<div class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full cursor-pointer px-4 chip-active">
+<p class="text-sm font-medium leading-normal">All</p>
+</div>
+<div class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full bg-component-dark hover:bg-primary/20 transition-colors cursor-pointer px-4">
+<p class="text-text-light text-sm font-medium leading-normal">Vulnerabilities</p>
+</div>
+<div class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full bg-component-dark hover:bg-primary/20 transition-colors cursor-pointer px-4">
+<p class="text-text-light text-sm font-medium leading-normal">Tutorials</p>
+</div>
+<div class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full bg-component-dark hover:bg-primary/20 transition-colors cursor-pointer px-4">
+<p class="text-text-light text-sm font-medium leading-normal">Remediation Guides</p>
+</div>
+</div>
+<!-- ImageGrid adapted to Resource Cards -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 p-4">
+<!-- Card 1 -->
+<div class="flex flex-col gap-4 p-5 rounded-xl border bg-component-dark glow-border cursor-pointer">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-3xl">bug_report</span>
+<p class="text-text-light text-base font-medium leading-normal">Understanding Cross-Site Scripting (XSS)</p>
+</div>
+<p class="text-text-muted text-sm font-normal leading-normal">Learn about the different types of XSS and how to prevent them in your web applications.</p>
+<div class="flex gap-2 text-xs">
+<span class="bg-primary/20 text-primary py-1 px-2 rounded-full">Vulnerability</span>
+<span class="bg-primary/20 text-primary py-1 px-2 rounded-full">OWASP Top 10</span>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="flex flex-col gap-4 p-5 rounded-xl border bg-component-dark glow-border cursor-pointer">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-3xl">gpp_good</span>
+<p class="text-text-light text-base font-medium leading-normal">How to Remediate SQL Injection</p>
+</div>
+<p class="text-text-muted text-sm font-normal leading-normal">A step-by-step guide to identifying and fixing SQL injection flaws in your codebase.</p>
+<div class="flex gap-2 text-xs">
+<span class="bg-primary/20 text-primary py-1 px-2 rounded-full">Remediation</span>
+<span class="bg-primary/20 text-primary py-1 px-2 rounded-full">SQL</span>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="flex flex-col gap-4 p-5 rounded-xl border bg-component-dark glow-border cursor-pointer">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-3xl">school</span>
+<p class="text-text-light text-base font-medium leading-normal">Getting Started with Your First Scan</p>
+</div>
+<p class="text-text-muted text-sm font-normal leading-normal">A beginner's tutorial on setting up and running a new vulnerability scan with our tool.</p>
+<div class="flex gap-2 text-xs">
+<span class="bg-primary/20 text-primary py-1 px-2 rounded-full">Tutorial</span>
+<span class="bg-primary/20 text-primary py-1 px-2 rounded-full">Beginner</span>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="flex flex-col gap-4 p-5 rounded-xl border bg-component-dark glow-border cursor-pointer">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-3xl">bug_report</span>
+<p class="text-text-light text-base font-medium leading-normal">Intro to Cross-Site Request Forgery</p>
+</div>
+<p class="text-text-muted text-sm font-normal leading-normal">Explore how CSRF attacks work and the best mitigation techniques for modern apps.</p>
+<div class="flex gap-2 text-xs">
+<span class="bg-primary/20 text-primary py-1 px-2 rounded-full">Vulnerability</span>
+<span class="bg-primary/20 text-primary py-1 px-2 rounded-full">Web Security</span>
+</div>
+</div>
+<!-- Card 5 -->
+<div class="flex flex-col gap-4 p-5 rounded-xl border bg-component-dark glow-border cursor-pointer">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-3xl">checklist</span>
+<p class="text-text-light text-base font-medium leading-normal">Secure Coding Checklist for Developers</p>
+</div>
+<p class="text-text-muted text-sm font-normal leading-normal">Key principles and practices for writing more secure application code from the start.</p>
+<div class="flex gap-2 text-xs">
+<span class="bg-primary/20 text-primary py-1 px-2 rounded-full">Best Practices</span>
+<span class="bg-primary/20 text-primary py-1 px-2 rounded-full">Secure Coding</span>
+</div>
+</div>
+<!-- Card 6 -->
+<div class="flex flex-col gap-4 p-5 rounded-xl border bg-component-dark glow-border cursor-pointer">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-3xl">school</span>
+<p class="text-text-light text-base font-medium leading-normal">Using the Reporting Dashboard</p>
+</div>
+<p class="text-text-muted text-sm font-normal leading-normal">Learn how to interpret scan results and generate insightful reports for your team.</p>
+<div class="flex gap-2 text-xs">
+<span class="bg-primary/20 text-primary py-1 px-2 rounded-full">Tutorial</span>
+<span class="bg-primary/20 text-primary py-1 px-2 rounded-full">Reporting</span>
+</div>
+</div>
+</div>
+</main>
+</div>
+</div>
+</div>
+</div>
+</body></html>

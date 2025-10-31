@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Project Omega - Vulnerability Scanner</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+<script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#00BFFF",
+            "background-dark": "#0A0A0A",
+            "container-dark": "#141414",
+            "border-dark": "#2A2A2A",
+            "text-primary-dark": "#EAEAEA",
+            "text-secondary-dark": "#888888",
+            "critical": "#FF0055",
+            "high": "#FFA500",
+            "medium": "#FFD700",
+            "low": "#00F0FF",
+          },
+          fontFamily: {
+            "display": ["Inter", "sans-serif"]
+          },
+          borderRadius: {
+            "DEFAULT": "0.5rem",
+            "lg": "0.75rem",
+            "xl": "1rem",
+            "full": "9999px"
+          },
+          boxShadow: {
+            'glow-primary': '0 0 20px 0px rgba(0, 191, 255, 0.35)',
+            'glow-inner': 'inset 0 0 10px 0px rgba(0, 191, 255, 0.1)',
+            'glow-critical': '0 0 15px 0px rgba(255, 0, 85, 0.3)',
+            'glow-high': '0 0 15px 0px rgba(255, 165, 0, 0.3)',
+          },
+          animation: {
+            'grid-pan': 'grid-pan 60s linear infinite',
+            'fade-in': 'fade-in 0.5s ease-out forwards',
+            'slide-up': 'slide-up 0.5s ease-out forwards'
+          },
+          keyframes: {
+            'grid-pan': {
+              '0%': { backgroundPosition: '0 0' },
+              '100%': { backgroundPosition: '-400px -400px' },
+            },
+            'fade-in': {
+                'from': { opacity: '0' },
+                'to': { opacity: '1' },
+            },
+            'slide-up': {
+                'from': { opacity: '0', transform: 'translateY(10px)' },
+                'to': { opacity: '1', transform: 'translateY(0)' },
+            },
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    body {
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+    }
+    .animated-grid {
+        --grid-color: rgba(42, 42, 42, 0.5);
+        background-image:
+            linear-gradient(to right, var(--grid-color) 1px, transparent 1px),
+            linear-gradient(to bottom, var(--grid-color) 1px, transparent 1px);
+        background-size: 50px 50px;
+        animation: grid-pan 60s linear infinite;
+        will-change: background-position;
+    }
+    .tab-indicator {
+        position: absolute;
+        bottom: 0;
+        height: 2px;
+        background-color: #00BFFF;
+        transition: left 0.3s ease-in-out, width 0.3s ease-in-out;
+        box-shadow: 0 0 10px rgba(0, 191, 255, 0.5);
+    }
+    .animate-delay-100 { animation-delay: 100ms; }
+    .animate-delay-200 { animation-delay: 200ms; }
+    .animate-delay-300 { animation-delay: 300ms; }
+    .animate-delay-400 { animation-delay: 400ms; }
+    .animate-delay-500 { animation-delay: 500ms; }
+  </style>
+</head>
+<body class="bg-background-dark font-display text-text-primary-dark">
+<div class="relative flex min-h-screen w-full flex-col overflow-x-hidden">
+<div class="absolute inset-0 z-0 animated-grid"></div>
+<div class="absolute inset-0 z-0 bg-gradient-to-b from-transparent to-background-dark"></div>
+<div class="relative z-10 flex h-full grow flex-col">
+<div class="flex flex-1 justify-center p-4 sm:p-6 md:p-8">
+<main class="flex w-full max-w-7xl flex-1 flex-col animate-fade-in">
+<div class="opacity-0 animate-slide-up">
+<div class="flex items-center gap-2 text-sm text-text-secondary-dark mb-6 px-1">
+<a class="hover:text-primary transition-colors" href="#">Projects</a>
+<span class="material-symbols-outlined !text-base">chevron_right</span>
+<span class="text-text-primary-dark">Project Omega</span>
+</div>
+<div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 flex items-center justify-center bg-container-dark border border-border-dark rounded-lg">
+<span class="material-symbols-outlined text-primary !text-3xl">shield</span>
+</div>
+<div>
+<h1 class="text-2xl md:text-3xl font-bold leading-tight text-text-primary-dark">Project Omega</h1>
+<p class="text-sm text-text-secondary-dark">https://example.com</p>
+</div>
+</div>
+<div class="flex flex-shrink-0 gap-3">
+<button class="flex min-w-[84px] cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-lg h-10 px-5 bg-primary text-black text-sm font-bold leading-normal tracking-wide transition-all duration-300 hover:bg-white hover:shadow-glow-primary">
+<span class="material-symbols-outlined text-base">rocket_launch</span>
+<span>New Scan</span>
+</button>
+</div>
+</div>
+</div>
+<div class="sticky top-0 z-20 bg-background-dark/80 backdrop-blur-sm opacity-0 animate-slide-up animate-delay-100">
+<div class="relative border-b border-border-dark flex gap-6 md:gap-8 px-1">
+<a class="relative px-2 py-4 text-sm font-semibold text-primary transition-colors" href="#">Settings</a>
+<a class="relative px-2 py-4 text-sm font-semibold text-text-secondary-dark hover:text-text-primary-dark transition-colors" href="#">Scans</a>
+<a class="relative px-2 py-4 text-sm font-semibold text-text-secondary-dark hover:text-text-primary-dark transition-colors" href="#">Findings</a>
+<div class="tab-indicator" style="left: 8px; width: 63px;"></div>
+</div>
+</div>
+<div class="py-8 space-y-8">
+<section class="opacity-0 animate-slide-up animate-delay-200">
+<h2 class="text-lg font-semibold text-text-primary-dark mb-4">Project Configuration</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<div class="bg-container-dark border border-border-dark rounded-lg p-5 flex items-start gap-4 hover:border-primary/50 transition-colors duration-300">
+<span class="material-symbols-outlined text-primary mt-1">link</span>
+<div>
+<h3 class="font-semibold text-text-primary-dark">Target URL</h3>
+<p class="text-sm text-text-secondary-dark">https://example.com</p>
+</div>
+</div>
+<div class="bg-container-dark border border-border-dark rounded-lg p-5 flex items-start gap-4 hover:border-primary/50 transition-colors duration-300">
+<span class="material-symbols-outlined text-primary mt-1">schedule</span>
+<div>
+<h3 class="font-semibold text-text-primary-dark">Scan Schedule</h3>
+<p class="text-sm text-text-secondary-dark">Daily at 3:00 AM UTC</p>
+</div>
+</div>
+<div class="bg-container-dark border border-border-dark rounded-lg p-5 flex items-start gap-4 hover:border-primary/50 transition-colors duration-300">
+<span class="material-symbols-outlined text-primary mt-1">notifications</span>
+<div>
+<h3 class="font-semibold text-text-primary-dark">Notifications</h3>
+<p class="text-sm text-text-secondary-dark">Enabled for Critical &amp; High</p>
+</div>
+</div>
+</div>
+</section>
+<section class="opacity-0 animate-slide-up animate-delay-300">
+<h2 class="text-lg font-semibold text-text-primary-dark mb-4">Vulnerability Summary</h2>
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-6">
+<div class="bg-container-dark border border-critical/40 rounded-lg p-5 flex flex-col gap-1.5 transition-all duration-300 hover:border-critical hover:shadow-glow-critical">
+<p class="text-sm font-medium text-critical">Critical</p>
+<p class="text-3xl font-bold text-text-primary-dark">12</p>
+</div>
+<div class="bg-container-dark border border-high/40 rounded-lg p-5 flex flex-col gap-1.5 transition-all duration-300 hover:border-high hover:shadow-glow-high">
+<p class="text-sm font-medium text-high">High</p>
+<p class="text-3xl font-bold text-text-primary-dark">35</p>
+</div>
+<div class="bg-container-dark border border-medium/40 rounded-lg p-5 flex flex-col gap-1.5 transition-colors duration-300 hover:border-medium">
+<p class="text-sm font-medium text-medium">Medium</p>
+<p class="text-3xl font-bold text-text-primary-dark">89</p>
+</div>
+<div class="bg-container-dark border border-low/40 rounded-lg p-5 flex flex-col gap-1.5 transition-colors duration-300 hover:border-low">
+<p class="text-sm font-medium text-low">Low</p>
+<p class="text-3xl font-bold text-text-primary-dark">152</p>
+</div>
+</div>
+</section>
+<section class="opacity-0 animate-slide-up animate-delay-400">
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<div class="lg:col-span-1 bg-container-dark border border-border-dark rounded-lg p-6 flex flex-col items-center justify-center">
+<h3 class="text-base font-semibold text-text-primary-dark mb-4 self-start">Severity Distribution</h3>
+<div class="relative w-44 h-44">
+<svg class="w-full h-full transform -rotate-90" viewBox="0 0 120 120">
+<circle cx="60" cy="60" fill="none" r="54" stroke="rgba(255,255,255,0.05)" stroke-width="12"></circle>
+<circle class="transition-all duration-500" cx="60" cy="60" fill="none" r="54" stroke="#FF0055" stroke-dasharray="12.02, 339.29" stroke-linecap="round" stroke-width="12"></circle>
+<circle class="transition-all duration-500" cx="60" cy="60" fill="none" r="54" stroke="#FFA500" stroke-dasharray="39.67, 339.29" stroke-dashoffset="-12.02" stroke-linecap="round" stroke-width="12"></circle>
+<circle class="transition-all duration-500" cx="60" cy="60" fill="none" r="54" stroke="#FFD700" stroke-dasharray="97.23, 339.29" stroke-dashoffset="-51.69" stroke-linecap="round" stroke-width="12"></circle>
+<circle class="transition-all duration-500" cx="60" cy="60" fill="none" r="54" stroke="#00F0FF" stroke-dasharray="190.38, 339.29" stroke-dashoffset="-148.92" stroke-linecap="round" stroke-width="12"></circle>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="text-3xl font-bold text-text-primary-dark">288</span>
+<span class="text-sm text-text-secondary-dark">Total</span>
+</div>
+</div>
+</div>
+<div class="lg:col-span-2 bg-container-dark border border-border-dark rounded-lg p-6">
+<h3 class="text-base font-semibold text-text-primary-dark mb-4">Recent Activity</h3>
+<div class="flow-root">
+<ul class="-mb-6" role="list">
+<li class="relative pb-6">
+<div class="absolute left-3 top-3 -ml-px h-full w-0.5 bg-border-dark"></div>
+<div class="relative flex items-center space-x-4">
+<span class="relative flex h-6 w-6 items-center justify-center rounded-full bg-green-500/20 ring-4 ring-container-dark">
+<span class="material-symbols-outlined text-sm text-green-400">task_alt</span>
+</span>
+<div class="flex-auto"><p class="text-sm text-text-secondary-dark">Scan #42 completed. <span class="text-text-primary-dark">3 new findings.</span></p></div>
+<time class="flex-none py-0.5 text-xs leading-5 text-text-secondary-dark">3h ago</time>
+</div>
+</li>
+<li class="relative pb-6">
+<div class="absolute left-3 top-3 -ml-px h-full w-0.5 bg-border-dark"></div>
+<div class="relative flex items-center space-x-4">
+<span class="relative flex h-6 w-6 items-center justify-center rounded-full bg-blue-500/20 ring-4 ring-container-dark">
+<span class="material-symbols-outlined text-sm text-blue-400">play_arrow</span>
+</span>
+<div class="flex-auto"><p class="text-sm text-text-secondary-dark">Scan initiated by <span class="text-text-primary-dark">Alex Morgan</span></p></div>
+<time class="flex-none py-0.5 text-xs leading-5 text-text-secondary-dark">4h ago</time>
+</div>
+</li>
+<li class="relative pb-6">
+<div class="absolute left-3 top-3 -ml-px h-full w-0.5 bg-border-dark"></div>
+<div class="relative flex items-center space-x-4">
+<span class="relative flex h-6 w-6 items-center justify-center rounded-full bg-yellow-500/20 ring-4 ring-container-dark">
+<span class="material-symbols-outlined text-sm text-yellow-400">notification_important</span>
+</span>
+<div class="flex-auto"><p class="text-sm text-text-secondary-dark">New High finding: <span class="text-text-primary-dark">SQL Injection</span></p></div>
+<time class="flex-none py-0.5 text-xs leading-5 text-text-secondary-dark">1d ago</time>
+</div>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+</div>
+</main>
+</div>
+</div>
+</div>
+
+</body></html>

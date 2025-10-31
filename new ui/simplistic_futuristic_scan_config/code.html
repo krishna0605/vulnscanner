@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>VulnScanner - Configure Scan</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#00BFFF",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#0A0F1A",
+                        "text-primary-dark": "#E1E1E6",
+                        "text-secondary-dark": "#7C899A",
+                        "border-dark": "#2A3346",
+                        "surface-dark": "#111727",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    boxShadow: {
+                        'glow-primary': '0 0 15px 0 rgba(0, 191, 255, 0.3)',
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings:
+                'FILL' 0,
+                'wght' 400,
+                'GRAD' 0,
+                'opsz' 24
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-text-primary-dark">
+<div class="relative flex min-h-screen w-full">
+<!-- SideNavBar -->
+<aside class="flex w-64 flex-col bg-surface-dark/50 p-4 border-r border-border-dark">
+<div class="flex flex-col gap-4">
+<div class="flex items-center gap-3 px-2 py-2">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" data-alt="Abstract logo for VulnScanner" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAJYd297giFxdGHFDfsn9UsqCpJvP2IU1snNXBeQOr3wprFcCKsTWNdS49O9moUpY978iSmAWcZkMuSXq5xFnGH9ZQw1_TwVjtR2yEi-pSyLG-3ERSrQIHS92_p_69M8wgh3y4Ve47cyOpPqZj3ILtqwal2vvg1X2hhYQRBebTsyxvqKBtmGI2_lcL-LNe-WtZfaPgf4uaso9eNtZKPgGTY0aQixIxUjG-MFFSIrA5YSRPuk2ht0tI9RVGLnsxO1Qs7OcESWn3S1GoQ");'></div>
+<div class="flex flex-col">
+<h1 class="text-text-primary-dark text-base font-bold leading-normal">VulnScanner</h1>
+<p class="text-text-secondary-dark text-sm font-normal leading-normal">Pro Plan</p>
+</div>
+</div>
+<nav class="flex flex-col gap-2 mt-6">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-text-secondary-dark hover:bg-primary/10 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<p class="text-sm font-medium leading-normal">Dashboard</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/20 text-primary" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">search</span>
+<p class="text-sm font-medium leading-normal">Scans</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-text-secondary-dark hover:bg-primary/10 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">folder</span>
+<p class="text-sm font-medium leading-normal">Projects</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-text-secondary-dark hover:bg-primary/10 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">bar_chart</span>
+<p class="text-sm font-medium leading-normal">Reports</p>
+</a>
+</nav>
+</div>
+<div class="mt-auto flex flex-col gap-1">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-text-secondary-dark hover:bg-primary/10 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">settings</span>
+<p class="text-sm font-medium leading-normal">Settings</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-text-secondary-dark hover:bg-primary/10 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">help</span>
+<p class="text-sm font-medium leading-normal">Help</p>
+</a>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 overflow-y-auto p-8">
+<div class="mx-auto max-w-4xl">
+<!-- PageHeading -->
+<div class="flex flex-wrap justify-between gap-3 mb-8">
+<div class="flex flex-col gap-2">
+<h1 class="text-text-primary-dark text-4xl font-bold tracking-tight">Configure Scan</h1>
+<p class="text-text-secondary-dark text-base font-normal leading-normal">Set up the parameters for your new web vulnerability scan.</p>
+</div>
+</div>
+<div class="flex flex-col gap-10">
+<!-- Target URL Section -->
+<section>
+<label class="flex flex-col w-full">
+<p class="text-text-primary-dark text-base font-medium leading-normal pb-2">Target URL</p>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary-dark">link</span>
+<input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-primary-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 focus:shadow-glow-primary border border-border-dark bg-surface-dark focus:border-primary/50 h-14 placeholder:text-text-secondary-dark pl-12 pr-4 text-base font-normal leading-normal transition-all" placeholder="Enter target URL or IP address (e.g., https://example.com)" value=""/>
+</div>
+</label>
+</section>
+<!-- Scan Policy Section -->
+<section class="flex flex-col gap-6 p-6 rounded-xl border border-border-dark bg-surface-dark/50">
+<h2 class="text-text-primary-dark text-xl font-bold">Scan Policy</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<!-- Scan Depth Slider -->
+<div class="flex flex-col gap-3">
+<label class="text-text-primary-dark font-medium" for="scan-depth">Scan Depth</label>
+<input class="w-full h-2 bg-border-dark rounded-lg appearance-none cursor-pointer accent-primary" id="scan-depth" max="100" min="0" type="range" value="50"/>
+<div class="flex justify-between text-sm text-text-secondary-dark">
+<span>Surface</span>
+<span>Full</span>
+</div>
+</div>
+<!-- Rate Limit Slider -->
+<div class="flex flex-col gap-3">
+<label class="text-text-primary-dark font-medium" for="rate-limit">Rate Limit (requests/sec)</label>
+<input class="w-full h-2 bg-border-dark rounded-lg appearance-none cursor-pointer accent-primary" id="rate-limit" max="50" min="1" type="range" value="10"/>
+<div class="flex justify-between text-sm text-text-secondary-dark">
+<span>1</span>
+<span>50</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Scheduling Section -->
+<section class="p-6 rounded-xl border border-border-dark bg-surface-dark/50">
+<h2 class="text-text-primary-dark text-xl font-bold mb-4">Scheduling</h2>
+<!-- SegmentedButtons -->
+<div class="flex">
+<div class="flex h-10 w-full max-w-sm items-center justify-center rounded-lg bg-background-dark p-1 border border-border-dark">
+<label class="flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-md px-2 has-[:checked]:bg-primary/20 has-[:checked]:text-primary text-text-secondary-dark text-sm font-medium leading-normal transition-colors">
+<span class="truncate">One-Time</span>
+<input checked="" class="invisible absolute w-0" name="scan-schedule" type="radio" value="One-Time"/>
+</label>
+<label class="flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-md px-2 has-[:checked]:bg-primary/20 has-[:checked]:text-primary text-text-secondary-dark text-sm font-medium leading-normal transition-colors">
+<span class="truncate">Recurring</span>
+<input class="invisible absolute w-0" name="scan-schedule" type="radio" value="Recurring"/>
+</label>
+</div>
+</div>
+</section>
+<!-- Advanced Options Section -->
+<section>
+<details class="group">
+<summary class="list-none flex cursor-pointer items-center justify-between p-4 rounded-lg hover:bg-surface-dark transition-colors">
+<h2 class="text-text-primary-dark text-xl font-bold">Advanced Options</h2>
+<span class="material-symbols-outlined text-text-secondary-dark transition-transform group-open:rotate-180">expand_more</span>
+</summary>
+<div class="mt-4 flex flex-col gap-6 p-6 rounded-xl border border-border-dark bg-surface-dark/50">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+<!-- Toggles -->
+<div class="flex flex-col gap-4">
+<label class="flex items-center justify-between cursor-pointer">
+<span class="text-text-primary-dark font-medium">Follow Redirects</span>
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="relative w-11 h-6 bg-border-dark rounded-full peer peer-focus:ring-2 peer-focus:ring-primary/50 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+<label class="flex items-center justify-between cursor-pointer">
+<span class="text-text-primary-dark font-medium">Use Authentication</span>
+<input class="sr-only peer" type="checkbox"/>
+<div class="relative w-11 h-6 bg-border-dark rounded-full peer peer-focus:ring-2 peer-focus:ring-primary/50 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<!-- Custom Headers -->
+<div class="flex flex-col gap-3">
+<p class="text-text-primary-dark font-medium">Custom Headers</p>
+<div class="flex gap-2">
+<input class="form-input flex-1 rounded-lg text-text-primary-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-dark bg-background-dark focus:border-primary/50 h-10 placeholder:text-text-secondary-dark px-3 text-sm" placeholder="Header Name"/>
+<input class="form-input flex-1 rounded-lg text-text-primary-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-dark bg-background-dark focus:border-primary/50 h-10 placeholder:text-text-secondary-dark px-3 text-sm" placeholder="Header Value"/>
+</div>
+<button class="flex items-center gap-2 self-start text-sm text-primary hover:text-primary/80 transition-colors">
+<span class="material-symbols-outlined text-base">add</span>
+                                            Add Header
+                                        </button>
+</div>
+</div>
+</div>
+</details>
+</section>
+</div>
+<!-- Action Bar -->
+<div class="mt-12 pt-6 border-t border-border-dark flex items-center justify-end gap-4">
+<button class="px-5 py-2.5 rounded-lg text-text-primary-dark bg-surface-dark border border-border-dark hover:bg-border-dark transition-colors text-sm font-semibold">
+                        Save as Template
+                    </button>
+<button class="px-6 py-2.5 rounded-lg text-background-dark bg-primary hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20 hover:shadow-glow-primary text-sm font-semibold">
+                        Start Scan
+                    </button>
+</div>
+</div>
+</main>
+</div>
+</body></html>

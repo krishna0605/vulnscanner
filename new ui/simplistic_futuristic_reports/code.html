@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Vulnerability Scanner Report</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#00BFFF",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#111321",
+                        "panel-dark": "#1A1B22",
+                        "critical": "#FF455F",
+                        "high": "#FFA500",
+                        "medium": "#FFD700",
+                        "low": "#00B8A9"
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    keyframes: {
+                        gradient: {
+                            '0%': { backgroundPosition: '0% 50%' },
+                            '50%': { backgroundPosition: '100% 50%' },
+                            '100%': { backgroundPosition: '0% 50%' },
+                        },
+                        draw: {
+                          'to': { 'stroke-dashoffset': 0 }
+                        },
+                        progress: {
+                            '0%': { width: '0%' },
+                        },
+                    },
+                    animation: {
+                        'gradient': 'gradient 15s ease infinite',
+                        'draw': 'draw 1.5s ease-out forwards',
+                        'progress': 'progress 1s ease-out forwards',
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background-color: #111321;
+            position: relative;
+            overflow-x: hidden;
+        }
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(315deg, rgba(0, 191, 255, 0.05) 0%, rgba(255, 69, 95, 0.05) 50%, rgba(0, 184, 169, 0.05) 100%);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+            z-index: 0;
+            opacity: 0.5;
+        }
+        .animate-draw {
+            stroke-dasharray: 100;
+            stroke-dashoffset: 100;
+            animation-name: draw;
+            animation-duration: 1.5s;
+            animation-fill-mode: forwards;
+            animation-timing-function: cubic-bezier(0.42, 0, 0.58, 1);
+        }
+        .animate-progress-bar {
+            animation-name: progress;
+            animation-duration: 1.5s;
+            animation-fill-mode: forwards;
+            animation-timing-function: cubic-bezier(0.42, 0, 0.58, 1);
+        }
+        .group:hover .group-hover-icon {
+            transform: translateY(-0.25rem) scale(1.05);
+            filter: drop-shadow(0 0 8px var(--glow-color));
+        }
+    </style>
+</head>
+<body class="font-display bg-background-light dark:bg-background-dark text-[#EAEAEA]">
+<div class="relative flex min-h-screen w-full z-10">
+<aside class="flex h-screen w-64 flex-col bg-background-light dark:bg-panel-dark/80 backdrop-blur-sm p-4 sticky top-0 border-r border-white/10">
+<div class="flex flex-col gap-4">
+<div class="flex items-center gap-3 px-2 py-2">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" data-alt="Abstract blue circular logo" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCbTR7lSd-BhGc-ypadn1JuP0-_VEuycMRF8sLOjYrI2ILOLU63vKKvIEA02FEMJQ-G1YyWAfrHjjApps0tNA-fDYnlJg36GWwonZ_9_DbweNqmQ5ETLr1BMh5iHXKuYWguUj5VUmSMyMANBzRgWGzcqoGSOY8f1-EiAiBUCR3NOB027HgONhL4YkPzECJhXga1xANrrtn-09f3O23BqYRb_rR9VCIKfNxb-hxi5qJMN_NaB5OBHGv4KTMMRz1XehaWLvm0WbsxS-1X");'></div>
+<div class="flex flex-col">
+<h1 class="text-white text-base font-bold leading-normal">Vulnerability Scanner</h1>
+<p class="text-white/60 text-sm font-normal leading-normal">secure.your.assets</p>
+</div>
+</div>
+<nav class="flex flex-col gap-2 mt-4">
+<a class="flex items-center gap-3 px-3 py-2 text-white/70 hover:text-white hover:bg-white/5 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<p class="text-sm font-medium leading-normal">Dashboard</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-white/70 hover:text-white hover:bg-white/5 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">search</span>
+<p class="text-sm font-medium leading-normal">Scans</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-white/70 hover:text-white hover:bg-white/5 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">folder</span>
+<p class="text-sm font-medium leading-normal">Projects</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/20 text-primary" href="#">
+<span class="material-symbols-outlined">bar_chart</span>
+<p class="text-sm font-medium leading-normal">Reports</p>
+</a>
+</nav>
+</div>
+<div class="mt-auto flex flex-col gap-1">
+<a class="flex items-center gap-3 px-3 py-2 text-white/70 hover:text-white hover:bg-white/5 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">settings</span>
+<p class="text-sm font-medium leading-normal">Settings</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-white/70 hover:text-white hover:bg-white/5 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">account_circle</span>
+<p class="text-sm font-medium leading-normal">Profile</p>
+</a>
+</div>
+</aside>
+<main class="flex-1 p-8 overflow-y-auto">
+<div class="max-w-7xl mx-auto">
+<div class="flex flex-wrap justify-between items-start gap-4 mb-8">
+<div class="flex flex-col gap-2">
+<p class="text-white text-4xl font-black leading-tight tracking-[-0.033em]">Scan Report: example.com</p>
+<p class="text-white/60 text-base font-normal leading-normal">Scan completed on October 26, 2023</p>
+</div>
+<div class="flex items-center gap-3">
+<button class="group relative inline-flex items-center justify-center gap-2 rounded-lg bg-primary/20 px-4 py-2 text-sm font-medium text-primary transition-all hover:bg-primary/30 hover:shadow-[0_0_15px_var(--glow-color)]" style="--glow-color: #00BFFF;">
+<span class="material-symbols-outlined group-hover-icon transition-transform">picture_as_pdf</span>
+                            Export as PDF
+                        </button>
+<button class="group relative inline-flex items-center justify-center gap-2 rounded-lg bg-primary/20 px-4 py-2 text-sm font-medium text-primary transition-all hover:bg-primary/30 hover:shadow-[0_0_15px_var(--glow-color)]" style="--glow-color: #00BFFF;">
+<span class="material-symbols-outlined group-hover-icon transition-transform">csv</span>
+                            Export as CSV
+                        </button>
+</div>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+<div class="flex flex-col gap-2 rounded-xl p-6 bg-panel-dark/80 backdrop-blur-sm border border-white/10">
+<p class="text-white/80 text-base font-medium leading-normal">Total Vulnerabilities</p>
+<p class="text-white tracking-light text-3xl font-bold leading-tight">128</p>
+</div>
+<div class="flex flex-col gap-2 rounded-xl p-6 bg-panel-dark/80 backdrop-blur-sm border border-white/10">
+<p class="text-white/80 text-base font-medium leading-normal">High Severity</p>
+<p class="text-high tracking-light text-3xl font-bold leading-tight">15</p>
+</div>
+<div class="flex flex-col gap-2 rounded-xl p-6 bg-panel-dark/80 backdrop-blur-sm border border-white/10">
+<p class="text-white/80 text-base font-medium leading-normal">Scan Duration</p>
+<p class="text-white tracking-light text-3xl font-bold leading-tight">42m 15s</p>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-8">
+<div class="lg:col-span-2 flex flex-col gap-4 rounded-xl p-6 bg-panel-dark/80 backdrop-blur-sm border border-white/10">
+<h3 class="text-white text-lg font-bold">Vulnerabilities by Severity</h3>
+<div class="relative flex items-center justify-center h-52">
+<svg class="w-full h-full" viewBox="0 0 36 36">
+<circle class="stroke-current text-low/20" cx="18" cy="18" fill="none" r="15.915" stroke-width="3"></circle>
+<circle class="animate-draw stroke-current text-critical" cx="18" cy="18" fill="none" r="15.915" stroke-dasharray="10, 90" stroke-linecap="round" stroke-width="3.5" style="animation-delay: 0.1s;"></circle>
+<circle class="animate-draw stroke-current text-high" cx="18" cy="18" fill="none" r="15.915" stroke-dasharray="25, 75" stroke-dashoffset="-10" stroke-linecap="round" stroke-width="3.5" style="animation-delay: 0.3s;"></circle>
+<circle class="animate-draw stroke-current text-medium" cx="18" cy="18" fill="none" r="15.915" stroke-dasharray="40, 60" stroke-dashoffset="-35" stroke-linecap="round" stroke-width="3.5" style="animation-delay: 0.5s;"></circle>
+<circle class="animate-draw stroke-current text-low" cx="18" cy="18" fill="none" r="15.915" stroke-dasharray="25, 75" stroke-dashoffset="-75" stroke-linecap="round" stroke-width="3.5" style="animation-delay: 0.7s;"></circle>
+</svg>
+<div class="absolute flex flex-col items-center justify-center">
+<span class="text-3xl font-bold text-white">128</span>
+<span class="text-sm text-white/60">Total</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-x-4 gap-y-2">
+<div class="flex items-center gap-2"><span class="size-3 rounded-full bg-critical"></span><span class="text-sm">Critical</span></div>
+<div class="flex items-center gap-2"><span class="size-3 rounded-full bg-high"></span><span class="text-sm">High</span></div>
+<div class="flex items-center gap-2"><span class="size-3 rounded-full bg-medium"></span><span class="text-sm">Medium</span></div>
+<div class="flex items-center gap-2"><span class="size-3 rounded-full bg-low"></span><span class="text-sm">Low</span></div>
+</div>
+</div>
+<div class="lg:col-span-3 flex flex-col gap-4 rounded-xl p-6 bg-panel-dark/80 backdrop-blur-sm border border-white/10">
+<h3 class="text-white text-lg font-bold">Top 5 Vulnerability Types</h3>
+<div class="flex flex-col gap-5 pt-2">
+<div class="flex flex-col gap-1.5">
+<p class="text-sm text-white/80">SQL Injection</p>
+<div class="w-full bg-white/10 rounded-full h-2.5"><div class="animate-progress-bar bg-high h-2.5 rounded-full" style="width: 75%; animation-delay: 0.1s;"></div></div>
+</div>
+<div class="flex flex-col gap-1.5">
+<p class="text-sm text-white/80">Cross-Site Scripting (XSS)</p>
+<div class="w-full bg-white/10 rounded-full h-2.5"><div class="animate-progress-bar bg-high h-2.5 rounded-full" style="width: 60%; animation-delay: 0.2s;"></div></div>
+</div>
+<div class="flex flex-col gap-1.5">
+<p class="text-sm text-white/80">Insecure Deserialization</p>
+<div class="w-full bg-white/10 rounded-full h-2.5"><div class="animate-progress-bar bg-critical h-2.5 rounded-full" style="width: 45%; animation-delay: 0.3s;"></div></div>
+</div>
+<div class="flex flex-col gap-1.5">
+<p class="text-sm text-white/80">Broken Access Control</p>
+<div class="w-full bg-white/10 rounded-full h-2.5"><div class="animate-progress-bar bg-medium h-2.5 rounded-full" style="width: 30%; animation-delay: 0.4s;"></div></div>
+</div>
+<div class="flex flex-col gap-1.5">
+<p class="text-sm text-white/80">Cross-Site Request Forgery (CSRF)</p>
+<div class="w-full bg-white/10 rounded-full h-2.5"><div class="animate-progress-bar bg-low h-2.5 rounded-full" style="width: 15%; animation-delay: 0.5s;"></div></div>
+</div>
+</div>
+</div>
+</div>
+<h2 class="text-white text-2xl font-bold leading-tight tracking-[-0.015em] mb-4">Detailed Findings</h2>
+<div class="space-y-4">
+<div class="rounded-xl bg-panel-dark/80 backdrop-blur-sm border border-white/10 p-6">
+<div class="flex flex-wrap items-center justify-between gap-4">
+<div>
+<h3 class="text-lg font-bold text-white">Insecure Deserialization</h3>
+<div class="mt-1 flex items-center gap-4 text-sm text-white/70">
+<span class="inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-medium bg-critical/20 text-critical">
+<span class="size-1.5 rounded-full bg-critical"></span>Critical
+</span>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-base">tag</span>
+<span>CVE-2023-12345</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-orange-500/20 text-orange-400">New</span>
+</div>
+</div>
+<div class="mt-4 border-t border-white/10 pt-4">
+<h4 class="font-semibold text-primary mb-2">Prevention Techniques</h4>
+<p class="text-sm text-white/80">Implement strict type constraints during deserialization. Use digital signatures to verify the integrity of serialized data. Avoid using native serialization formats; prefer safer alternatives like JSON.</p>
+</div>
+</div>
+<div class="rounded-xl bg-panel-dark/80 backdrop-blur-sm border border-white/10 p-6">
+<div class="flex flex-wrap items-center justify-between gap-4">
+<div>
+<h3 class="text-lg font-bold text-white">SQL Injection</h3>
+<div class="mt-1 flex items-center gap-4 text-sm text-white/70">
+<span class="inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-medium bg-high/20 text-high">
+<span class="size-1.5 rounded-full bg-high"></span>High
+</span>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-base">tag</span>
+<span>CVE-2023-54321</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-orange-500/20 text-orange-400">New</span>
+</div>
+</div>
+<div class="mt-4 border-t border-white/10 pt-4">
+<h4 class="font-semibold text-primary mb-2">Prevention Techniques</h4>
+<p class="text-sm text-white/80">Use parameterized queries (prepared statements) to separate SQL code from user-provided data. Implement input validation and sanitization on all user-supplied input.</p>
+</div>
+</div>
+<div class="rounded-xl bg-panel-dark/80 backdrop-blur-sm border border-white/10 p-6">
+<div class="flex flex-wrap items-center justify-between gap-4">
+<div>
+<h3 class="text-lg font-bold text-white">Cross-Site Scripting (XSS)</h3>
+<div class="mt-1 flex items-center gap-4 text-sm text-white/70">
+<span class="inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-medium bg-medium/20 text-medium">
+<span class="size-1.5 rounded-full bg-medium"></span>Medium
+</span>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-base">tag</span>
+<span>CVE-2023-24680</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-green-500/20 text-green-400">Patched</span>
+</div>
+</div>
+<div class="mt-4 border-t border-white/10 pt-4">
+<h4 class="font-semibold text-primary mb-2">Prevention Techniques</h4>
+<p class="text-sm text-white/80">Apply context-aware output encoding to all user-provided data before it is displayed on a page. Implement a strong Content Security Policy (CSP) to restrict the sources of executable scripts.</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+
+</body></html>

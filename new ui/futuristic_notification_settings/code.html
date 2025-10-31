@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Settings • Notifications</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/modern-normalize/2.0.0/modern-normalize.min.css" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@400&display=swap" />
+  <style>
+    body { background:#0A0B14; color:#E0E0E0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, 'Helvetica Neue', sans-serif; }
+    .container { max-width: 1120px; margin: 0 auto; padding: 24px; }
+    .card { background:#1A1B23; border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:24px; }
+    .grid { display:grid; gap:24px; }
+    @media (min-width: 1024px) { .grid-4 { grid-template-columns: 280px 1fr 1fr 1fr; } }
+    .nav { display:flex; gap:16px; align-items:center; }
+    .nav a, .nav span { display:inline-flex; gap:8px; align-items:center; padding:8px 10px; border-radius:8px; color:#888; text-decoration:none; }
+    .nav a:hover { color:#fff; background:rgba(255,255,255,0.06); }
+    .nav .active { color:#00FFFF; }
+    .sidebar a { display:flex; gap:10px; align-items:center; padding:10px 12px; border-radius:10px; color:#bbb; text-decoration:none; }
+    .sidebar a:hover { color:#fff; background:rgba(255,255,255,0.06); }
+    .sidebar a.active { color:#fff; background:rgba(255,255,255,0.08); }
+    .toggle { display:flex; align-items:center; gap:10px; }
+    .switch { width:44px; height:24px; background:#2E2E3F; border-radius:999px; position:relative; cursor:pointer; }
+    .switch::after { content:""; position:absolute; top:3px; left:3px; width:18px; height:18px; background:#bbb; border-radius:999px; transition: all .2s ease; }
+    .switch.on { background:#4A90E2; }
+    .switch.on::after { left:23px; background:#fff; }
+    .material-symbols-outlined { font-size:18px; }
+    .btn { display:inline-flex; align-items:center; gap:8px; height:40px; padding:0 16px; border-radius:10px; border:1px solid rgba(255,255,255,0.08); text-decoration:none; cursor:pointer; }
+  </style>
+</head>
+<body>
+  <header style="position:sticky;top:0;z-index:30;border-bottom:1px solid rgba(46,46,63,0.5);background:rgba(10,11,20,0.8);backdrop-filter: blur(6px);">
+    <div class="container" style="display:flex;justify-content:space-between;align-items:center;">
+      <div class="nav">
+        <a href="../simplistic_futuristic_settings/code.html"><span class="material-symbols-outlined">settings</span>Settings</a>
+        <a href="../futuristic_api_management/code.html"><span class="material-symbols-outlined">key</span>API Management</a>
+        <span class="active"><span class="material-symbols-outlined">notifications</span>Notifications</span>
+        <a href="../futuristic_security_settings/code.html"><span class="material-symbols-outlined">shield_lock</span>Security</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="grid">
+      <section class="card">
+        <h1 style="color:#fff;font-size:24px;margin:0 0 8px 0;">Notification Preferences</h1>
+        <p style="color:#bbb;font-size:13px;">Choose how and when you want to be notified about scans and findings.</p>
+
+        <div class="card" style="margin-top:16px; display:grid; gap:12px;">
+          <div class="toggle">
+            <span class="material-symbols-outlined">mail</span>
+            <div>Email Alerts</div>
+            <div class="switch on" onclick="this.classList.toggle('on')"></div>
+          </div>
+          <div class="toggle">
+            <span class="material-symbols-outlined">chat</span>
+            <div>Slack Alerts</div>
+            <div class="switch" onclick="this.classList.toggle('on')"></div>
+          </div>
+          <div class="toggle">
+            <span class="material-symbols-outlined">notifications_active</span>
+            <div>Push Alerts</div>
+            <div class="switch on" onclick="this.classList.toggle('on')"></div>
+          </div>
+        </div>
+
+        <div style="margin-top:16px;display:flex;gap:12px;">
+          <button class="btn"><span class="material-symbols-outlined">save</span>Save Changes</button>
+          <button class="btn"><span class="material-symbols-outlined">undo</span>Reset</button>
+        </div>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

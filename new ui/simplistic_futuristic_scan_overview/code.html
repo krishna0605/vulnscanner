@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Scan Overview - Vulnerability Scanner</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+<style>
+        .glow-blue { box-shadow: 0 0 5px #00FFFF, 0 0 10px #00FFFF, 0 0 15px #00FFFF; }
+        .glow-green { box-shadow: 0 0 2px #00FF7F, 0 0 4px #00FF7F; }
+        .glow-orange { box-shadow: 0 0 2px #FFBF00, 0 0 4px #FFBF00; }
+        .glow-red { box-shadow: 0 0 2px #FF3333, 0 0 4px #FF3333; }
+    </style>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#00FFFF",
+              "background-light": "#E0E0E0",
+              "background-dark": "#121212",
+              "surface-dark": "#1E1E1E",
+              "text-dark": "#E0E0E0",
+              "text-muted-dark": "#888888",
+              "status-green": "#00FF7F",
+              "status-orange": "#FFBF00",
+              "status-red": "#FF3333",
+              "status-gray": "#666666"
+            },
+            fontFamily: {
+              "display": ["Space Grotesk", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+            boxShadow: {
+              'glow-primary': '0 0 8px 0px rgba(0, 255, 255, 0.5), 0 0 20px 0px rgba(0, 255, 255, 0.3)',
+            }
+          },
+        },
+      }
+    </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-text-dark">
+<div class="relative flex h-auto min-h-screen w-full flex-col group/design-root overflow-x-hidden">
+<div class="layout-container flex h-full grow flex-col">
+<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-white/10 px-6 sm:px-10 py-4 sticky top-0 z-50 bg-background-dark/80 backdrop-blur-sm">
+<div class="flex items-center gap-4 text-white">
+<div class="size-6 text-primary">
+<svg fill="none" viewbox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_6_330)">
+<path clip-rule="evenodd" d="M24 0.757355L47.2426 24L24 47.2426L0.757355 24L24 0.757355ZM21 35.7574V12.2426L9.24264 24L21 35.7574Z" fill="currentColor" fill-rule="evenodd"></path>
+</g>
+<defs>
+<clippath id="clip0_6_330"><rect fill="white" height="48" width="48"></rect></clippath>
+</defs>
+</svg>
+</div>
+<h1 class="text-white text-xl font-bold leading-tight tracking-[-0.015em]">Vulnerability Scanner</h1>
+</div>
+<div class="flex flex-1 justify-end gap-4 sm:gap-8 items-center">
+<nav class="hidden md:flex items-center gap-6 sm:gap-9">
+<a class="text-white text-sm font-medium leading-normal hover:text-primary transition-colors" href="#">Dashboard</a>
+<a class="text-white text-sm font-medium leading-normal hover:text-primary transition-colors" href="#">Projects</a>
+<a class="text-white text-sm font-medium leading-normal hover:text-primary transition-colors" href="#">Settings</a>
+</nav>
+<button class="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-primary text-black text-sm font-bold leading-normal tracking-[0.015em] hover:shadow-glow-primary transition-shadow duration-300">
+<span class="truncate">Start New Scan</span>
+</button>
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 border-2 border-primary/50" data-alt="User avatar with an abstract geometric pattern" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBW9yn3-oepu9ihgSD5Ac7Mtqxu3JtKlDpy2760YuJ9IepN-3VP0c67SghB3bMuBv_S7v6tWH3u28iw6DG-KzO2s_RBvNmFhl6sJ9N3_NxuuasqJ68s6Vflcue1XGQmHzV8CG4Y9H9vpfgJExh782b64C0WssJI7X6MJGNljF6YUkcFS3ChzbMR7wRR4Mp8m1PI-8_F8ag55ifvn7c0tg4eeTKG694K5YHOB1afFlSU1Tz39P14IV7oU8iVo3U80Ng0CcJB8KtvvcMz");'></div>
+</div>
+</header>
+<main class="px-4 sm:px-10 flex flex-1 justify-center py-8">
+<div class="layout-content-container flex flex-col w-full max-w-6xl flex-1 gap-10">
+<div class="flex flex-wrap justify-between gap-3 items-center">
+<h1 class="text-white text-4xl font-black leading-tight tracking-[-0.033em] min-w-72">Scan Overview</h1>
+</div>
+<!-- Active Scans Section -->
+<section class="flex flex-col gap-4">
+<h2 class="text-white text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-5 border-b border-white/10">Active Scans</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-4">
+<!-- Active Scan Card 1 -->
+<div class="flex flex-col gap-4 rounded-lg bg-surface-dark p-6 border border-white/10">
+<div class="flex justify-between items-start">
+<div class="flex flex-col">
+<p class="text-white text-lg font-bold leading-tight tracking-[-0.015em]">example-website.com</p>
+<p class="text-status-orange text-sm font-normal leading-normal">Scanning...</p>
+</div>
+<div class="flex items-center gap-2">
+<button class="flex items-center justify-center size-8 rounded-full hover:bg-white/10 text-text-muted-dark hover:text-primary transition-colors"><span class="material-symbols-outlined text-xl">pause</span></button>
+<button class="flex items-center justify-center size-8 rounded-full hover:bg-white/10 text-text-muted-dark hover:text-status-red transition-colors"><span class="material-symbols-outlined text-xl">cancel</span></button>
+</div>
+</div>
+<div>
+<div class="flex justify-between items-center mb-1">
+<span class="text-sm font-medium text-text-muted-dark">Progress</span>
+<span class="text-sm font-medium text-primary">75%</span>
+</div>
+<div class="w-full bg-white/5 rounded-full h-2.5">
+<div class="bg-primary h-2.5 rounded-full glow-blue" style="width: 75%; animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;"></div>
+</div>
+</div>
+</div>
+<!-- Active Scan Card 2 -->
+<div class="flex flex-col gap-4 rounded-lg bg-surface-dark p-6 border border-white/10">
+<div class="flex justify-between items-start">
+<div class="flex flex-col">
+<p class="text-white text-lg font-bold leading-tight tracking-[-0.015em]">another-target.org</p>
+<p class="text-status-gray text-sm font-normal leading-normal">Paused</p>
+</div>
+<div class="flex items-center gap-2">
+<button class="flex items-center justify-center size-8 rounded-full hover:bg-white/10 text-text-muted-dark hover:text-primary transition-colors"><span class="material-symbols-outlined text-xl">play_arrow</span></button>
+<button class="flex items-center justify-center size-8 rounded-full hover:bg-white/10 text-text-muted-dark hover:text-status-red transition-colors"><span class="material-symbols-outlined text-xl">cancel</span></button>
+</div>
+</div>
+<div>
+<div class="flex justify-between items-center mb-1">
+<span class="text-sm font-medium text-text-muted-dark">Progress</span>
+<span class="text-sm font-medium text-primary">32%</span>
+</div>
+<div class="w-full bg-white/5 rounded-full h-2.5">
+<div class="bg-primary h-2.5 rounded-full" style="width: 32%;"></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Scan History Section -->
+<section class="flex flex-col gap-4">
+<h2 class="text-white text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-5 border-b border-white/10">Scan History</h2>
+<div class="p-4">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-text-muted-dark">search</span>
+<input class="w-full bg-surface-dark border border-white/10 rounded-lg pl-10 pr-4 py-2 text-text-dark focus:ring-2 focus:ring-primary focus:border-primary transition-shadow" placeholder="Filter by target URL or date..." type="text"/>
+</div>
+</div>
+<div class="overflow-x-auto p-4">
+<table class="w-full text-sm text-left text-text-muted-dark">
+<thead class="text-xs text-text-dark uppercase bg-surface-dark">
+<tr>
+<th class="px-6 py-3 rounded-l-lg" scope="col">Target</th>
+<th class="px-6 py-3" scope="col">Date</th>
+<th class="px-6 py-3" scope="col">Duration</th>
+<th class="px-6 py-3" scope="col">Vulnerabilities</th>
+<th class="px-6 py-3 rounded-r-lg" scope="col">Status</th>
+</tr>
+</thead>
+<tbody>
+<tr class="bg-background-dark border-b border-surface-dark hover:bg-surface-dark/50 cursor-pointer">
+<th class="px-6 py-4 font-medium text-white whitespace-nowrap" scope="row">secure-api.dev</th>
+<td class="px-6 py-4">2024-05-20 14:30</td>
+<td class="px-6 py-4">12m 45s</td>
+<td class="px-6 py-4">
+<span class="text-status-red font-bold">5 Critical</span>, 12 Medium
+                                        </td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<div class="size-2.5 rounded-full bg-status-red glow-red"></div>
+<span>Critical Found</span>
+</div>
+</td>
+</tr>
+<tr class="bg-background-dark border-b border-surface-dark hover:bg-surface-dark/50 cursor-pointer">
+<th class="px-6 py-4 font-medium text-white whitespace-nowrap" scope="row">e-commerce-store.com</th>
+<td class="px-6 py-4">2024-05-19 09:15</td>
+<td class="px-6 py-4">25m 10s</td>
+<td class="px-6 py-4">
+<span class="text-status-orange font-bold">8 Medium</span>, 22 Low
+                                        </td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<div class="size-2.5 rounded-full bg-status-orange glow-orange"></div>
+<span>Warnings</span>
+</div>
+</td>
+</tr>
+<tr class="bg-background-dark border-b border-surface-dark hover:bg-surface-dark/50 cursor-pointer">
+<th class="px-6 py-4 font-medium text-white whitespace-nowrap" scope="row">my-blog-project.net</th>
+<td class="px-6 py-4">2024-05-18 22:00</td>
+<td class="px-6 py-4">8m 02s</td>
+<td class="px-6 py-4">
+                                            3 Low
+                                        </td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<div class="size-2.5 rounded-full bg-status-green glow-green"></div>
+<span>Completed</span>
+</div>
+</td>
+</tr>
+<tr class="bg-background-dark hover:bg-surface-dark/50 cursor-pointer">
+<th class="px-6 py-4 font-medium text-white whitespace-nowrap" scope="row">test-env.internal</th>
+<td class="px-6 py-4">2024-05-17 11:45</td>
+<td class="px-6 py-4">2m 15s</td>
+<td class="px-6 py-4">
+                                            N/A
+                                        </td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<div class="size-2.5 rounded-full bg-status-gray"></div>
+<span>Cancelled</span>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</div>
+</main>
+</div>
+</div>
+</body></html>

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CyberCorp Scanner - Project Phoenix</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+<style>
+        .glow-critical { box-shadow: 0 0 8px 1px #FF3B30; }
+        .glow-high { box-shadow: 0 0 8px 1px #FF9500; }
+        .glow-medium { box-shadow: 0 0 8px 1px #FFCC00; }
+        .glow-low { box-shadow: 0 0 8px 1px #007AFF; }
+        .table-row-hover:hover { background-color: rgba(75, 255, 255, 0.05); }
+    </style>
+<script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#00BFFF",
+              "background-light": "#f6f6f8",
+              "background-dark": "#111321",
+            },
+            fontFamily: {
+              "display": ["Inter", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.5rem", "lg": "0.75rem", "xl": "1rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+</head>
+<body class="font-display bg-background-light dark:bg-background-dark text-gray-300">
+<div class="relative flex min-h-screen w-full">
+<!-- SideNavBar -->
+<aside class="flex h-screen w-64 flex-col bg-[#1A1B23] border-r border-white/10 p-4 sticky top-0">
+<div class="flex flex-col gap-4">
+<div class="flex items-center gap-3 px-2 pt-2">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" data-alt="CyberCorp Scanner company logo" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBemeKyAMeSL8OIp2qSFO9vXbtSsQL3WG-u7tCx0kEYLo4WweAwVQ9RLD8143DNlLt4vgfdmcmOZ20afLO-6WMx2-f7qhB3A80SAfg71niy2EaclTcNwnfR1iQBop061D0I2IHde5t5DGxmicz5RBb2NyrJclxHvQZano1alFundJ9yLHZEZsTu5DYFOlkSkh2t3R6yQXSD4lyLkgYRM73rKFlET1tT8VYlfgVrCvZsxSxl-qlt6OjjqX-7SQiyZUwfKC7Bfc2EBFJq");'></div>
+<div class="flex flex-col">
+<h1 class="text-white text-base font-bold leading-normal">CyberCorp Scanner</h1>
+<p class="text-gray-400 text-sm font-normal leading-normal">v2.1</p>
+</div>
+</div>
+<nav class="flex flex-col gap-2 mt-6">
+<a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:bg-white/5 hover:text-white rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined text-2xl">dashboard</span>
+<p class="text-sm font-medium leading-normal">Dashboard</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/20 text-primary" href="#">
+<span class="material-symbols-outlined text-2xl">folder</span>
+<p class="text-sm font-medium leading-normal">Projects</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:bg-white/5 hover:text-white rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined text-2xl">bar_chart</span>
+<p class="text-sm font-medium leading-normal">Reports</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:bg-white/5 hover:text-white rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined text-2xl">settings</span>
+<p class="text-sm font-medium leading-normal">Settings</p>
+</a>
+</nav>
+</div>
+<div class="mt-auto">
+<button class="flex w-full min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-primary text-background-dark text-sm font-bold leading-normal tracking-[0.015em] hover:opacity-90 transition-opacity">
+<span class="truncate">New Project</span>
+</button>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 p-8">
+<div class="max-w-7xl mx-auto">
+<!-- Breadcrumbs -->
+<div class="flex flex-wrap gap-2 mb-4">
+<a class="text-gray-400 text-sm font-medium leading-normal hover:text-white transition-colors" href="#">Projects</a>
+<span class="text-gray-500 text-sm font-medium leading-normal">/</span>
+<span class="text-white text-sm font-medium leading-normal">Project Phoenix</span>
+</div>
+<!-- PageHeading -->
+<div class="flex flex-wrap justify-between items-center gap-4 mb-6">
+<h1 class="text-white text-4xl font-black leading-tight tracking-[-0.033em] min-w-72">Project Phoenix - Vulnerabilities</h1>
+<button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-[#1A1B23] text-white text-sm font-bold leading-normal tracking-[0.015em] border border-white/10 hover:bg-white/5 transition-colors">
+<span class="truncate">Start New Scan</span>
+</button>
+</div>
+<!-- Toolbar & Filters -->
+<div class="flex flex-col md:flex-row justify-between items-center gap-4 p-4 bg-[#1A1B23] rounded-lg border border-white/10 mb-6">
+<div class="flex items-center gap-2 flex-wrap">
+<!-- Chips -->
+<button class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-[#111321] pl-4 pr-2 border border-white/10 hover:bg-white/5 transition-colors">
+<p class="text-white text-sm font-medium leading-normal">Severity</p>
+<span class="material-symbols-outlined text-xl">arrow_drop_down</span>
+</button>
+<button class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-[#111321] pl-4 pr-2 border border-white/10 hover:bg-white/5 transition-colors">
+<p class="text-white text-sm font-medium leading-normal">Status</p>
+<span class="material-symbols-outlined text-xl">arrow_drop_down</span>
+</button>
+<button class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-[#111321] pl-4 pr-2 border border-white/10 hover:bg-white/5 transition-colors">
+<p class="text-white text-sm font-medium leading-normal">Date Range</p>
+<span class="material-symbols-outlined text-xl">arrow_drop_down</span>
+</button>
+</div>
+<!-- ToolBar -->
+<div class="flex items-center gap-2">
+<div class="relative w-full md:w-auto">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xl">search</span>
+<input class="bg-[#111321] border border-white/10 text-white text-sm rounded-lg focus:ring-primary focus:border-primary block w-full pl-10 p-2.5 transition-colors h-9" placeholder="Search vulnerabilities..." type="text"/>
+</div>
+<button class="p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors">
+<span class="material-symbols-outlined text-2xl">sort</span>
+</button>
+</div>
+</div>
+<!-- Vulnerability Table -->
+<div class="bg-[#1A1B23] rounded-lg border border-white/10 overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-sm text-left text-gray-300">
+<thead class="text-xs text-gray-400 uppercase bg-[#111321]">
+<tr>
+<th class="px-6 py-4 w-12" scope="col"></th>
+<th class="px-6 py-4" scope="col">Vulnerability</th>
+<th class="px-6 py-4" scope="col">URL</th>
+<th class="px-6 py-4" scope="col">Status</th>
+<th class="px-6 py-4" scope="col">Date Found</th>
+</tr>
+</thead>
+<tbody>
+<tr class="border-b border-white/10 cursor-pointer table-row-hover transition-colors">
+<td class="px-6 py-4">
+<div class="w-2 h-2 rounded-full bg-[#FF3B30] glow-critical" data-alt="Critical severity indicator"></div>
+</td>
+<td class="px-6 py-4 font-medium text-white whitespace-nowrap">SQL Injection</td>
+<td class="px-6 py-4 text-gray-400">/api/v1/users</td>
+<td class="px-6 py-4">
+<span class="bg-red-900/50 text-red-300 text-xs font-medium px-2.5 py-0.5 rounded-full">Open</span>
+</td>
+<td class="px-6 py-4 text-gray-400">2023-10-26</td>
+</tr>
+<tr class="border-b border-white/10 cursor-pointer table-row-hover transition-colors">
+<td class="px-6 py-4">
+<div class="w-2 h-2 rounded-full bg-[#FF9500] glow-high" data-alt="High severity indicator"></div>
+</td>
+<td class="px-6 py-4 font-medium text-white whitespace-nowrap">Cross-Site Scripting (XSS)</td>
+<td class="px-6 py-4 text-gray-400">/search?q=&lt;script&gt;...</td>
+<td class="px-6 py-4">
+<span class="bg-red-900/50 text-red-300 text-xs font-medium px-2.5 py-0.5 rounded-full">Open</span>
+</td>
+<td class="px-6 py-4 text-gray-400">2023-10-25</td>
+</tr>
+<tr class="border-b border-white/10 cursor-pointer table-row-hover transition-colors">
+<td class="px-6 py-4">
+<div class="w-2 h-2 rounded-full bg-[#FFCC00] glow-medium" data-alt="Medium severity indicator"></div>
+</td>
+<td class="px-6 py-4 font-medium text-white whitespace-nowrap">Outdated Component</td>
+<td class="px-6 py-4 text-gray-400">/assets/libs/jquery.min.js</td>
+<td class="px-6 py-4">
+<span class="bg-blue-900/50 text-blue-300 text-xs font-medium px-2.5 py-0.5 rounded-full">In Progress</span>
+</td>
+<td class="px-6 py-4 text-gray-400">2023-10-25</td>
+</tr>
+<tr class="border-b border-white/10 cursor-pointer table-row-hover transition-colors">
+<td class="px-6 py-4">
+<div class="w-2 h-2 rounded-full bg-[#FFCC00] glow-medium" data-alt="Medium severity indicator"></div>
+</td>
+<td class="px-6 py-4 font-medium text-white whitespace-nowrap">Cross-Site Request Forgery</td>
+<td class="px-6 py-4 text-gray-400">/account/settings</td>
+<td class="px-6 py-4">
+<span class="bg-green-900/50 text-green-300 text-xs font-medium px-2.5 py-0.5 rounded-full">Fixed</span>
+</td>
+<td class="px-6 py-4 text-gray-400">2023-10-22</td>
+</tr>
+<tr class="cursor-pointer table-row-hover transition-colors">
+<td class="px-6 py-4">
+<div class="w-2 h-2 rounded-full bg-[#007AFF] glow-low" data-alt="Low severity indicator"></div>
+</td>
+<td class="px-6 py-4 font-medium text-white whitespace-nowrap">Missing Security Headers</td>
+<td class="px-6 py-4 text-gray-400">/</td>
+<td class="px-6 py-4">
+<span class="bg-gray-700/50 text-gray-400 text-xs font-medium px-2.5 py-0.5 rounded-full">Ignored</span>
+</td>
+<td class="px-6 py-4 text-gray-400">2023-10-21</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>
