@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from core.supabase import get_supabase_client
 from db.session import async_session
 from models import Project, ScanSession
-from schemas.dashboard import ScanProgressUpdate, DashboardMetricUpdate, RealTimeUpdate
+from schemas.sqlite_dashboard import ScanProgressUpdate, DashboardMetricUpdate, RealTimeUpdate
 from api.middleware.auth import auth_manager
 
 logger = logging.getLogger(__name__)
