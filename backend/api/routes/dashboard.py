@@ -18,7 +18,7 @@ from models import (
     Project, ScanSession, DiscoveredUrl, ExtractedForm, 
     TechnologyFingerprint, ScanStatus, RealtimeUpdate
 )
-from schemas.dashboard import (
+from schemas.sqlite_dashboard import (
     ProjectCreate, ProjectUpdate, ProjectResponse, ProjectSummary,
     ScanSessionCreate, ScanSessionResponse, ScanSummary,
     DiscoveredUrlResponse, ExtractedFormResponse, TechnologyFingerprintResponse,

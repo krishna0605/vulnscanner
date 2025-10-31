@@ -23,7 +23,7 @@ from schemas.scan_results import (
     TechnologyFingerprintResponse, TechnologyFingerprintFilter, TechnologyFingerprintCreate,
     ScanResultsSummary, ScanResultsExport
 )
-from schemas.dashboard import PaginationParams
+from schemas.sqlite_dashboard import PaginationParams
 from tasks.report_tasks import generate_report_task
 
 logger = logging.getLogger(__name__)
