@@ -239,9 +239,9 @@ async def get_project_summary(
         scan_stats_query = (
             select(
                 func.count(ScanSession.id).label("total_scans"),
-                func.sum(func.case((ScanSession.status == ScanStatus.RUNNING, 1), else_=0)).label("active_scans"),
-                func.sum(func.case((ScanSession.status == ScanStatus.COMPLETED, 1), else_=0)).label("completed_scans"),
-                func.sum(func.case((ScanSession.status == ScanStatus.FAILED, 1), else_=0)).label("failed_scans"),
+                func.sum(func.case([(ScanSession.status == ScanStatus.RUNNING, 1)], else_=0)).label("active_scans"),
+                func.sum(func.case([(ScanSession.status == ScanStatus.COMPLETED, 1)], else_=0)).label("completed_scans"),
+                func.sum(func.case([(ScanSession.status == ScanStatus.FAILED, 1)], else_=0)).label("failed_scans"),
                 func.max(ScanSession.start_time).label("last_scan_date")
             )
             .where(ScanSession.project_id == project_id)
@@ -728,7 +728,7 @@ async def get_projects_summary(
                 "target_domain": project.target_domain,
                 "last_scan_date": latest_scan.start_time.isoformat() if latest_scan else None,
                 "vulnerability_count": vulnerability_count,
-                "scan_status": latest_scan.status.value if latest_scan else "pending",
+                "scan_status": latest_scan.status if isinstance(latest_scan.status, str) else latest_scan.status.value if latest_scan else "pending",
                 "progress": None
             })
         
@@ -774,7 +774,7 @@ async def get_recent_activity(
             activities.append({
                 "id": str(scan.id),
                 "type": activity_type,
-                "title": f"Scan {scan.status.value} for {project_name}",
+                "title": f"Scan {scan.status if isinstance(scan.status, str) else scan.status.value} for {project_name}",
                 "description": f"Target: {project_name}",
                 "timestamp": scan.start_time.isoformat(),
                 "project_name": project_name,
@@ -848,13 +848,13 @@ async def get_scan_statistics(
         stats_query = (
             select(
                 func.count(ScanSession.id).label("total_scans"),
-                func.sum(func.case((ScanSession.status == ScanStatus.RUNNING, 1), else_=0)).label("active_scans"),
-                func.sum(func.case((ScanSession.status == ScanStatus.COMPLETED, 1), else_=0)).label("completed_scans"),
-                func.sum(func.case((ScanSession.status == ScanStatus.FAILED, 1), else_=0)).label("failed_scans"),
+                func.sum(func.case([(ScanSession.status == ScanStatus.RUNNING, 1)], else_=0)).label("active_scans"),
+                func.sum(func.case([(ScanSession.status == ScanStatus.COMPLETED, 1)], else_=0)).label("completed_scans"),
+                func.sum(func.case([(ScanSession.status == ScanStatus.FAILED, 1)], else_=0)).label("failed_scans"),
                 func.avg(
                     func.case(
-                        (ScanSession.end_time.isnot(None), 
-                         func.extract('epoch', ScanSession.end_time - ScanSession.start_time)),
+                        [(ScanSession.end_time.isnot(None), 
+                         func.extract('epoch', ScanSession.end_time - ScanSession.start_time))],
                         else_=None
                     )
                 ).label("avg_duration")
