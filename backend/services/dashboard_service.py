@@ -14,7 +14,7 @@ from models import (
     Project, ScanSession, DiscoveredUrl, ExtractedForm, 
     TechnologyFingerprint, ScanStatus
 )
-from schemas.sqlite_dashboard import (
+from schemas.dashboard import (
     DashboardOverview, ProjectSummary, ScanSummary
 )
 import logging
