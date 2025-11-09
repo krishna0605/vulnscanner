@@ -1,0 +1,186 @@
+name: vulscan
+
+networks:
+  app_net:
+
+volumes:
+  vulscan_pg_data:
+  vulscan_redis_data:
+  vulscan_rabbitmq_data:
+  vulscan_backend_logs:
+  vulscan_celery_logs:
+  vulscan_celery_beat_data:
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: vulscanner-postgres-dev
+    environment:
+      POSTGRES_DB: vulscan
+      POSTGRES_USER: vulscan
+      POSTGRES_PASSWORD: vulscan
+      TZ: "UTC"
+    volumes:
+      - vulscan_pg_data:/var/lib/postgresql/data
+    # If you need host access to Postgres, uncomment next line (change 5433 if taken)
+    # ports: ["5433:5432"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks: [app_net]
+
+  redis:
+    image: redis:7-alpine
+    container_name: vulscanner-redis-dev
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - vulscan_redis_data:/data
+    # Avoid host port conflicts by default. Uncomment if needed:
+    # ports: ["6379:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    networks: [app_net]
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: vulscanner-rabbitmq-dev
+    environment:
+      RABBITMQ_DEFAULT_USER: vulscan
+      RABBITMQ_DEFAULT_PASS: vulscan
+      RABBITMQ_NODENAME: rabbit@localhost
+    volumes:
+      - vulscan_rabbitmq_data:/var/lib/rabbitmq
+    # Use 15673 on host to avoid common 15672 collision
+    ports:
+      - "15673:15672"   # RabbitMQ Management UI -> http://localhost:15673
+      # - "5672:5672"   # AMQP (not published by default)
+    healthcheck:
+      test: ["CMD-SHELL", "rabbitmq-diagnostics -q ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    networks: [app_net]
+
+  # Build backend once; workers reuse the same image
+  backend:
+    # Use your backend Dockerfile (multi-stage). Target should exist (e.g., "development")
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    image: vulscanner-backend:dev
+    container_name: vulscanner-backend-dev
+    env_file:
+      - ./backend/.env
+    environment:
+      # FastAPI / Uvicorn
+      UVICORN_HOST: 0.0.0.0
+      UVICORN_PORT: "8000"
+
+      # DB
+      DATABASE_URL: postgresql+psycopg://vulscan:vulscan@postgres:5432/vulscan
+
+      # Redis
+      REDIS_URL: redis://redis:6379/0
+
+      # Celery / RabbitMQ
+      CELERY_BROKER_URL: amqp://vulscan:vulscan@rabbitmq:5672//
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+
+      # Any other env your app needs...
+      PYTHONPATH: /app
+      PYTHONUNBUFFERED: "1"
+    volumes:
+      - vulscan_backend_logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+    # Publish backend on 8001 to avoid host conflict with anything on 8000
+    ports:
+      - "8001:8000"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8000/api/v1/dashboard/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+    networks: [app_net]
+
+  # One-shot init job (swap with alembic/migrations if you have them)
+  db-init:
+    image: alpine:3.20
+    container_name: vulscanner-db-init
+    command: ["/bin/sh", "-lc", "echo 'DB init placeholder (replace with migrations)'; exit 0"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [app_net]
+
+  celery-worker:
+    image: vulscanner-backend:dev
+    container_name: vulscanner-celery-worker-dev
+    command: ["sh", "-c", "celery -A tasks.celery_app:celery_app worker --loglevel=INFO --concurrency=2 --hostname=worker@%h"]
+    environment:
+      DATABASE_URL: postgresql+psycopg://vulscan:vulscan@postgres:5432/vulscan
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: amqp://vulscan:vulscan@rabbitmq:5672//
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      CELERY_APP: tasks.celery_app:celery_app
+      PYTHONPATH: /app
+      PYTHONUNBUFFERED: "1"
+    volumes:
+      - vulscan_celery_logs:/app/celery-logs
+    depends_on:
+      backend:
+        condition: service_started
+    networks: [app_net]
+
+  celery-beat:
+    image: vulscanner-backend:dev
+    container_name: vulscanner-celery-beat-dev
+    command: ["sh", "-c", "celery -A tasks.celery_app:celery_app beat --loglevel=INFO --pidfile=/tmp/celerybeat.pid --schedule=/tmp/celerybeat-schedule"]
+    environment:
+      DATABASE_URL: postgresql+psycopg://vulscan:vulscan@postgres:5432/vulscan
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: amqp://vulscan:vulscan@rabbitmq:5672//
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      CELERY_APP: tasks.celery_app:celery_app
+      PYTHONPATH: /app
+      PYTHONUNBUFFERED: "1"
+    volumes:
+      - vulscan_celery_beat_data:/tmp
+      - vulscan_celery_logs:/app/celery-logs
+    depends_on:
+      backend:
+        condition: service_started
+    networks: [app_net]
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: development
+    image: vulscan-frontend:latest
+    container_name: vulscanner-frontend-dev
+    environment:
+      # Point Next.js to backend inside the network
+      NEXT_PUBLIC_API_BASE_URL: http://backend:8000
+      # If your Next dev server needs NODE_ENV:
+      NODE_ENV: development
+    depends_on:
+      backend:
+        condition: service_started
+    # Publish on 3001 to avoid host conflicts on 3000
+    ports:
+      - "3001:3000"
+    networks: [app_net]

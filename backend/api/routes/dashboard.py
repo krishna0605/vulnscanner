@@ -2,7 +2,6 @@
 Dashboard API endpoints for the vulnerability scanner.
 Provides CRUD operations for projects, scans, and real-time data with enhanced authentication.
 """
-import json
 import logging
 from datetime import datetime, timedelta, timezone
 from typing import List, Optional, Dict, Any
@@ -10,204 +9,33 @@ from typing import List, Optional, Dict, Any
 
 from fastapi import APIRouter, Depends, HTTPException, status, Query, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, and_, desc
-from sqlalchemy.orm import selectinload
+from sqlalchemy import select, func, and_, desc, case
 
 from api.deps import get_db
 from models import (
     Project, ScanSession, DiscoveredUrl, ExtractedForm, 
-    TechnologyFingerprint, ScanStatus, RealtimeUpdate
+    ScanStatus, RealtimeUpdate
 )
 from schemas.sqlite_dashboard import (
     ProjectCreate, ProjectUpdate, ProjectResponse, ProjectSummary,
-    ScanSessionCreate, ScanSessionResponse, ScanSummary,
-    DiscoveredUrlResponse, ExtractedFormResponse, TechnologyFingerprintResponse,
-    DashboardMetricCreate, DashboardMetricResponse, DashboardMetricUpdate,
-    DashboardOverview, PaginationParams, ScanSessionFilter, UrlDiscoveryFilter,
-    ScanProgressUpdate, RealTimeUpdate as RealtimeUpdateSchema, MetricSummary
+    ScanSessionCreate, ScanSessionResponse, DashboardMetricUpdate,
+    DashboardOverview, PaginationParams, ScanSessionFilter, RealTimeUpdate as RealtimeUpdateSchema
 )
-from core.auth_deps import get_current_user, get_user_id
+from core.auth_deps import get_user_id
+from core.config import settings
+from check_services import run_checks
 from api.routes.websocket import manager
 from services.dashboard_service import DashboardService
+from tasks.crawler_tasks import start_crawl_task
 
 logger = logging.getLogger(__name__)
-router = APIRouter(prefix="/api/v1", tags=["dashboard"])
+router = APIRouter(prefix="/api/v1/dashboard", tags=["dashboard"])
 
 
 # Database session dependency is imported from api.deps
 
 
-# Project endpoints
-@router.get("/projects", response_model=List[ProjectResponse])
-async def list_projects(
-    db: AsyncSession = Depends(get_db),
-    user_id: str = Depends(get_user_id),
-    limit: int = Query(50, ge=1, le=1000),
-    offset: int = Query(0, ge=0)
-):
-    """List all projects for the current user."""
-    try:
-        # Use UUID directly for Supabase compatibility
-        query = (
-            select(Project)
-            .where(Project.owner_id == user_id)
-            .order_by(desc(Project.created_at))
-            .limit(limit)
-            .offset(offset)
-        )
-        result = await db.execute(query)
-        projects = result.scalars().all()
-        return projects
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to retrieve projects: {str(e)}"
-        )
-
-
-@router.post("/projects", response_model=ProjectResponse, status_code=status.HTTP_201_CREATED)
-async def create_project(
-    project_data: ProjectCreate,
-    db: AsyncSession = Depends(get_db),
-    user_id: str = Depends(get_user_id)
-):
-    """Create a new project."""
-    try:
-        # Use UUID directly for Supabase compatibility
-        project = Project(
-            name=project_data.name,
-            description=project_data.description,
-            target_domain=project_data.target_domain,
-            scope_rules=project_data.scope_rules,
-            owner_id=user_id
-        )
-        
-        db.add(project)
-        await db.commit()
-        await db.refresh(project)
-        
-        return project
-    except Exception as e:
-        await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to create project: {str(e)}"
-        )
-
-
-@router.get("/projects/{project_id}", response_model=ProjectResponse)
-async def get_project(
-    project_id: str,
-    db: AsyncSession = Depends(get_db),
-    user_id: str = Depends(get_user_id)
-):
-    """Get a specific project by ID."""
-    try:
-        # Use UUIDs directly for Supabase compatibility
-        query = select(Project).where(
-            and_(
-                Project.id == project_id,
-                Project.owner_id == user_id
-            )
-        )
-        result = await db.execute(query)
-        project = result.scalar_one_or_none()
-        
-        if not project:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Project not found"
-            )
-        
-        return project
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to retrieve project: {str(e)}"
-        )
-
-
-@router.put("/projects/{project_id}", response_model=ProjectResponse)
-async def update_project(
-    project_id: str,
-    project_data: ProjectUpdate,
-    db: AsyncSession = Depends(get_db),
-    user_id: str = Depends(get_user_id)
-):
-    """Update a project."""
-    try:
-        # Use UUIDs directly for Supabase compatibility
-        query = select(Project).where(
-            and_(
-                Project.id == project_id,
-                Project.owner_id == user_id
-            )
-        )
-        result = await db.execute(query)
-        project = result.scalar_one_or_none()
-        
-        if not project:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Project not found"
-            )
-        
-        # Update fields if provided
-        update_data = project_data.model_dump(exclude_unset=True)
-        for field, value in update_data.items():
-            setattr(project, field, value)
-        
-        await db.commit()
-        await db.refresh(project)
-        
-        return project
-    except HTTPException:
-        raise
-    except Exception as e:
-        await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to update project: {str(e)}"
-        )
-
-
-@router.delete("/projects/{project_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_project(
-    project_id: str,
-    db: AsyncSession = Depends(get_db),
-    user_id: str = Depends(get_user_id)
-):
-    """Delete a project."""
-    try:
-        # Use UUIDs directly for Supabase compatibility
-        query = select(Project).where(
-            and_(
-                Project.id == project_id,
-                Project.owner_id == user_id
-            )
-        )
-        result = await db.execute(query)
-        project = result.scalar_one_or_none()
-        
-        if not project:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Project not found"
-            )
-        
-        await db.delete(project)
-        await db.commit()
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to delete project: {str(e)}"
-        )
+# Project CRUD endpoints moved to `/api/v1/projects` router for single-source management.
 
 
 @router.get("/projects/{project_id}/summary", response_model=ProjectSummary)
@@ -239,9 +67,9 @@ async def get_project_summary(
         scan_stats_query = (
             select(
                 func.count(ScanSession.id).label("total_scans"),
-                func.sum(func.case([(ScanSession.status == ScanStatus.RUNNING, 1)], else_=0)).label("active_scans"),
-                func.sum(func.case([(ScanSession.status == ScanStatus.COMPLETED, 1)], else_=0)).label("completed_scans"),
-                func.sum(func.case([(ScanSession.status == ScanStatus.FAILED, 1)], else_=0)).label("failed_scans"),
+                func.sum(case((ScanSession.status == ScanStatus.RUNNING, 1), else_=0)).label("active_scans"),
+                func.sum(case((ScanSession.status == ScanStatus.COMPLETED, 1), else_=0)).label("completed_scans"),
+                func.sum(case((ScanSession.status == ScanStatus.FAILED, 1), else_=0)).label("failed_scans"),
                 func.max(ScanSession.start_time).label("last_scan_date")
             )
             .where(ScanSession.project_id == project_id)
@@ -286,158 +114,23 @@ async def get_project_summary(
         )
 
 
-# Scan session endpoints
-@router.get("/projects/{project_id}/scans", response_model=List[ScanSessionResponse])
-async def list_project_scans(
-    project_id: str,
-    db: AsyncSession = Depends(get_db),
-    user_id: str = Depends(get_user_id),
-    filters: ScanSessionFilter = Depends(),
-    pagination: PaginationParams = Depends()
-):
-    """List scan sessions for a project."""
-    try:
-        # Use UUIDs directly for Supabase compatibility
-        # Verify project ownership
-        project_query = select(Project).where(
-            and_(
-                Project.id == project_id,
-                Project.owner_id == user_id
-            )
-        )
-        project_result = await db.execute(project_query)
-        project = project_result.scalar_one_or_none()
-        
-        if not project:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Project not found"
-            )
-        
-        # Build query with filters
-        query = select(ScanSession).where(ScanSession.project_id == project_id)
-        
-        if filters.status:
-            query = query.where(ScanSession.status == filters.status)
-        if filters.start_date:
-            query = query.where(ScanSession.start_time >= filters.start_date)
-        if filters.end_date:
-            query = query.where(ScanSession.start_time <= filters.end_date)
-        
-        query = (
-            query.order_by(desc(ScanSession.start_time))
-            .limit(pagination.limit)
-            .offset(pagination.offset)
-        )
-        
-        result = await db.execute(query)
-        scans = result.scalars().all()
-        
-        return scans
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to retrieve scans: {str(e)}"
-        )
+# Scan session endpoints are handled by `/api/v1` scans router.
 
 
-@router.post("/projects/{project_id}/scans", response_model=ScanSessionResponse, status_code=status.HTTP_201_CREATED)
-async def create_scan_session(
-    project_id: str,
-    scan_data: ScanSessionCreate,
-    db: AsyncSession = Depends(get_db),
-    user_id: str = Depends(get_user_id)
-):
-    """Create a new scan session."""
-    try:
-        # Use UUIDs directly for Supabase compatibility
-        # Verify project ownership
-        project_query = select(Project).where(
-            and_(
-                Project.id == project_id,
-                Project.owner_id == user_id
-            )
-        )
-        project_result = await db.execute(project_query)
-        project = project_result.scalar_one_or_none()
-        
-        if not project:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Project not found"
-            )
-        
-        scan_session = ScanSession(
-            project_id=project_id,
-            configuration=scan_data.configuration.model_dump(),
-            created_by=user_id
-        )
-        
-        db.add(scan_session)
-        await db.commit()
-        await db.refresh(scan_session)
-        
-        # TODO: Trigger background crawl task here
-        
-        return scan_session
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to create scan session: {str(e)}"
-        )
+# Scan creation is handled by `/api/v1` scans router.
 
 
-@router.get("/scans/{scan_id}", response_model=ScanSessionResponse)
-async def get_scan_session(
-    scan_id: str,
-    db: AsyncSession = Depends(get_db),
-    user_id: str = Depends(get_user_id)
-):
-    """Get a specific scan session."""
-    try:
-        # Use UUIDs directly for Supabase compatibility
-        query = (
-            select(ScanSession)
-            .join(Project)
-            .where(
-                and_(
-                    ScanSession.id == scan_id,
-                    Project.owner_id == user_id
-                )
-            )
-        )
-        result = await db.execute(query)
-        scan = result.scalar_one_or_none()
-        
-        if not scan:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Scan session not found"
-            )
-        
-        return scan
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to retrieve scan session: {str(e)}"
-        )
+# Scan retrieval is handled by `/api/v1` scans router.
+
+
+# Scan stop is handled by `/api/v1` scans router.
 
 
 @router.get("/overview", response_model=DashboardOverview)
 async def get_dashboard_overview(
     db: AsyncSession = Depends(get_db),
     user_id: str = Depends(get_user_id),
-    time_range: str = Query("7d", regex="^(1h|6h|24h|7d|30d|90d)$")
+    time_range: str = Query("7d", pattern="^(1h|6h|24h|7d|30d|90d)$")
 ) -> DashboardOverview:
     """
     Get comprehensive dashboard overview with real-time metrics and enhanced analytics.
@@ -462,7 +155,7 @@ async def get_dashboard_overview(
         logger.error(f"Error in /dashboard/overview: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to get dashboard overview"
+            detail=f"Failed to get dashboard overview: {str(e)}"
         )
 
 
@@ -470,7 +163,7 @@ async def get_dashboard_overview(
 async def get_live_metrics(
     db: AsyncSession = Depends(get_db),
     user_id: str = Depends(get_user_id),
-    metric_type: str = Query("all", regex="^(all|scans|urls|forms|performance)$")
+    metric_type: str = Query("all", pattern="^(all|scans|urls|forms|performance)$")
 ) -> Dict[str, Any]:
     """
     Get live dashboard metrics with real-time updates.
@@ -647,7 +340,7 @@ async def broadcast_custom_update(
 async def get_analytics_summary(
     db: AsyncSession = Depends(get_db),
     user_id: str = Depends(get_user_id),
-    time_range: str = Query("7d", regex="^(1h|6h|24h|7d|30d|90d)$")
+    time_range: str = Query("7d", pattern="^(1h|6h|24h|7d|30d|90d)$")
 ) -> Dict[str, Any]:
     """
     Get comprehensive analytics summary for the dashboard.
@@ -680,7 +373,7 @@ async def get_analytics_summary(
         )
 
 
-@router.get("/dashboard/projects-summary", response_model=List[Dict[str, Any]])
+@router.get("/projects-summary", response_model=List[Dict[str, Any]])
 async def get_projects_summary(
     db: AsyncSession = Depends(get_db),
     user_id: str = Depends(get_user_id),
@@ -688,32 +381,50 @@ async def get_projects_summary(
 ) -> List[Dict[str, Any]]:
     """
     Get projects summary for dashboard display.
+    Optimized to avoid N+1 queries by using a single JOIN query.
     """
     try:
-        # Use UUID directly for Supabase compatibility
+        # Create subquery to get the latest scan for each project
+        latest_scans_subquery = (
+            select(
+                ScanSession.project_id,
+                func.max(ScanSession.start_time).label('latest_start_time')
+            )
+            .group_by(ScanSession.project_id)
+            .subquery()
+        )
         
-        # Get projects with their latest scan information
+        # Main query with LEFT JOIN to get projects and their latest scan in one query
         query = (
-            select(Project)
+            select(
+                Project.id,
+                Project.name,
+                Project.target_domain,
+                Project.created_at,
+                ScanSession.start_time,
+                ScanSession.status
+            )
+            .outerjoin(
+                latest_scans_subquery,
+                Project.id == latest_scans_subquery.c.project_id
+            )
+            .outerjoin(
+                ScanSession,
+                and_(
+                    ScanSession.project_id == Project.id,
+                    ScanSession.start_time == latest_scans_subquery.c.latest_start_time
+                )
+            )
             .where(Project.owner_id == user_id)
             .order_by(desc(Project.created_at))
             .limit(limit)
         )
+        
         result = await db.execute(query)
-        projects = result.scalars().all()
+        rows = result.all()
         
         projects_summary = []
-        for project in projects:
-            # Get latest scan for this project
-            latest_scan_query = (
-                select(ScanSession)
-                .where(ScanSession.project_id == project.id)
-                .order_by(desc(ScanSession.start_time))
-                .limit(1)
-            )
-            scan_result = await db.execute(latest_scan_query)
-            latest_scan = scan_result.scalar_one_or_none()
-            
+        for row in rows:
             # Get vulnerability counts (placeholder for now)
             vulnerability_count = {
                 "critical": 0,
@@ -722,13 +433,18 @@ async def get_projects_summary(
                 "low": 0
             }
             
+            # Handle scan status conversion
+            scan_status = "pending"
+            if row.status:
+                scan_status = row.status if isinstance(row.status, str) else row.status.value
+            
             projects_summary.append({
-                "id": str(project.id),
-                "name": project.name,
-                "target_domain": project.target_domain,
-                "last_scan_date": latest_scan.start_time.isoformat() if latest_scan else None,
+                "id": str(row.id),
+                "name": row.name,
+                "target_domain": row.target_domain,
+                "last_scan_date": row.start_time.isoformat() if row.start_time else None,
                 "vulnerability_count": vulnerability_count,
-                "scan_status": latest_scan.status if isinstance(latest_scan.status, str) else latest_scan.status.value if latest_scan else "pending",
+                "scan_status": scan_status,
                 "progress": None
             })
         
@@ -742,7 +458,7 @@ async def get_projects_summary(
         )
 
 
-@router.get("/dashboard/recent-activity", response_model=List[Dict[str, Any]])
+@router.get("/recent-activity", response_model=List[Dict[str, Any]])
 async def get_recent_activity(
     db: AsyncSession = Depends(get_db),
     user_id: str = Depends(get_user_id),
@@ -795,7 +511,7 @@ async def get_recent_activity(
         )
 
 
-@router.get("/dashboard/vulnerability-trends", response_model=List[Dict[str, Any]])
+@router.get("/vulnerability-trends", response_model=List[Dict[str, Any]])
 async def get_vulnerability_trends(
     db: AsyncSession = Depends(get_db),
     user_id: str = Depends(get_user_id),
@@ -833,7 +549,7 @@ async def get_vulnerability_trends(
         )
 
 
-@router.get("/dashboard/scan-statistics", response_model=Dict[str, Any])
+@router.get("/scan-statistics", response_model=Dict[str, Any])
 async def get_scan_statistics(
     db: AsyncSession = Depends(get_db),
     user_id: str = Depends(get_user_id)
@@ -848,13 +564,13 @@ async def get_scan_statistics(
         stats_query = (
             select(
                 func.count(ScanSession.id).label("total_scans"),
-                func.sum(func.case([(ScanSession.status == ScanStatus.RUNNING, 1)], else_=0)).label("active_scans"),
-                func.sum(func.case([(ScanSession.status == ScanStatus.COMPLETED, 1)], else_=0)).label("completed_scans"),
-                func.sum(func.case([(ScanSession.status == ScanStatus.FAILED, 1)], else_=0)).label("failed_scans"),
+                func.sum(case((ScanSession.status == ScanStatus.RUNNING, 1), else_=0)).label("active_scans"),
+                func.sum(case((ScanSession.status == ScanStatus.COMPLETED, 1), else_=0)).label("completed_scans"),
+                func.sum(case((ScanSession.status == ScanStatus.FAILED, 1), else_=0)).label("failed_scans"),
                 func.avg(
-                    func.case(
-                        [(ScanSession.end_time.isnot(None), 
-                         func.extract('epoch', ScanSession.end_time - ScanSession.start_time))],
+                    case(
+                        (ScanSession.end_time.isnot(None), 
+                         func.extract('epoch', ScanSession.end_time - ScanSession.start_time)),
                         else_=None
                     )
                 ).label("avg_duration")
@@ -895,16 +611,16 @@ async def dashboard_health_check(
     Health check endpoint for dashboard services.
     """
     try:
-        # Check database connectivity
-        await db.execute(select(1))
+        # Check core infrastructure services
+        infra_status = run_checks(settings)
         
         # Check WebSocket manager status
-        connection_stats = manager.get_connection_stats()
-        
+        connection_stats = await manager.get_connection_stats()
+
         return {
-            "status": "healthy",
-            "database": "connected",
-            "websocket_connections": connection_stats["total_connections"],
+            "status": "healthy" if all(not v.startswith("Failed") for v in infra_status.values()) else "degraded",
+            "infrastructure": infra_status,
+            "websocket_connections": connection_stats["active_connections"],
             "active_users": connection_stats["unique_users"],
             "timestamp": datetime.now(timezone.utc).isoformat()
         }

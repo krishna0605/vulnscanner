@@ -2,13 +2,12 @@
 Dashboard service layer for business logic and data operations.
 Handles complex dashboard operations and data aggregation.
 """
-import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Dict, Optional, Any
+from collections import Counter
 # from uuid import UUID  # Not needed for SQLite models
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, and_, desc, text
-from sqlalchemy.orm import selectinload
+from sqlalchemy import select, func, and_, desc, case
 
 from models import (
     Project, ScanSession, DiscoveredUrl, ExtractedForm, 
@@ -32,19 +31,25 @@ class DashboardService:
         """Get comprehensive dashboard overview for a user."""
         try:
             # Get project statistics
+            logger.debug(f"[overview] Fetching project stats for user {user_id}")
             project_stats = await self._get_project_stats(user_id)
             
             # Get scan statistics
+            logger.debug(f"[overview] Fetching scan stats for user {user_id}")
             scan_stats = await self._get_scan_stats(user_id)
             
             # Get discovery statistics
+            logger.debug(f"[overview] Fetching discovery stats for user {user_id}")
             discovery_stats = await self._get_discovery_stats(user_id)
             
-            # Get recent activity
-            recent_activity = await self._get_recent_activity(user_id, limit=10)
+            # Get recent activity (currently not included in overview)
+            logger.debug(f"[overview] Fetching recent activity for user {user_id}")
+            await self._get_recent_activity(user_id, limit=10)
             
             # Get recent projects and scans
+            logger.debug(f"[overview] Fetching recent projects for user {user_id}")
             recent_projects = await self._get_recent_projects(user_id, limit=5)
+            logger.debug(f"[overview] Fetching recent scans for user {user_id}")
             recent_scans = await self._get_recent_scans(user_id, limit=5)
             
             return DashboardOverview(
@@ -66,7 +71,7 @@ class DashboardService:
         """Get detailed summary for a specific project."""
         try:
             # Verify project ownership
-            project = await self._verify_project_access(project_id, user_id)
+            await self._verify_project_access(project_id, user_id)
             
             # Get scan statistics for this project
             scan_stats_query = (
@@ -162,48 +167,52 @@ class DashboardService:
     # async def get_metrics_by_name(self, user_id: str, metric_name: str, hours_back: int = 24) -> List[DashboardMetricResponse]:
     
     async def get_technology_distribution(self, user_id: str, project_id: Optional[int] = None) -> Dict[str, int]:
-        """Get distribution of detected technologies."""
+        """Get distribution of detected technologies.
+
+        Optimization: select only needed columns and aggregate in-memory using Counters
+        to reduce transferred data and avoid loading full ORM entities.
+        """
         try:
             query = (
-                select(TechnologyFingerprint)
+                select(
+                    TechnologyFingerprint.server_software,
+                    TechnologyFingerprint.programming_language,
+                    TechnologyFingerprint.framework,
+                    TechnologyFingerprint.cms,
+                    TechnologyFingerprint.javascript_libraries,
+                )
+                .select_from(TechnologyFingerprint)
                 .join(DiscoveredUrl)
                 .join(ScanSession)
                 .join(Project)
                 .where(Project.owner_id == user_id)
             )
-            
+
             if project_id:
                 query = query.where(Project.id == project_id)
-            
+
             result = await self.db.execute(query)
-            fingerprints = result.scalars().all()
-            
-            tech_distribution = {}
-            
-            for fp in fingerprints:
-                # Count server software
-                if fp.server_software:
-                    tech_distribution[fp.server_software] = tech_distribution.get(fp.server_software, 0) + 1
-                
-                # Count programming languages
-                if fp.programming_language:
-                    tech_distribution[fp.programming_language] = tech_distribution.get(fp.programming_language, 0) + 1
-                
-                # Count frameworks
-                if fp.framework:
-                    tech_distribution[fp.framework] = tech_distribution.get(fp.framework, 0) + 1
-                
-                # Count CMS
-                if fp.cms:
-                    tech_distribution[fp.cms] = tech_distribution.get(fp.cms, 0) + 1
-                
-                # Count JavaScript libraries
-                if fp.javascript_libraries:
-                    for lib in fp.javascript_libraries:
-                        tech_distribution[lib] = tech_distribution.get(lib, 0) + 1
-            
-            return tech_distribution
-            
+            rows = result.all()
+
+            counter: Counter[str] = Counter()
+
+            for server, lang, framework, cms, js_libs in rows:
+                if server:
+                    counter[server] += 1
+                if lang:
+                    counter[lang] += 1
+                if framework:
+                    counter[framework] += 1
+                if cms:
+                    counter[cms] += 1
+                if js_libs:
+                    # js_libs is expected to be a list/array of strings
+                    for lib in js_libs:
+                        if lib:
+                            counter[str(lib)] += 1
+
+            return dict(counter)
+
         except Exception as e:
             logger.error(f"Error getting technology distribution: {e}")
             raise
@@ -243,15 +252,11 @@ class DashboardService:
     
     async def _get_project_stats(self, user_id: str) -> Dict[str, int]:
         """Get project statistics for a user."""
-        logger.info("Executing _get_project_stats")
-        logger.info(f"User ID: {user_id}")
         try:
             # Use UUIDs directly for Supabase compatibility
             query = select(func.count(Project.id)).where(Project.owner_id == user_id)
-            logger.info(f"Query: {query}")
             result = await self.db.execute(query)
             total = result.scalar() or 0
-            logger.info(f"Total projects: {total}")
             return {"total": total}
         except Exception as e:
             logger.error(f"Error in _get_project_stats: {e}")
@@ -260,10 +265,12 @@ class DashboardService:
     async def _get_scan_stats(self, user_id: str) -> Dict[str, int]:
         """Get scan statistics for a user."""
         # Use UUIDs directly for Supabase compatibility
+        # NOTE: SQLite does not support the SQL "FILTER (WHERE ...)" clause used by
+        # SQLAlchemy's .filter() on aggregates. Use SUM(CASE ...) for cross-dialect support.
         query = (
             select(
                 func.count(ScanSession.id).label("total"),
-                func.count().filter(ScanSession.status == ScanStatus.RUNNING).label("active")
+                func.sum(case((ScanSession.status == ScanStatus.RUNNING, 1), else_=0)).label("active")
             )
             .join(Project)
             .where(Project.owner_id == user_id)
@@ -296,7 +303,7 @@ class DashboardService:
             .join(DiscoveredUrl)
             .join(ScanSession)
             .join(Project)
-            .where(Project.owner_id == user_id_int)
+            .where(Project.owner_id == user_id)
         )
         form_result = await self.db.execute(form_query)
         forms = form_result.scalar() or 0
@@ -307,7 +314,7 @@ class DashboardService:
             .join(DiscoveredUrl)
             .join(ScanSession)
             .join(Project)
-            .where(Project.owner_id == user_id_int)
+            .where(Project.owner_id == user_id)
         )
         tech_result = await self.db.execute(tech_query)
         technologies = tech_result.scalar() or 0
@@ -320,29 +327,37 @@ class DashboardService:
     
     async def _get_recent_activity(self, user_id: str, limit: int = 10) -> List[Dict[str, Any]]:
         """Get recent activity for a user."""
-        # Use UUIDs directly for Supabase compatibility
+        # Use explicit column selection to avoid selecting non-existent fields (e.g., created_at in SQLite)
         query = (
-            select(ScanSession, Project.name.label("project_name"))
-            .join(Project)
+            select(
+                ScanSession.id,
+                ScanSession.project_id,
+                ScanSession.status,
+                ScanSession.start_time,
+                ScanSession.end_time,
+                Project.name.label("project_name")
+            )
+            .select_from(ScanSession)
+            .join(Project, ScanSession.project_id == Project.id)
             .where(Project.owner_id == user_id)
             .order_by(desc(ScanSession.start_time))
             .limit(limit)
         )
-        
+
         result = await self.db.execute(query)
-        scans = result.all()
-        
-        activity = []
-        for scan, project_name in scans:
+        rows = result.all()
+
+        activity: List[Dict[str, Any]] = []
+        for row in rows:
             activity.append({
                 "type": "scan",
-                "action": f"Scan {scan.status}",
-                "project_name": project_name,
-                "project_id": str(scan.project_id),
-                "scan_id": str(scan.id),
-                "timestamp": scan.start_time
+                "action": f"Scan {row.status}",
+                "project_name": row.project_name,
+                "project_id": str(row.project_id),
+                "scan_id": str(row.id),
+                "timestamp": row.start_time
             })
-        
+
         return activity
     
     async def _verify_project_access(self, project_id: str, user_id: str) -> Project:
@@ -423,7 +438,7 @@ class DashboardService:
     async def get_scan_statistics(self, user_id: str, time_delta: timedelta) -> Dict[str, Any]:
         """Get comprehensive scan statistics for a time period."""
         try:
-            start_time = datetime.utcnow() - time_delta
+            start_time = datetime.now(timezone.utc) - time_delta
             
             # Get scan counts and completion rate
             scan_query = (
@@ -510,7 +525,7 @@ class DashboardService:
     async def get_analytics_summary(self, user_id: str, time_delta: timedelta) -> Dict[str, Any]:
         """Get comprehensive analytics summary for dashboard."""
         try:
-            start_time = datetime.utcnow() - time_delta
+            start_time = datetime.now(timezone.utc) - time_delta
             
             # Get project analytics
             project_analytics = await self._get_project_analytics(user_id, start_time)
@@ -531,7 +546,7 @@ class DashboardService:
                 "performance": performance_analytics,
                 "time_period": {
                     "start": start_time.isoformat(),
-                    "end": datetime.utcnow().isoformat(),
+                    "end": datetime.now(timezone.utc).isoformat(),
                     "duration_hours": time_delta.total_seconds() / 3600
                 }
             }
@@ -594,7 +609,7 @@ class DashboardService:
         query = (
             select(
                 func.count(ExtractedForm.id).label("total"),
-                func.count().filter(ExtractedForm.authentication_required == True).label("auth_required")
+                func.count().filter(ExtractedForm.authentication_required.is_(True)).label("auth_required")
             )
             .join(DiscoveredUrl)
             .join(ScanSession)
@@ -613,7 +628,7 @@ class DashboardService:
     async def _get_live_performance_metrics(self, user_id: str) -> Dict[str, Any]:
         """Get live performance metrics."""
         # Get recent scan performance (last 24 hours)
-        recent_time = datetime.utcnow() - timedelta(hours=24)
+        recent_time = datetime.now(timezone.utc) - timedelta(hours=24)
         
         query = (
             select(
@@ -628,7 +643,8 @@ class DashboardService:
             .where(
                 and_(
                     Project.owner_id == user_id,
-                    ScanSession.created_at >= recent_time
+                    # Use start_time as a proxy in SQLite environments where created_at may not exist
+                    ScanSession.start_time >= recent_time
                 )
             )
         )
@@ -850,73 +866,84 @@ class DashboardService:
         return result.scalar() or 0
     
     async def _get_recent_projects(self, user_id: str, limit: int = 5) -> List[ProjectSummary]:
-        """Get recent projects for the user."""
+        """Get recent projects for the user with optimized aggregated query."""
+        # Single optimized query with aggregations to avoid N+1 queries
         query = (
-            select(Project)
+            select(
+                Project.id,
+                Project.name,
+                Project.target_domain,
+                func.count(ScanSession.id).label('total_scans'),
+                func.count(DiscoveredUrl.id).label('total_urls_discovered'),
+                func.max(ScanSession.start_time).label('last_scan_date')
+            )
+            .select_from(Project)
+            .outerjoin(ScanSession, Project.id == ScanSession.project_id)
+            .outerjoin(DiscoveredUrl, ScanSession.id == DiscoveredUrl.session_id)
             .where(Project.owner_id == user_id)
+            .group_by(Project.id, Project.name, Project.target_domain)
             .order_by(Project.updated_at.desc())
             .limit(limit)
         )
+        
         result = await self.db.execute(query)
-        projects = result.scalars().all()
+        rows = result.all()
         
         project_summaries = []
-        for project in projects:
-            # Get basic stats for each project
-            scan_count_query = select(func.count(ScanSession.id)).where(ScanSession.project_id == project.id)
-            scan_count_result = await self.db.execute(scan_count_query)
-            scan_count = scan_count_result.scalar() or 0
-            
-            url_count_query = (
-                select(func.count(DiscoveredUrl.id))
-                .join(ScanSession)
-                .where(ScanSession.project_id == project.id)
-            )
-            url_count_result = await self.db.execute(url_count_query)
-            url_count = url_count_result.scalar() or 0
-            
+        for row in rows:
             project_summaries.append(ProjectSummary(
-                id=project.id,
-                name=project.name,
-                description=project.description or "",
-                target_domain=project.target_domain,
-                total_scans=scan_count,
-                total_urls_discovered=url_count,
+                id=row.id,
+                name=row.name,
+                target_domain=row.target_domain,
+                total_scans=row.total_scans or 0,
+                total_urls_discovered=row.total_urls_discovered or 0,
                 total_forms_found=0,  # Simplified for now
-                total_technologies_detected=0,  # Simplified for now
-                last_scan_date=None,  # Simplified for now
-                created_at=project.created_at,
-                updated_at=project.updated_at
+                last_scan_date=row.last_scan_date
             ))
         
         return project_summaries
     
     async def _get_recent_scans(self, user_id: str, limit: int = 5) -> List[ScanSummary]:
-        """Get recent scans for the user."""
+        """Get recent scans for the user with optimized aggregated query."""
+        # Single optimized query with aggregations to avoid N+1 queries
         query = (
-            select(ScanSession, Project.name.label("project_name"))
-            .join(Project)
+            select(
+                ScanSession.id,
+                ScanSession.project_id,
+                ScanSession.status,
+                ScanSession.start_time,
+                ScanSession.end_time,
+                Project.name.label("project_name"),
+                func.count(DiscoveredUrl.id).label('urls_discovered')
+            )
+            .select_from(ScanSession)
+            .join(Project, ScanSession.project_id == Project.id)
+            .outerjoin(DiscoveredUrl, ScanSession.id == DiscoveredUrl.session_id)
             .where(Project.owner_id == user_id)
+            .group_by(
+                ScanSession.id,
+                ScanSession.project_id,
+                ScanSession.status,
+                ScanSession.start_time,
+                ScanSession.end_time,
+                Project.name
+            )
             .order_by(ScanSession.start_time.desc())
             .limit(limit)
         )
+        
         result = await self.db.execute(query)
-        scans = result.all()
+        rows = result.all()
         
         scan_summaries = []
-        for scan, project_name in scans:
-            # Get URL count for this scan
-            url_count_query = select(func.count(DiscoveredUrl.id)).where(DiscoveredUrl.session_id == scan.id)
-            url_count_result = await self.db.execute(url_count_query)
-            url_count = url_count_result.scalar() or 0
-            
+        for row in rows:
             scan_summaries.append(ScanSummary(
-                id=scan.id,
-                project_id=scan.project_id,
-                status=scan.status,
-                start_time=scan.start_time,
-                end_time=scan.end_time,
-                urls_discovered=url_count,
+                id=row.id,
+                project_id=row.project_id,
+                status=row.status,
+                start_time=row.start_time,
+                end_time=row.end_time,
+                urls_discovered=row.urls_discovered or 0,
                 forms_extracted=0,  # Simplified for now
                 technologies_detected=0  # Simplified for now
             ))
