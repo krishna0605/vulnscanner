@@ -9,7 +9,7 @@ from pathlib import Path
 backend_dir = Path(__file__).parent
 sys.path.insert(0, str(backend_dir))
 
-from core.security import create_access_token
+from core.security import create_access_token  # noqa: E402
 
 def create_test_token():
     """Create a test JWT token."""
@@ -21,10 +21,10 @@ def create_test_token():
     # Create access token (expires in 60 minutes by default)
     token = create_access_token(subject=test_user_id, expires_minutes=60)
     
-    print(f"✅ Test JWT token created successfully!")
+    print("✅ Test JWT token created successfully!")
     print(f"👤 User ID: {test_user_id}")
     print(f"🔑 Token: {token}")
-    print(f"⏰ Expires in: 60 minutes")
+    print("⏰ Expires in: 60 minutes")
     print()
     print("📋 To test authentication, use this token in the Authorization header:")
     print(f"Authorization: Bearer {token}")

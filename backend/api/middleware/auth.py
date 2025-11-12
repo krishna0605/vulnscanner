@@ -4,11 +4,9 @@ Provides comprehensive user session management and security measures.
 """
 
 from typing import Optional, Dict, Any
-from fastapi import HTTPException, status, WebSocket, WebSocketException
+from fastapi import HTTPException, status, WebSocket, WebSocketException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import jwt, JWTError
-import asyncio
-import time
 import logging
 from datetime import datetime, timezone
 
@@ -77,7 +75,7 @@ class AuthenticationManager:
                             await self._create_session(user_data)
                             return user_data
                     except Exception as e:
-                        logger.warning(f"Supabase authentication failed: {e}")
+                        logger.error(f"Supabase authentication failed: {e}", exc_info=True)
                         pass  # Continue to raise authentication error
                 
                 # If both fail, raise authentication error

@@ -148,3 +148,6 @@ docker-compose.override.yml
 
 # Misc
 .trae/
+ 
+# Large local datasets (do not track)
+dataSETS/

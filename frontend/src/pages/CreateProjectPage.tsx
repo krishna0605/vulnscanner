@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import projectService, { ProjectCreate } from '../services/projectService.ts';
+import { normalizeDomain } from '../utils/normalizeDomain.ts';
 
 const CreateProjectPage: React.FC = () => {
   const navigate = useNavigate();
@@ -36,11 +37,17 @@ const CreateProjectPage: React.FC = () => {
         throw new Error('Target domain is required');
       }
 
+      // Normalize domain (accept full URLs or raw domains)
+      const normalized = normalizeDomain(formData.target_domain.trim());
+      if (!normalized) {
+        throw new Error('Invalid domain or URL');
+      }
+
       // Create the project
       await projectService.createProject({
         name: formData.name.trim(),
         description: formData.description?.trim() || undefined,
-        target_domain: formData.target_domain.trim(),
+        target_domain: normalized,
         scope_rules: formData.scope_rules
       });
 
@@ -93,7 +100,7 @@ const CreateProjectPage: React.FC = () => {
           </div>
 
           {error && (
-            <div className="mb-4 p-3 rounded-md bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+            <div className="mb-4 p-3 rounded-md bg-red-500/10 border border-red-500/20 text-red-400 text-sm" role="alert" aria-live="assertive">
               {error}
             </div>
           )}
@@ -138,13 +145,16 @@ const CreateProjectPage: React.FC = () => {
                   className="form-input w-full bg-transparent h-11 pl-10 pr-4 text-[#E0E0E0] placeholder:text-[#888888] focus:outline-none focus:ring-0 text-base" 
                   id="target-domain" 
                   name="target_domain"
-                  placeholder="e.g., https://example.com" 
-                  type="url" 
+                  placeholder="e.g., example.com or https://example.com" 
+                  type="text" 
                   value={formData.target_domain}
                   onChange={handleInputChange}
                   required 
+                  aria-describedby="target-domain-help"
+                  title="Enter the target domain. Full URLs are accepted; the host will be extracted."
                 />
               </div>
+              <p id="target-domain-help" className="mt-1 text-xs text-[#888888]">Full URLs are accepted; the host will be extracted automatically.</p>
             </div>
             <div>
               <label className="mb-1.5 block text-sm font-medium" htmlFor="scan-settings">Scan Settings</label>
@@ -161,7 +171,7 @@ const CreateProjectPage: React.FC = () => {
             </div>
             <div className="pt-4 flex items-center justify-end gap-4">
               <button type="button" className="flex h-11 items-center justify-center rounded-md px-6 text-sm font-medium text-[#888888] hover:text-white" onClick={() => navigate('/dashboard')}>Cancel</button>
-              <button type="submit" className="relative flex w-44 items-center justify-center overflow-hidden rounded-md h-11 px-5 text-base font-medium tracking-wide text-white bg-[#4A90E2]/20 border border-[#4A90E2]/40 hover:bg-[#4A90E2]/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled={isLoading}>
+              <button type="submit" className="relative flex w-44 items-center justify-center overflow-hidden rounded-md h-11 px-5 text-base font-medium tracking-wide text-white bg-[#4A90E2]/20 border border-[#4A90E2]/40 hover:bg-[#4A90E2]/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled={isLoading} aria-busy={isLoading}>
                 <span>{isLoading ? 'Creating...' : 'Create Project'}</span>
               </button>
             </div>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth.ts';
+import { useAuth } from '../contexts/AuthContext.tsx';
 import { useSelector } from 'react-redux';
 import { RootState } from '../store/index.ts';
 

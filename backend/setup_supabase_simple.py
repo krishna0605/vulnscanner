@@ -5,7 +5,6 @@ Simple script to create tables in Supabase using existing database session.
 
 import asyncio
 import sys
-import os
 from pathlib import Path
 
 # Add the backend directory to Python path
@@ -16,11 +15,11 @@ sys.path.insert(0, str(backend_dir))
 if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
-from sqlalchemy import text
-from passlib.context import CryptContext
+from sqlalchemy import text  # noqa: E402
+from passlib.context import CryptContext  # noqa: E402
 
 # Import existing database components
-from db.session import engine, async_session
+from db.session import engine, async_session  # noqa: E402
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

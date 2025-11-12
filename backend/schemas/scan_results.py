@@ -2,11 +2,11 @@
 Pydantic schemas for scan results including discovered URLs, forms, and technology fingerprints.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Optional, Any
 from uuid import UUID
 
-from pydantic import BaseModel, Field, HttpUrl, validator
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 
 # Base schemas for common fields
@@ -28,14 +28,16 @@ class DiscoveredURLBase(BaseModel):
     response_time: Optional[int] = Field(None, ge=0, description="Response time in milliseconds")
     page_title: Optional[str] = Field(None, max_length=500, description="Page title extracted from HTML")
 
-    @validator('method')
+    @field_validator('method')
+    @classmethod
     def validate_method(cls, v):
         allowed_methods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS']
         if v.upper() not in allowed_methods:
             raise ValueError(f'Method must be one of: {", ".join(allowed_methods)}')
         return v.upper()
 
-    @validator('url', 'parent_url')
+    @field_validator('url', 'parent_url')
+    @classmethod
     def validate_url_format(cls, v):
         if v and not (v.startswith('http://') or v.startswith('https://')):
             raise ValueError('URL must start with http:// or https://')
@@ -44,7 +46,6 @@ class DiscoveredURLBase(BaseModel):
 
 class DiscoveredURLCreate(DiscoveredURLBase):
     """Schema for creating a discovered URL."""
-    pass
 
 
 class DiscoveredURLUpdate(BaseModel):
@@ -62,8 +63,7 @@ class DiscoveredURLResponse(DiscoveredURLBase, TimestampMixin):
     session_id: UUID
     discovered_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class DiscoveredURLFilter(BaseModel):
@@ -85,20 +85,23 @@ class ExtractedFormBase(BaseModel):
     csrf_tokens: List[str] = Field(default_factory=list, description="CSRF tokens found in the form")
     authentication_required: bool = Field(default=False, description="Whether form requires authentication")
 
-    @validator('form_method')
+    @field_validator('form_method')
+    @classmethod
     def validate_form_method(cls, v):
         allowed_methods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']
         if v.upper() not in allowed_methods:
             raise ValueError(f'Form method must be one of: {", ".join(allowed_methods)}')
         return v.upper()
 
-    @validator('form_fields')
+    @field_validator('form_fields')
+    @classmethod
     def validate_form_fields(cls, v):
         if not isinstance(v, dict):
             raise ValueError('Form fields must be a dictionary')
         return v
 
-    @validator('csrf_tokens')
+    @field_validator('csrf_tokens')
+    @classmethod
     def validate_csrf_tokens(cls, v):
         if not isinstance(v, list):
             raise ValueError('CSRF tokens must be a list')
@@ -124,8 +127,7 @@ class ExtractedFormResponse(ExtractedFormBase, TimestampMixin):
     id: UUID
     url_id: UUID
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ExtractedFormFilter(BaseModel):
@@ -146,13 +148,15 @@ class TechnologyFingerprintBase(BaseModel):
     javascript_libraries: List[str] = Field(default_factory=list, description="Detected JavaScript libraries")
     security_headers: Dict[str, str] = Field(default_factory=dict, description="Security headers found")
 
-    @validator('javascript_libraries')
+    @field_validator('javascript_libraries')
+    @classmethod
     def validate_js_libraries(cls, v):
         if not isinstance(v, list):
             raise ValueError('JavaScript libraries must be a list')
         return v
 
-    @validator('security_headers')
+    @field_validator('security_headers')
+    @classmethod
     def validate_security_headers(cls, v):
         if not isinstance(v, dict):
             raise ValueError('Security headers must be a dictionary')
@@ -180,8 +184,7 @@ class TechnologyFingerprintResponse(TechnologyFingerprintBase, TimestampMixin):
     url_id: UUID
     detected_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class TechnologyFingerprintFilter(BaseModel):
@@ -204,22 +207,22 @@ class ScanResultsSummary(BaseModel):
     content_type_distribution: Optional[Dict[str, int]] = Field(None, description="Distribution of content types")
     technology_summary: Optional[Dict[str, List[str]]] = Field(None, description="Summary of detected technologies by type")
     security_headers_summary: Optional[Dict[str, int]] = Field(None, description="Summary of security headers found")
-    generated_at: datetime = Field(default_factory=datetime.utcnow)
+    generated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # Export schemas
 class ScanResultsExport(BaseModel):
     """Schema for scan results export request."""
-    format: str = Field(..., regex="^(json|csv|pdf)$", description="Export format")
+    format: str = Field(..., pattern="^(json|csv|pdf)$", description="Export format")
     include_urls: bool = Field(default=True, description="Include discovered URLs in export")
     include_forms: bool = Field(default=True, description="Include extracted forms in export")
     include_technologies: bool = Field(default=True, description="Include technology fingerprints in export")
     filters: Optional[Dict[str, Any]] = Field(None, description="Optional filters to apply to export")
 
-    @validator('format')
+    @field_validator('format')
+    @classmethod
     def validate_format(cls, v):
         allowed_formats = ['json', 'csv', 'pdf']
         if v.lower() not in allowed_formats:
@@ -234,7 +237,7 @@ class ExportTaskResponse(BaseModel):
     scan_id: str
     format: str
     message: str
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class ExportTaskStatus(BaseModel):
@@ -253,9 +256,10 @@ class ExportTaskStatus(BaseModel):
 # Bulk operation schemas
 class BulkURLCreate(BaseModel):
     """Schema for bulk URL creation."""
-    urls: List[DiscoveredURLCreate] = Field(..., min_items=1, max_items=1000)
+    urls: List[DiscoveredURLCreate] = Field(..., min_length=1, max_length=1000)
 
-    @validator('urls')
+    @field_validator('urls')
+    @classmethod
     def validate_urls_limit(cls, v):
         if len(v) > 1000:
             raise ValueError('Cannot create more than 1000 URLs at once')
@@ -264,9 +268,10 @@ class BulkURLCreate(BaseModel):
 
 class BulkFormCreate(BaseModel):
     """Schema for bulk form creation."""
-    forms: List[ExtractedFormCreate] = Field(..., min_items=1, max_items=500)
+    forms: List[ExtractedFormCreate] = Field(..., min_length=1, max_length=500)
 
-    @validator('forms')
+    @field_validator('forms')
+    @classmethod
     def validate_forms_limit(cls, v):
         if len(v) > 500:
             raise ValueError('Cannot create more than 500 forms at once')
@@ -275,9 +280,10 @@ class BulkFormCreate(BaseModel):
 
 class BulkTechnologyCreate(BaseModel):
     """Schema for bulk technology fingerprint creation."""
-    technologies: List[TechnologyFingerprintCreate] = Field(..., min_items=1, max_items=500)
+    technologies: List[TechnologyFingerprintCreate] = Field(..., min_length=1, max_length=500)
 
-    @validator('technologies')
+    @field_validator('technologies')
+    @classmethod
     def validate_technologies_limit(cls, v):
         if len(v) > 500:
             raise ValueError('Cannot create more than 500 technology fingerprints at once')
@@ -333,7 +339,7 @@ class ComprehensiveStatistics(BaseModel):
     technology_stats: TechnologyStatistics
     scan_duration: Optional[int] = Field(None, description="Scan duration in seconds")
     crawl_efficiency: Optional[float] = Field(None, description="Crawl efficiency percentage")
-    generated_at: datetime = Field(default_factory=datetime.utcnow)
+    generated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 # Common schemas
@@ -343,8 +349,8 @@ class CommonFilter(BaseModel):
     created_before: Optional[datetime] = None
     limit: int = Field(default=50, ge=1, le=1000)
     offset: int = Field(default=0, ge=0)
-    sort_by: str = Field(default="created_at", regex="^(created_at|url|status_code|response_time)$")
-    sort_order: str = Field(default="desc", regex="^(asc|desc)$")
+    sort_by: str = Field(default="created_at", pattern="^(created_at|url|status_code|response_time)$")
+    sort_order: str = Field(default="desc", pattern="^(asc|desc)$")
 
 
 class HealthCheck(BaseModel):

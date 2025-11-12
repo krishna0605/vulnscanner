@@ -5,15 +5,13 @@ Enhanced with comprehensive authentication and session management.
 import json
 import logging
 from datetime import datetime, timezone
-from typing import Dict, List, Set, Optional
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, HTTPException
-from sqlalchemy import select, and_
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Dict, Set, Any
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, HTTPException
+from sqlalchemy import select
 
-from core.supabase import get_supabase_client
 from db.session import async_session
 from models import Project, ScanSession
-from schemas.sqlite_dashboard import ScanProgressUpdate, DashboardMetricUpdate, RealTimeUpdate
+from schemas.sqlite_dashboard import ScanProgressUpdate, DashboardMetricUpdate
 from api.middleware.auth import auth_manager
 
 logger = logging.getLogger(__name__)
@@ -436,18 +434,20 @@ async def broadcast_dashboard_metric(user_id: str, metric_data: DashboardMetricU
     await manager.send_personal_message(update, user_id)
 
 
-async def broadcast_realtime_update(update: RealtimeUpdate):
+async def broadcast_realtime_update(update: Dict[str, Any]):
     """Broadcast general realtime update."""
     message = {
         "type": "realtime_update",
-        "data": update.model_dump()
+        "data": update
     }
     
     # Determine which users to send to based on update type
-    if update.entity_type == "scan" and update.entity_id:
-        await manager.broadcast_scan_update(update.entity_id, message)
-    elif update.entity_type == "project" and update.entity_id:
-        await manager.broadcast_project_update(update.entity_id, message)
+    entity_type = update.get("entity_type")
+    entity_id = update.get("entity_id")
+    if entity_type == "scan" and entity_id:
+        await manager.broadcast_scan_update(entity_id, message)
+    elif entity_type == "project" and entity_id:
+        await manager.broadcast_project_update(entity_id, message)
 
 
 # Export the manager for use in other modules

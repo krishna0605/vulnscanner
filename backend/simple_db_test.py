@@ -5,7 +5,6 @@ Direct test of Supabase connection and project storage
 """
 
 import os
-import uuid
 from datetime import datetime
 from dotenv import load_dotenv
 

@@ -39,8 +39,8 @@ def test_fixed_schema():
         print("❌ Error: No references to public.users found in fixed schema")
         return False
     
-    print(f"✅ Schema validation passed:")
-    print(f"   - No auth.users references found")
+    print("✅ Schema validation passed:")
+    print("   - No auth.users references found")
     print(f"   - Found {public_refs} public.users references")
     
     # Check for user_id column definitions

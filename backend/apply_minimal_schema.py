@@ -3,7 +3,6 @@
 Apply minimal schema to Supabase using REST API
 """
 import requests
-import json
 from pathlib import Path
 from core.config import Settings
 
@@ -31,7 +30,7 @@ def apply_minimal_schema():
         print(f"📄 Schema size: {len(schema_sql)} characters")
         
         # Prepare API request
-        url = f"{settings.supabase_url}/rest/v1/rpc/exec_sql"
+        f"{settings.supabase_url}/rest/v1/rpc/exec_sql"
         headers = {
             "Authorization": f"Bearer {settings.supabase_service_role_key}",
             "Content-Type": "application/json",
@@ -128,7 +127,7 @@ def main():
     
     if schema_success:
         # Test tables
-        test_success = test_tables()
+        test_tables()
         
         print("\n" + "=" * 60)
         print("✅ MINIMAL SCHEMA APPLICATION COMPLETE!")

@@ -4,12 +4,12 @@ Handles scan completion notifications, error alerts, and system notifications.
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional
 from celery import shared_task
 
-from backend.core.config import settings
-from backend.services.scan_service import ScanService
+from core.config import settings
+from services.scan_service import ScanService
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +39,7 @@ def send_scan_completion_notification(self, scan_id: int, user_email: str):
             "scan_id": scan_id,
             "project_id": scan.project_id,
             "status": scan.status,
-            "completed_at": datetime.utcnow().isoformat(),
+            "completed_at": datetime.now(timezone.utc).isoformat(),
             "stats": scan.stats or {}
         }
         
@@ -79,7 +79,7 @@ def send_scan_error_notification(self, scan_id: int, user_email: str, error_mess
             "scan_id": scan_id,
             "project_id": scan.project_id if scan else None,
             "error_message": error_message,
-            "failed_at": datetime.utcnow().isoformat()
+            "failed_at": datetime.now(timezone.utc).isoformat()
         }
         
         # Send error notification
@@ -117,7 +117,7 @@ def send_weekly_summary_notification(user_email: str, user_id: int):
         
         notification_data = {
             "user_id": user_id,
-            "week_ending": datetime.utcnow().isoformat(),
+            "week_ending": datetime.now(timezone.utc).isoformat(),
             "stats": weekly_stats
         }
         
@@ -161,7 +161,7 @@ def send_system_alert_notification(alert_type: str, message: str, severity: str 
             "alert_type": alert_type,
             "message": message,
             "severity": severity,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "system": "Enhanced Vulnerability Scanner"
         }
         
@@ -352,7 +352,7 @@ def send_email_via_sendgrid(to_email: str, email_content: Dict[str, str]) -> Dic
             "status": "sent",
             "service": "sendgrid",
             "recipient": to_email,
-            "message_id": f"sg_{datetime.utcnow().timestamp()}"
+            "message_id": f"sg_{datetime.now(timezone.utc).timestamp()}"
         }
         
     except Exception as exc:
@@ -382,7 +382,7 @@ def send_email_via_smtp(to_email: str, email_content: Dict[str, str]) -> Dict[st
             "status": "sent",
             "service": "smtp",
             "recipient": to_email,
-            "message_id": f"smtp_{datetime.utcnow().timestamp()}"
+            "message_id": f"smtp_{datetime.now(timezone.utc).timestamp()}"
         }
         
     except Exception as exc:
@@ -445,7 +445,7 @@ def cleanup_notification_logs():
         
         return {
             "status": "completed",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "message": "Notification logs cleanup completed"
         }
         

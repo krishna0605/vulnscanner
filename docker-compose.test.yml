@@ -1,0 +1,288 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database for Testing
+  postgres-test:
+    image: postgres:15-alpine
+    container_name: vulnscanner-postgres-test
+    environment:
+      POSTGRES_DB: vulnscanner_test
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+      - ./backend/migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - test-network
+
+  # Redis for Caching and Celery Broker
+  redis-test:
+    image: redis:7-alpine
+    container_name: vulnscanner-redis-test
+    ports:
+      - "6380:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_test_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - test-network
+
+  # RabbitMQ for Celery Message Broker
+  rabbitmq-test:
+    image: rabbitmq:3.12-management-alpine
+    container_name: vulnscanner-rabbitmq-test
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin
+    ports:
+      - "5673:5672"
+      - "15673:15672"
+    volumes:
+      - rabbitmq_test_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - test-network
+
+  # Backend API Service
+  backend-test:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: vulnscanner-backend-test
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres-test:5432/vulnscanner_test
+      - REDIS_URL=redis://redis-test:6379/0
+      - CELERY_BROKER_URL=amqp://admin:admin@rabbitmq-test:5672//
+      - CELERY_RESULT_BACKEND=redis://redis-test:6379/1
+      - SECRET_KEY=test-secret-key-change-in-production
+      - DEBUG=true
+      - TESTING=true
+      - LOG_LEVEL=INFO
+      - SUPABASE_URL=https://test.supabase.co
+      - SUPABASE_ANON_KEY=test-anon-key
+      - SUPABASE_SERVICE_ROLE_KEY=test-service-key
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./backend:/app
+      - backend_test_logs:/app/logs
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+      redis-test:
+        condition: service_healthy
+      rabbitmq-test:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    networks:
+      - test-network
+    command: >
+      sh -c "
+        echo 'Waiting for database...' &&
+        python -c 'import time; time.sleep(10)' &&
+        echo 'Running database migrations...' &&
+        alembic upgrade head &&
+        echo 'Starting FastAPI server...' &&
+        uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+      "
+
+  # Celery Worker for Background Tasks
+  celery-worker-test:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: vulnscanner-celery-worker-test
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres-test:5432/vulnscanner_test
+      - REDIS_URL=redis://redis-test:6379/0
+      - CELERY_BROKER_URL=amqp://admin:admin@rabbitmq-test:5672//
+      - CELERY_RESULT_BACKEND=redis://redis-test:6379/1
+      - SECRET_KEY=test-secret-key-change-in-production
+      - DEBUG=true
+      - TESTING=true
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./backend:/app
+      - celery_test_logs:/app/logs
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+      redis-test:
+        condition: service_healthy
+      rabbitmq-test:
+        condition: service_healthy
+      backend-test:
+        condition: service_healthy
+    networks:
+      - test-network
+    command: >
+      sh -c "
+        echo 'Waiting for backend to be ready...' &&
+        python -c 'import time; time.sleep(20)' &&
+        echo 'Starting Celery worker...' &&
+        celery -A tasks.celery_app worker --loglevel=info --concurrency=2
+      "
+
+  # Celery Beat Scheduler
+  celery-beat-test:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: vulnscanner-celery-beat-test
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres-test:5432/vulnscanner_test
+      - REDIS_URL=redis://redis-test:6379/0
+      - CELERY_BROKER_URL=amqp://admin:admin@rabbitmq-test:5672//
+      - CELERY_RESULT_BACKEND=redis://redis-test:6379/1
+      - SECRET_KEY=test-secret-key-change-in-production
+      - DEBUG=true
+      - TESTING=true
+    volumes:
+      - ./backend:/app
+      - celery_beat_test_data:/app/celerybeat-schedule
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+      redis-test:
+        condition: service_healthy
+      rabbitmq-test:
+        condition: service_healthy
+      backend-test:
+        condition: service_healthy
+    networks:
+      - test-network
+    command: >
+      sh -c "
+        echo 'Waiting for backend to be ready...' &&
+        python -c 'import time; time.sleep(25)' &&
+        echo 'Starting Celery beat scheduler...' &&
+        celery -A tasks.celery_app beat --loglevel=info
+      "
+
+  # Frontend Service (for integration testing)
+  frontend-test:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: development
+    container_name: vulnscanner-frontend-test
+    environment:
+      - REACT_APP_API_URL=http://backend-test:8000/api/v1
+      - REACT_APP_SUPABASE_URL=https://test.supabase.co
+      - REACT_APP_SUPABASE_ANON_KEY=test-anon-key
+      - NODE_ENV=test
+    ports:
+      - "3001:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      backend-test:
+        condition: service_healthy
+    networks:
+      - test-network
+    command: npm start
+
+  # Nginx Reverse Proxy for Testing
+  nginx-test:
+    image: nginx:alpine
+    container_name: vulnscanner-nginx-test
+    ports:
+      - "8080:80"
+    volumes:
+      - ./infrastructure/nginx/nginx.test.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - backend-test
+      - frontend-test
+    networks:
+      - test-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Test Runner Service
+  test-runner:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: vulnscanner-test-runner
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres-test:5432/vulnscanner_test
+      - REDIS_URL=redis://redis-test:6379/0
+      - CELERY_BROKER_URL=amqp://admin:admin@rabbitmq-test:5672//
+      - CELERY_RESULT_BACKEND=redis://redis-test:6379/1
+      - SECRET_KEY=test-secret-key-change-in-production
+      - TESTING=true
+      - PYTHONPATH=/app
+    volumes:
+      - ./backend:/app
+      - test_results:/app/test-results
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+      redis-test:
+        condition: service_healthy
+      rabbitmq-test:
+        condition: service_healthy
+    networks:
+      - test-network
+    profiles:
+      - testing
+    command: >
+      sh -c "
+        echo 'Running database migrations...' &&
+        alembic upgrade head &&
+        echo 'Running tests...' &&
+        python -m pytest tests/ -v --tb=short --junitxml=test-results/results.xml --cov=. --cov-report=xml --cov-report=html &&
+        echo 'Tests completed!'
+      "
+
+volumes:
+  postgres_test_data:
+    driver: local
+  redis_test_data:
+    driver: local
+  rabbitmq_test_data:
+    driver: local
+  backend_test_logs:
+    driver: local
+  celery_test_logs:
+    driver: local
+  celery_beat_test_data:
+    driver: local
+  test_results:
+    driver: local
+
+networks:
+  test-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

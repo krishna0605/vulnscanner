@@ -3,30 +3,87 @@ Pydantic schemas for dashboard API endpoints.
 Defines request/response models for dashboard functionality.
 """
 from typing import Optional, Dict, Any, List
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import UUID
-from pydantic import BaseModel, Field, ConfigDict
+import re
+from urllib.parse import urlparse
+import ipaddress
+from pydantic import BaseModel, Field, ConfigDict, field_validator
 
-from models import ScanStatus
+from ..models import ScanStatus
 
 
 # Base schemas
 class ProjectBase(BaseModel):
     """Base project schema."""
-    name: str = Field(..., min_length=1, max_length=100, description="Project name")
+    name: str = Field(..., min_length=3, max_length=100, description="Project name")
     description: Optional[str] = Field(None, description="Project description")
     target_domain: str = Field(..., min_length=1, max_length=255, description="Target domain to scan")
     scope_rules: List[str] = Field(default_factory=list, description="URL scope rules (regex patterns)")
+    
+    @field_validator('target_domain')
+    @classmethod
+    def validate_domain(cls, v: str) -> str:
+        """Validate and normalize target_domain.
+
+        Accepts full URLs like "https://example.com/path" and normalizes to the host
+        (e.g., "example.com"). Also accepts raw domains (with or without port) and IPs.
+        """
+        if not v or not v.strip():
+            raise ValueError("Domain cannot be empty")
+
+        raw = v.strip()
+
+        # If it's a URL, extract hostname/netloc
+        host = raw
+        if '://' in raw:
+            parsed = urlparse(raw)
+            host = parsed.netloc or parsed.path
+        else:
+            # Strip any path if present
+            host = raw.split('/')[0]
+
+        # Remove credentials
+        if '@' in host:
+            host = host.split('@')[-1]
+        # Remove port
+        if ':' in host:
+            host = host.split(':')[0]
+
+        host = host.strip().lower()
+        if not host:
+            raise ValueError("Domain cannot be empty after normalization")
+
+        # Allow localhost
+        if host == 'localhost':
+            return host
+
+        # Allow IP addresses (IPv4/IPv6)
+        try:
+            ipaddress.ip_address(host)
+            return host
+        except ValueError:
+            pass
+
+        # Basic domain format validation: letters, numbers, dots, hyphens
+        domain_pattern = r'^[a-z0-9]([a-z0-9\-\.]*[a-z0-9])?$'
+        if not re.match(domain_pattern, host):
+            raise ValueError("Invalid domain format - only letters, numbers, dots, and hyphens allowed")
+
+        # Must contain at least one dot (e.g., example.com)
+        if '.' not in host:
+            raise ValueError("Domain must contain at least one dot (e.g., example.com)")
+
+        return host
 
 
 class ProjectCreate(ProjectBase):
     """Schema for creating a new project."""
-    pass
 
 
 class ProjectUpdate(BaseModel):
     """Schema for updating a project."""
-    name: Optional[str] = Field(None, min_length=1, max_length=100)
+    name: Optional[str] = Field(None, min_length=3, max_length=100)
     description: Optional[str] = None
     target_domain: Optional[str] = Field(None, min_length=1, max_length=255)
     scope_rules: Optional[List[str]] = None
@@ -36,8 +93,8 @@ class ProjectResponse(ProjectBase):
     """Schema for project response."""
     model_config = ConfigDict(from_attributes=True)
     
-    id: UUID
-    owner_id: UUID
+    id: str
+    owner_id: str
     created_at: datetime
     updated_at: datetime
 
@@ -48,6 +105,7 @@ class ScanConfigurationSchema(BaseModel):
     max_depth: int = Field(default=3, ge=1, le=10, description="Maximum crawl depth")
     max_pages: int = Field(default=1000, ge=10, le=100000, description="Maximum pages to crawl")
     requests_per_second: int = Field(default=10, ge=1, le=100, description="Request rate limit")
+    max_concurrent_requests: int = Field(default=10, ge=1, le=100, description="Maximum concurrent requests")
     timeout: int = Field(default=30, ge=5, le=300, description="Request timeout in seconds")
     follow_redirects: bool = Field(default=True, description="Follow HTTP redirects")
     respect_robots: bool = Field(default=True, description="Respect robots.txt")
@@ -55,11 +113,19 @@ class ScanConfigurationSchema(BaseModel):
     scope_patterns: List[str] = Field(default_factory=list, description="URL scope patterns")
     exclude_patterns: List[str] = Field(default_factory=list, description="URL exclude patterns")
     authentication: Optional[Dict[str, Any]] = Field(None, description="Authentication configuration")
+    target_url: Optional[str] = Field(None, description="Explicit target URL (overrides project target_domain)")
 
 
 class ScanSessionCreate(BaseModel):
     """Schema for creating a new scan session."""
     configuration: ScanConfigurationSchema
+
+
+class ScanSessionUpdate(BaseModel):
+    """Schema for updating a scan session."""
+    status: Optional[ScanStatus] = None
+    end_time: Optional[datetime] = None
+    stats: Optional[Dict[str, Any]] = None
 
 
 class ScanSessionResponse(BaseModel):
@@ -74,6 +140,7 @@ class ScanSessionResponse(BaseModel):
     configuration: Dict[str, Any]
     stats: Dict[str, Any]
     created_by: UUID
+    created_at: Optional[datetime] = None
 
 
 # URL discovery schemas
@@ -193,7 +260,7 @@ class RealTimeUpdate(BaseModel):
     """Schema for real-time updates."""
     event_type: str = Field(..., description="Type of update event")
     data: Dict[str, Any] = Field(..., description="Update data")
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     session_id: Optional[UUID] = None
 
 
@@ -206,7 +273,7 @@ class ScanProgressUpdate(BaseModel):
     urls_discovered: int = Field(..., ge=0)
     current_url: Optional[str] = None
     message: Optional[str] = None
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class DashboardMetricUpdate(BaseModel):
@@ -215,7 +282,7 @@ class DashboardMetricUpdate(BaseModel):
     metric_value: float
     metric_type: str
     labels: Dict[str, Any] = Field(default_factory=dict)
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 # Pagination schemas

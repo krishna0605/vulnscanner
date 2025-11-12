@@ -3,17 +3,16 @@ API routes for scan results including discovered URLs, forms, and technology fin
 """
 
 import logging
-from typing import List, Optional, Dict, Any
-from datetime import datetime
+from typing import List, Dict, Any
+from datetime import datetime, timezone
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status, Query, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, desc, func, distinct
-from sqlalchemy.orm import selectinload
 
 from api.deps import get_db
-from core.auth_deps import get_current_user, get_user_id
+from core.auth_deps import get_user_id
 from models import (
     ScanSession, Project, DiscoveredUrl, ExtractedForm, TechnologyFingerprint
 )
@@ -41,13 +40,16 @@ async def list_scan_urls(
 ):
     """List discovered URLs for a scan session."""
     try:
+        # Convert UUID to string for SQLite compatibility
+        scan_id_str = str(scan_id)
+        
         # Verify scan ownership
         scan_query = (
             select(ScanSession)
             .join(Project)
             .where(
                 and_(
-                    ScanSession.id == scan_id,
+                    ScanSession.id == scan_id_str,
                     Project.owner_id == user_id
                 )
             )
@@ -62,7 +64,7 @@ async def list_scan_urls(
             )
         
         # Build query with filters
-        query = select(DiscoveredUrl).where(DiscoveredUrl.session_id == scan_id)
+        query = select(DiscoveredUrl).where(DiscoveredUrl.session_id == scan_id_str)
         
         if filters.status_code:
             query = query.where(DiscoveredUrl.status_code == filters.status_code)
@@ -107,13 +109,16 @@ async def create_discovered_url(
 ):
     """Create a new discovered URL entry."""
     try:
+        # Convert UUID to string for SQLite compatibility
+        scan_id_str = str(scan_id)
+        
         # Verify scan ownership
         scan_query = (
             select(ScanSession)
             .join(Project)
             .where(
                 and_(
-                    ScanSession.id == scan_id,
+                    ScanSession.id == scan_id_str,
                     Project.owner_id == user_id
                 )
             )
@@ -130,7 +135,7 @@ async def create_discovered_url(
         # Check for duplicate URL
         existing_query = select(DiscoveredUrl).where(
             and_(
-                DiscoveredUrl.session_id == scan_id,
+                DiscoveredUrl.session_id == scan_id_str,
                 DiscoveredUrl.url == url_data.url,
                 DiscoveredUrl.method == url_data.method
             )
@@ -145,7 +150,7 @@ async def create_discovered_url(
             )
         
         discovered_url = DiscoveredUrl(
-            session_id=scan_id,
+            session_id=scan_id_str,
             **url_data.model_dump()
         )
         
@@ -175,14 +180,18 @@ async def get_discovered_url(
 ):
     """Get a specific discovered URL."""
     try:
+        # Convert UUIDs to strings for SQLite compatibility
+        scan_id_str = str(scan_id)
+        url_id_str = str(url_id)
+        
         query = (
             select(DiscoveredUrl)
             .join(ScanSession)
             .join(Project)
             .where(
                 and_(
-                    DiscoveredUrl.id == url_id,
-                    DiscoveredUrl.session_id == scan_id,
+                    DiscoveredUrl.id == url_id_str,
+                    DiscoveredUrl.session_id == scan_id_str,
                     Project.owner_id == user_id
                 )
             )
@@ -219,13 +228,16 @@ async def list_scan_forms(
 ):
     """List extracted forms for a scan session."""
     try:
+        # Convert UUID to string for SQLite compatibility
+        scan_id_str = str(scan_id)
+        
         # Verify scan ownership
         scan_query = (
             select(ScanSession)
             .join(Project)
             .where(
                 and_(
-                    ScanSession.id == scan_id,
+                    ScanSession.id == scan_id_str,
                     Project.owner_id == user_id
                 )
             )
@@ -243,7 +255,7 @@ async def list_scan_forms(
         query = (
             select(ExtractedForm)
             .join(DiscoveredUrl)
-            .where(DiscoveredUrl.session_id == scan_id)
+            .where(DiscoveredUrl.session_id == scan_id_str)
         )
         
         if filters.form_method:
@@ -259,7 +271,7 @@ async def list_scan_forms(
             query = query.where(ExtractedForm.form_action.ilike(f"%{filters.action_pattern}%"))
         
         query = (
-            query.order_by(desc(DiscoveredURL.discovered_at))
+            query.order_by(desc(DiscoveredUrl.discovered_at))
             .limit(pagination.limit)
             .offset(pagination.offset)
         )
@@ -288,6 +300,9 @@ async def create_extracted_form(
 ):
     """Create a new extracted form entry."""
     try:
+        # Convert UUID to string for SQLite compatibility
+        scan_id_str = str(scan_id)
+        
         # Verify URL belongs to the scan and user owns it
         url_query = (
             select(DiscoveredUrl)
@@ -296,7 +311,7 @@ async def create_extracted_form(
             .where(
                 and_(
                     DiscoveredUrl.id == form_data.url_id,
-                    DiscoveredUrl.session_id == scan_id,
+                    DiscoveredUrl.session_id == scan_id_str,
                     Project.owner_id == user_id
                 )
             )
@@ -338,6 +353,10 @@ async def get_extracted_form(
 ):
     """Get a specific extracted form."""
     try:
+        # Convert UUIDs to strings for SQLite compatibility
+        scan_id_str = str(scan_id)
+        form_id_str = str(form_id)
+        
         query = (
             select(ExtractedForm)
             .join(DiscoveredUrl)
@@ -345,8 +364,8 @@ async def get_extracted_form(
             .join(Project)
             .where(
                 and_(
-                    ExtractedForm.id == form_id,
-                    DiscoveredUrl.session_id == scan_id,
+                    ExtractedForm.id == form_id_str,
+                    DiscoveredUrl.session_id == scan_id_str,
                     Project.owner_id == user_id
                 )
             )
@@ -383,13 +402,16 @@ async def list_scan_technologies(
 ):
     """List technology fingerprints for a scan session."""
     try:
+        # Convert UUID to string for SQLite compatibility
+        scan_id_str = str(scan_id)
+        
         # Verify scan ownership
         scan_query = (
             select(ScanSession)
             .join(Project)
             .where(
                 and_(
-                    ScanSession.id == scan_id,
+                    ScanSession.id == scan_id_str,
                     Project.owner_id == user_id
                 )
             )
@@ -407,7 +429,7 @@ async def list_scan_technologies(
         query = (
             select(TechnologyFingerprint)
             .join(DiscoveredUrl)
-            .where(DiscoveredUrl.session_id == scan_id)
+            .where(DiscoveredUrl.session_id == scan_id_str)
         )
         
         if filters.server_software:
@@ -449,6 +471,9 @@ async def create_technology_fingerprint(
 ):
     """Create a new technology fingerprint entry."""
     try:
+        # Convert UUID to string for SQLite compatibility
+        scan_id_str = str(scan_id)
+        
         # Verify URL belongs to the scan and user owns it
         url_query = (
             select(DiscoveredUrl)
@@ -457,7 +482,7 @@ async def create_technology_fingerprint(
             .where(
                 and_(
                     DiscoveredUrl.id == tech_data.url_id,
-                    DiscoveredUrl.session_id == scan_id,
+                    DiscoveredUrl.session_id == scan_id_str,
                     Project.owner_id == user_id
                 )
             )
@@ -499,6 +524,10 @@ async def get_technology_fingerprint(
 ):
     """Get a specific technology fingerprint."""
     try:
+        # Convert UUIDs to strings for SQLite compatibility
+        scan_id_str = str(scan_id)
+        tech_id_str = str(tech_id)
+        
         query = (
             select(TechnologyFingerprint)
             .join(DiscoveredUrl)
@@ -506,8 +535,8 @@ async def get_technology_fingerprint(
             .join(Project)
             .where(
                 and_(
-                    TechnologyFingerprint.id == tech_id,
-                    DiscoveredUrl.session_id == scan_id,
+                    TechnologyFingerprint.id == tech_id_str,
+                    DiscoveredUrl.session_id == scan_id_str,
                     Project.owner_id == user_id
                 )
             )
@@ -542,13 +571,16 @@ async def get_scan_results_summary(
 ):
     """Get a summary of scan results."""
     try:
+        # Convert UUID to string for SQLite compatibility
+        scan_id_str = str(scan_id)
+        
         # Verify scan ownership
         scan_query = (
             select(ScanSession)
             .join(Project)
             .where(
                 and_(
-                    ScanSession.id == scan_id,
+                    ScanSession.id == scan_id_str,
                     Project.owner_id == user_id
                 )
             )
@@ -563,14 +595,14 @@ async def get_scan_results_summary(
             )
         
         # Get counts
-        urls_count_query = select(func.count(DiscoveredUrl.id)).where(DiscoveredUrl.session_id == scan_id)
+        urls_count_query = select(func.count(DiscoveredUrl.id)).where(DiscoveredUrl.session_id == scan_id_str)
         urls_count_result = await db.execute(urls_count_query)
         urls_count = urls_count_result.scalar()
         
         forms_count_query = (
             select(func.count(ExtractedForm.id))
             .join(DiscoveredUrl)
-            .where(DiscoveredUrl.session_id == scan_id)
+            .where(DiscoveredUrl.session_id == scan_id_str)
         )
         forms_count_result = await db.execute(forms_count_query)
         forms_count = forms_count_result.scalar()
@@ -578,7 +610,7 @@ async def get_scan_results_summary(
         tech_count_query = (
             select(func.count(TechnologyFingerprint.id))
             .join(DiscoveredUrl)
-            .where(DiscoveredUrl.session_id == scan_id)
+            .where(DiscoveredUrl.session_id == scan_id_str)
         )
         tech_count_result = await db.execute(tech_count_query)
         tech_count = tech_count_result.scalar()
@@ -586,7 +618,7 @@ async def get_scan_results_summary(
         # Get unique domains
         domains_query = (
             select(func.count(distinct(func.split_part(DiscoveredUrl.url, '/', 3))))
-            .where(DiscoveredUrl.session_id == scan_id)
+            .where(DiscoveredUrl.session_id == scan_id_str)
         )
         domains_result = await db.execute(domains_query)
         unique_domains = domains_result.scalar()
@@ -594,7 +626,7 @@ async def get_scan_results_summary(
         # Get status code distribution
         status_codes_query = (
             select(DiscoveredUrl.status_code, func.count(DiscoveredUrl.id))
-            .where(DiscoveredUrl.session_id == scan_id)
+            .where(DiscoveredUrl.session_id == scan_id_str)
             .group_by(DiscoveredUrl.status_code)
         )
         status_codes_result = await db.execute(status_codes_query)
@@ -607,7 +639,7 @@ async def get_scan_results_summary(
             total_technologies=tech_count,
             unique_domains=unique_domains,
             status_code_distribution=status_code_distribution,
-            generated_at=datetime.utcnow()
+            generated_at=datetime.now(timezone.utc)
         )
         
     except HTTPException:
@@ -617,6 +649,139 @@ async def get_scan_results_summary(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to retrieve scan results summary: {str(e)}"
+        )
+
+
+@router.get("/scans/{scan_id}/export")
+async def export_scan_results_direct(
+    scan_id: UUID,
+    format: str = Query(..., pattern="^(json|csv|pdf)$"),
+    db: AsyncSession = Depends(get_db),
+    user_id: str = Depends(get_user_id)
+):
+    """Export scan results directly in the specified format."""
+    try:
+        # Convert UUID to string for SQLite compatibility
+        scan_id_str = str(scan_id)
+        
+        # Verify scan ownership
+        scan_query = (
+            select(ScanSession)
+            .join(Project)
+            .where(
+                and_(
+                    ScanSession.id == scan_id_str,
+                    Project.owner_id == user_id
+                )
+            )
+        )
+        scan_result = await db.execute(scan_query)
+        scan = scan_result.scalar_one_or_none()
+        
+        if not scan:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Scan session not found"
+            )
+        
+        # Get all scan data
+        urls_query = select(DiscoveredUrl).where(DiscoveredUrl.session_id == scan_id_str)
+        urls_result = await db.execute(urls_query)
+        urls = urls_result.scalars().all()
+        
+        forms_query = (
+            select(ExtractedForm)
+            .join(DiscoveredUrl)
+            .where(DiscoveredUrl.session_id == scan_id_str)
+        )
+        forms_result = await db.execute(forms_query)
+        forms = forms_result.scalars().all()
+        
+        techs_query = (
+            select(TechnologyFingerprint)
+            .join(DiscoveredUrl)
+            .where(DiscoveredUrl.session_id == scan_id_str)
+        )
+        techs_result = await db.execute(techs_query)
+        techs = techs_result.scalars().all()
+        
+        if format == "json":
+            from fastapi.responses import JSONResponse
+            data = {
+                "scan_id": str(scan_id),
+                "scan_status": scan.status.value if hasattr(scan.status, 'value') else str(scan.status),
+                "start_time": scan.start_time.isoformat() if scan.start_time else None,
+                "end_time": scan.end_time.isoformat() if scan.end_time else None,
+                "urls": [
+                    {
+                        "url": url.url,
+                        "method": url.method,
+                        "status_code": url.status_code,
+                        "content_type": url.content_type,
+                        "page_title": url.page_title
+                    } for url in urls
+                ],
+                "forms": [
+                    {
+                        "form_action": form.form_action,
+                        "form_method": form.form_method,
+                        "form_fields": form.form_fields
+                    } for form in forms
+                ],
+                "technologies": [
+                    {
+                        "server_software": tech.server_software,
+                        "programming_language": tech.programming_language,
+                        "framework": tech.framework,
+                        "cms": tech.cms
+                    } for tech in techs
+                ]
+            }
+            return JSONResponse(content=data, headers={"content-type": "application/json"})
+        
+        elif format == "csv":
+            import csv
+            import io
+            from fastapi.responses import StreamingResponse
+            
+            output = io.StringIO()
+            writer = csv.writer(output)
+            
+            # Write headers
+            writer.writerow(["url", "method", "status_code", "content_type", "page_title"])
+            
+            # Write URL data
+            for url in urls:
+                writer.writerow([
+                    url.url,
+                    url.method,
+                    url.status_code,
+                    url.content_type,
+                    url.page_title
+                ])
+            
+            output.seek(0)
+            return StreamingResponse(
+                io.BytesIO(output.getvalue().encode()),
+                media_type="text/csv",
+                headers={"Content-Disposition": f"attachment; filename=scan_{scan_id}_results.csv"}
+            )
+        
+        elif format == "pdf":
+            # For now, return a simple text response indicating PDF generation
+            from fastapi.responses import PlainTextResponse
+            return PlainTextResponse(
+                content=f"PDF export for scan {scan_id} - Feature coming soon",
+                media_type="application/pdf"
+            )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error exporting scan results: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to export scan results: {str(e)}"
         )
 
 
@@ -630,13 +795,16 @@ async def export_scan_results(
 ):
     """Export scan results in the specified format."""
     try:
+        # Convert UUID to string for SQLite compatibility
+        scan_id_str = str(scan_id)
+        
         # Verify scan ownership
         scan_query = (
             select(ScanSession)
             .join(Project)
             .where(
                 and_(
-                    ScanSession.id == scan_id,
+                    ScanSession.id == scan_id_str,
                     Project.owner_id == user_id
                 )
             )
@@ -684,13 +852,16 @@ async def get_export_status(
 ):
     """Get the status of an export task."""
     try:
+        # Convert UUID to string for SQLite compatibility
+        scan_id_str = str(scan_id)
+        
         # Verify scan ownership
         scan_query = (
             select(ScanSession)
             .join(Project)
             .where(
                 and_(
-                    ScanSession.id == scan_id,
+                    ScanSession.id == scan_id_str,
                     Project.owner_id == user_id
                 )
             )
@@ -705,7 +876,7 @@ async def get_export_status(
             )
         
         # Get task status from Celery
-        from backend.tasks.celery_app import celery_app
+        from tasks.celery_app import celery_app
         task = celery_app.AsyncResult(task_id)
         
         return {

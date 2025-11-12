@@ -1,0 +1,353 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vulscanner-config
+  namespace: vulscanner
+  labels:
+    app.kubernetes.io/name: enhanced-vulnerability-scanner
+    app.kubernetes.io/component: config
+    app.kubernetes.io/part-of: vulscanner
+data:
+  # Application Configuration
+  ENVIRONMENT: "production"
+  DEBUG: "false"
+  LOG_LEVEL: "INFO"
+  
+  # API Configuration
+  WORKERS: "4"
+  MAX_CONNECTIONS: "100"
+  RATE_LIMIT_PER_MINUTE: "100"
+  CORS_ORIGINS: "https://vulscanner.example.com"
+  
+  # Database Configuration
+  POSTGRES_DB: "vulscanner"
+  POSTGRES_USER: "vulscanner"
+  
+  # Redis Configuration
+  REDIS_DB: "0"
+  
+  # RabbitMQ Configuration
+  RABBITMQ_USER: "vulscanner"
+  RABBITMQ_VHOST: "vulscanner"
+  
+  # Celery Configuration
+  CELERY_CONCURRENCY: "4"
+  CELERY_MAX_TASKS_PER_CHILD: "1000"
+  CELERY_TIME_LIMIT: "3600"
+  CELERY_SOFT_TIME_LIMIT: "3300"
+  
+  # Crawler Configuration
+  CRAWLER_MAX_DEPTH: "3"
+  CRAWLER_MAX_PAGES: "1000"
+  CRAWLER_REQUESTS_PER_SECOND: "10"
+  CRAWLER_TIMEOUT: "30"
+  CRAWLER_USER_AGENT: "Enhanced-Vulnerability-Scanner/1.0"
+  
+  # Monitoring Configuration
+  PROMETHEUS_PORT: "9090"
+  GRAFANA_PORT: "3000"
+  
+  # Security Configuration
+  RATE_LIMIT_ENABLED: "true"
+  CORS_ENABLED: "true"
+  HTTPS_ONLY: "true"
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+  namespace: vulscanner
+  labels:
+    app.kubernetes.io/name: enhanced-vulnerability-scanner
+    app.kubernetes.io/component: nginx-config
+    app.kubernetes.io/part-of: vulscanner
+data:
+  nginx.conf: |
+    user nginx;
+    worker_processes auto;
+    error_log /var/log/nginx/error.log warn;
+    pid /var/run/nginx.pid;
+
+    events {
+        worker_connections 1024;
+        use epoll;
+        multi_accept on;
+    }
+
+    http {
+        include /etc/nginx/mime.types;
+        default_type application/octet-stream;
+
+        # Logging
+        log_format main '$remote_addr - $remote_user [$time_local] "$request" '
+                       '$status $body_bytes_sent "$http_referer" '
+                       '"$http_user_agent" "$http_x_forwarded_for" '
+                       'rt=$request_time uct="$upstream_connect_time" '
+                       'uht="$upstream_header_time" urt="$upstream_response_time"';
+
+        access_log /var/log/nginx/access.log main;
+
+        # Performance
+        sendfile on;
+        tcp_nopush on;
+        tcp_nodelay on;
+        keepalive_timeout 65;
+        types_hash_max_size 2048;
+        client_max_body_size 100M;
+
+        # Gzip
+        gzip on;
+        gzip_vary on;
+        gzip_min_length 1024;
+        gzip_proxied any;
+        gzip_comp_level 6;
+        gzip_types
+            text/plain
+            text/css
+            text/xml
+            text/javascript
+            application/json
+            application/javascript
+            application/xml+rss
+            application/atom+xml
+            image/svg+xml;
+
+        # Security Headers
+        add_header X-Frame-Options DENY always;
+        add_header X-Content-Type-Options nosniff always;
+        add_header X-XSS-Protection "1; mode=block" always;
+        add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+        add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:; frame-ancestors 'none';" always;
+
+        # Rate Limiting
+        limit_req_zone $binary_remote_addr zone=api:10m rate=10r/s;
+        limit_req_zone $binary_remote_addr zone=login:10m rate=1r/s;
+
+        # Upstream Backend
+        upstream backend {
+            least_conn;
+            server vulscanner-backend:8000 max_fails=3 fail_timeout=30s;
+            keepalive 32;
+        }
+
+        # Upstream Frontend
+        upstream frontend {
+            least_conn;
+            server vulscanner-frontend:80 max_fails=3 fail_timeout=30s;
+            keepalive 32;
+        }
+
+        # Health Check
+        server {
+            listen 80;
+            server_name _;
+            location /health {
+                access_log off;
+                return 200 "healthy\n";
+                add_header Content-Type text/plain;
+            }
+        }
+
+        # Main Server
+        server {
+            listen 80;
+            server_name vulscanner.example.com;
+
+            # Redirect to HTTPS
+            return 301 https://$server_name$request_uri;
+        }
+
+        server {
+            listen 443 ssl http2;
+            server_name vulscanner.example.com;
+
+            # SSL Configuration
+            ssl_certificate /etc/nginx/ssl/cert.pem;
+            ssl_certificate_key /etc/nginx/ssl/key.pem;
+            ssl_protocols TLSv1.2 TLSv1.3;
+            ssl_ciphers ECDHE-RSA-AES256-GCM-SHA512:DHE-RSA-AES256-GCM-SHA512:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA384;
+            ssl_prefer_server_ciphers off;
+            ssl_session_cache shared:SSL:10m;
+            ssl_session_timeout 10m;
+
+            # API Routes
+            location /api/ {
+                limit_req zone=api burst=20 nodelay;
+                
+                proxy_pass http://backend;
+                proxy_http_version 1.1;
+                proxy_set_header Upgrade $http_upgrade;
+                proxy_set_header Connection 'upgrade';
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+                proxy_cache_bypass $http_upgrade;
+                
+                proxy_connect_timeout 30s;
+                proxy_send_timeout 30s;
+                proxy_read_timeout 30s;
+            }
+
+            # Authentication Routes (stricter rate limiting)
+            location /api/v1/auth/ {
+                limit_req zone=login burst=5 nodelay;
+                
+                proxy_pass http://backend;
+                proxy_http_version 1.1;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+            }
+
+            # Frontend Routes
+            location / {
+                proxy_pass http://frontend;
+                proxy_http_version 1.1;
+                proxy_set_header Upgrade $http_upgrade;
+                proxy_set_header Connection 'upgrade';
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+                proxy_cache_bypass $http_upgrade;
+            }
+
+            # Static Assets (with caching)
+            location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+                proxy_pass http://frontend;
+                expires 1y;
+                add_header Cache-Control "public, immutable";
+            }
+        }
+    }
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: vulscanner
+  labels:
+    app.kubernetes.io/name: enhanced-vulnerability-scanner
+    app.kubernetes.io/component: prometheus-config
+    app.kubernetes.io/part-of: vulscanner
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+      evaluation_interval: 15s
+      external_labels:
+        cluster: 'vulscanner-prod'
+        environment: 'production'
+
+    rule_files:
+      - "/etc/prometheus/rules/*.yml"
+
+    alerting:
+      alertmanagers:
+        - static_configs:
+            - targets:
+              - alertmanager:9093
+
+    scrape_configs:
+      # Prometheus itself
+      - job_name: 'prometheus'
+        static_configs:
+          - targets: ['localhost:9090']
+
+      # Backend API
+      - job_name: 'vulscanner-backend'
+        static_configs:
+          - targets: ['vulscanner-backend:8000']
+        metrics_path: '/api/v1/metrics'
+        scrape_interval: 30s
+
+      # Celery Workers
+      - job_name: 'vulscanner-celery'
+        static_configs:
+          - targets: ['vulscanner-celery-worker:9540']
+        scrape_interval: 30s
+
+      # PostgreSQL
+      - job_name: 'postgres'
+        static_configs:
+          - targets: ['postgres-exporter:9187']
+        scrape_interval: 30s
+
+      # Redis
+      - job_name: 'redis'
+        static_configs:
+          - targets: ['redis-exporter:9121']
+        scrape_interval: 30s
+
+      # RabbitMQ
+      - job_name: 'rabbitmq'
+        static_configs:
+          - targets: ['rabbitmq:15692']
+        scrape_interval: 30s
+
+      # Nginx
+      - job_name: 'nginx'
+        static_configs:
+          - targets: ['nginx-exporter:9113']
+        scrape_interval: 30s
+
+      # Node Exporter (system metrics)
+      - job_name: 'node'
+        static_configs:
+          - targets: ['node-exporter:9100']
+        scrape_interval: 30s
+
+      # Kubernetes API Server
+      - job_name: 'kubernetes-apiservers'
+        kubernetes_sd_configs:
+          - role: endpoints
+        scheme: https
+        tls_config:
+          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
+            action: keep
+            regex: default;kubernetes;https
+
+      # Kubernetes Nodes
+      - job_name: 'kubernetes-nodes'
+        kubernetes_sd_configs:
+          - role: node
+        scheme: https
+        tls_config:
+          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        relabel_configs:
+          - action: labelmap
+            regex: __meta_kubernetes_node_label_(.+)
+
+      # Kubernetes Pods
+      - job_name: 'kubernetes-pods'
+        kubernetes_sd_configs:
+          - role: pod
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+            action: keep
+            regex: true
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+            action: replace
+            target_label: __metrics_path__
+            regex: (.+)
+          - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+            action: replace
+            regex: ([^:]+)(?::\d+)?;(\d+)
+            replacement: $1:$2
+            target_label: __address__
+          - action: labelmap
+            regex: __meta_kubernetes_pod_label_(.+)
+          - source_labels: [__meta_kubernetes_namespace]
+            action: replace
+            target_label: kubernetes_namespace
+          - source_labels: [__meta_kubernetes_pod_name]
+            action: replace
+            target_label: kubernetes_pod_name

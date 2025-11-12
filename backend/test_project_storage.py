@@ -99,7 +99,7 @@ def test_project_storage():
         
         # Insert test project
         try:
-            insert_result = supabase.table('projects').insert(test_project).execute()
+            supabase.table('projects').insert(test_project).execute()
             print("✅ Test project created successfully!")
             print(f"📊 Project ID: {test_project['id']}")
             print(f"📝 Project Name: {test_project['name']}")

@@ -3,7 +3,6 @@
 Test script to verify project creation through FastAPI backend
 """
 import requests
-import json
 import sys
 from datetime import datetime
 

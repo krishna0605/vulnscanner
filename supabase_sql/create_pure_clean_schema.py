@@ -87,7 +87,7 @@ def create_pure_clean_schema():
     print(f"✅ Successfully created {output_file}")
     print(f"📁 File size: {len(modified_content):,} bytes")
     print(f"🗑️  Removed {total_removed} DROP statements")
-    print(f"🚀 Ready for initial Supabase deployment without warnings")
+    print("🚀 Ready for initial Supabase deployment without warnings")
     
     return True
 

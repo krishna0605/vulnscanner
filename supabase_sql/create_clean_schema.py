@@ -49,7 +49,7 @@ def create_clean_schema():
     with open('combined_schema_clean.sql', 'w', encoding='utf-8') as f:
         f.write(clean_content)
     
-    print(f"✅ Clean schema created: combined_schema_clean.sql")
+    print("✅ Clean schema created: combined_schema_clean.sql")
     print(f"📊 Removed {drop_count} DROP TRIGGER statements")
     print(f"📁 File size: {len(clean_content):,} bytes")
     print("\n🚀 Use combined_schema_clean.sql for initial deployment")

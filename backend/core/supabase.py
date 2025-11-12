@@ -5,9 +5,8 @@ This module provides Supabase client instances for database operations,
 authentication, and real-time subscriptions.
 """
 
-import os
 import logging
-from typing import Optional, Dict, Any
+from typing import Dict, Any
 from functools import lru_cache
 
 from .config import settings
@@ -43,26 +42,11 @@ def get_supabase_client():
                 logger.warning("Supabase URL or anon key not configured")
                 return None
             
-            from supabase import create_client, Client
+            from supabase import create_client
             
             _supabase_client = create_client(
                 supabase_url=settings.supabase_url,
-                supabase_key=settings.supabase_anon_key,
-                options={
-                    "auth": {
-                        "auto_refresh_token": True,
-                        "persist_session": True,
-                        "detect_session_in_url": False,
-                    },
-                    "db": {
-                        "schema": "public",
-                    },
-                    "global": {
-                        "headers": {
-                            "X-Client-Info": "vulscan-backend",
-                        },
-                    },
-                }
+                supabase_key=settings.supabase_anon_key
             )
             
             logger.info("Supabase client initialized successfully")
@@ -101,25 +85,11 @@ def get_supabase_admin_client():
                 logger.warning("Supabase URL or service role key not configured")
                 return None
             
-            from supabase import create_client, Client
+            from supabase import create_client
             
             _supabase_admin_client = create_client(
                 supabase_url=settings.supabase_url,
-                supabase_key=settings.supabase_service_role_key,
-                options={
-                    "auth": {
-                        "auto_refresh_token": False,
-                        "persist_session": False,
-                    },
-                    "db": {
-                        "schema": "public",
-                    },
-                    "global": {
-                        "headers": {
-                            "X-Client-Info": "vulscan-backend-admin",
-                        },
-                    },
-                }
+                supabase_key=settings.supabase_service_role_key
             )
             
             logger.info("Supabase admin client initialized successfully")
@@ -183,7 +153,7 @@ async def test_supabase_connection() -> Dict[str, Any]:
             result["client_available"] = True
             
             # Try a simple query to test connection
-            response = client.table("profiles").select("id").limit(1).execute()
+            client.table("profiles").select("id").limit(1).execute()
             result["connection_test"] = True
             
         # Test admin client

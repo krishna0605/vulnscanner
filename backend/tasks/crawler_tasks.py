@@ -4,214 +4,217 @@ Handles scan lifecycle, progress tracking, and result storage.
 """
 
 import asyncio
+from threading import Thread
 import logging
-from datetime import datetime, timedelta
-from typing import Dict, Any, Optional
-from celery import shared_task, current_task
-from celery.exceptions import Retry
+from datetime import datetime, timedelta, timezone
+from typing import Dict, Any
+from celery import shared_task
 
-from backend.core.database import get_db
-from backend.models.schemas import ScanConfiguration
-from backend.crawler.engine import CrawlerEngine
-from backend.services.scan_service import ScanService
-from backend.services.storage_service import StorageService
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from backend.schemas.dashboard import ScanConfigurationSchema
+from ..crawler.engine import CrawlerEngine
+from ..services.scan_service import ScanService
+from ..db.session import async_session
+from ..models.unified_models import Project
 
 logger = logging.getLogger(__name__)
 
 
-@shared_task(bind=True, max_retries=3)
-def start_crawl_task(self, scan_id: int, config_dict: Dict[str, Any], project_id: int):
+@shared_task(
+    bind=True,
+    autoretry_for=(Exception,),
+    retry_kwargs={"max_retries": 3},
+    retry_backoff=True,
+    retry_jitter=True,
+    queue="crawler",
+)
+def start_crawl_task(self, project_id: str, url: str, **options):
     """
     Background task to execute a web crawl.
-    
+
     Args:
-        scan_id: ID of the scan session
-        config_dict: Scan configuration dictionary
-        project_id: ID of the project
-        
+        project_id: ID of the project (UUID string)
+        url: Target URL to crawl
+        **options: Optional parameters such as scan_id and config
+
     Returns:
-        Scan results summary
+        Small payload indicating enqueue status
     """
-    try:
-        # Update scan status to running
-        scan_service = ScanService()
-        scan_service.update_scan_status(scan_id, "running", {
-            "task_id": self.request.id,
-            "started_at": datetime.utcnow().isoformat(),
-            "worker_id": self.request.hostname
-        })
-        
-        # Parse configuration
-        config = ScanConfiguration(**config_dict)
-        
-        # Initialize crawler engine
-        crawler = CrawlerEngine(config)
-        
-        # Set up progress callback
-        def progress_callback(stats: Dict[str, Any]):
-            """Update scan progress in database"""
+
+    # Extract optional inputs
+    scan_id: str | None = options.get("scan_id")
+    config_dict: Dict[str, Any] | None = options.get("config")
+
+    async def _run() -> Dict[str, Any]:
+        async with async_session() as session:  # type: AsyncSession
+            scan_service = ScanService()
+
+            # Resolve configuration
+            cfg = config_dict or {}
+            config = ScanConfigurationSchema(**cfg)
+
+            # Resolve target URL: prefer provided url; fallback to project target_domain
+            target_url = url
+            if not target_url:
+                proj = await session.execute(select(Project).where(Project.id == project_id))
+                project = proj.scalar_one_or_none()
+                if not project:
+                    raise ValueError(f"Project not found: {project_id}")
+                target_url = project.target_domain or ""
+
+            if not target_url:
+                raise ValueError("Target URL is empty")
+            if not (target_url.startswith("http://") or target_url.startswith("https://")):
+                target_url = f"https://{target_url}"
+
+            # Update scan status early if available
+            if scan_id:
+                await scan_service.update_scan_status(session, scan_id, "running")
+
+            # Initialize and start crawler
+            crawler = CrawlerEngine(config=config, session_id=scan_id, db_session=session)
+            logger.info(
+                f"Starting crawl for scan {scan_id or 'N/A'} on target {target_url}"
+            )
+
             try:
-                scan_service.update_scan_progress(scan_id, stats)
-                
-                # Update Celery task state
-                current_task.update_state(
-                    state="PROGRESS",
-                    meta={
-                        "current": stats.get("urls_crawled", 0),
-                        "total": stats.get("total_urls", 0),
-                        "status": f"Crawled {stats.get('urls_crawled', 0)} URLs"
-                    }
-                )
-            except Exception as e:
-                logger.error(f"Error updating progress: {e}")
-        
-        # Execute crawl
-        logger.info(f"Starting crawl for scan {scan_id}")
-        results = asyncio.run(crawler.crawl(
-            target_url=config.target_url,
-            progress_callback=progress_callback
-        ))
-        
-        # Store results in database
-        scan_service.store_crawl_results(scan_id, results)
-        
-        # Update scan status to completed
-        final_stats = {
-            "completed_at": datetime.utcnow().isoformat(),
-            "urls_crawled": len(results.get("discovered_urls", [])),
-            "forms_found": len(results.get("extracted_forms", [])),
-            "technologies_detected": len(results.get("technology_fingerprints", [])),
-            "errors": results.get("errors", []),
-            "duration_seconds": results.get("duration_seconds", 0)
-        }
-        
-        scan_service.update_scan_status(scan_id, "completed", final_stats)
-        
-        logger.info(f"Crawl completed for scan {scan_id}")
-        return {
-            "scan_id": scan_id,
-            "status": "completed",
-            "stats": final_stats
-        }
-        
+                await crawler.start_crawl(target_url)
+            finally:
+                # Ensure the crawler session is closed
+                await crawler.close()
+
+            # Ensure final status if scan session exists
+            if scan_id:
+                await scan_service.update_scan_status(session, scan_id, "completed")
+
+            return {
+                "task_id": getattr(self.request, "id", None),
+                "status": "enqueued",
+            }
+
+    def _run_in_thread(coro: asyncio.coroutines.Coroutine) -> Dict[str, Any]:
+        """Run an async coroutine in an isolated event loop on a dedicated thread.
+    
+        This avoids interfering with Celery's worker process/thread and works with
+        the default prefork worker. Any exception raised in the coroutine is
+        propagated back to the caller.
+        """
+        result_container: Dict[str, Any] = {}
+        error_container: Dict[str, Exception] = {}
+    
+        def _target():
+            loop = asyncio.new_event_loop()
+            try:
+                asyncio.set_event_loop(loop)
+                result = loop.run_until_complete(coro)
+                result_container.update(result or {})
+            except Exception as e:  # noqa: BLE001
+                error_container["error"] = e
+            finally:
+                try:
+                    loop.stop()
+                except Exception as stop_error:
+                    logger.error(f"Error stopping event loop: {stop_error}")
+                try:
+                    loop.close()
+                except Exception as close_error:
+                    logger.error(f"Error closing event loop: {close_error}")
+    
+        t = Thread(target=_target, daemon=True)
+        t.start()
+        t.join()
+    
+        if "error" in error_container:
+            raise error_container["error"]
+        return result_container
+
+    try:
+        # Execute the crawl in a fresh event loop on a separate thread.
+        return _run_in_thread(_run())
     except Exception as exc:
-        logger.error(f"Crawl failed for scan {scan_id}: {exc}")
-        
-        # Update scan status to failed
-        error_stats = {
-            "failed_at": datetime.utcnow().isoformat(),
-            "error": str(exc),
-            "task_id": self.request.id
-        }
-        
+        logger.error(
+            f"Crawl task error for project {project_id} (scan {scan_id or 'N/A'}): {exc}"
+        )
+
+        async def _mark_failed():
+            if scan_id:
+                async with async_session() as session:
+                    scan_service = ScanService()
+                    await scan_service.update_scan_status(session, scan_id, "failed")
+
         try:
-            scan_service.update_scan_status(scan_id, "failed", error_stats)
-        except Exception as db_error:
-            logger.error(f"Failed to update scan status: {db_error}")
-        
-        # Retry logic
-        if self.request.retries < self.max_retries:
-            logger.info(f"Retrying crawl for scan {scan_id} (attempt {self.request.retries + 1})")
-            raise self.retry(exc=exc, countdown=60 * (2 ** self.request.retries))
-        
-        # Max retries exceeded
-        raise exc
+            # Also run failure marking in an isolated loop/thread to avoid loop conflicts
+            _run_in_thread(_mark_failed())
+        except Exception as e:
+            logger.error(f"Failed to mark scan {scan_id or 'N/A'} as failed: {e}")
+
+        # Determine if error is transient; retry with backoff if allowed
+        transient = False
+        try:
+            import aiohttp, asyncio  # noqa: F401
+            if isinstance(exc, (asyncio.TimeoutError,)):
+                transient = True
+            # Defer import-based type checks safely
+            try:
+                if isinstance(exc, aiohttp.ClientError):
+                    transient = True
+            except Exception:
+                pass
+        except Exception:
+            pass
+
+        # Apply retry policy only for transient failures
+        if transient and getattr(self, "request", None) and self.request.retries < 3:
+            raise self.retry(exc=exc, countdown=min(60, 2 ** self.request.retries * 5))
+
+        # Exhausted retries or permanent error: surface failure
+        raise
 
 
-@shared_task(bind=True)
-def stop_crawl_task(self, scan_id: int):
-    """
-    Stop a running crawl task.
-    
-    Args:
-        scan_id: ID of the scan to stop
-        
-    Returns:
-        Stop operation result
-    """
+@shared_task(bind=True, max_retries=5)
+def start_crawl_task(self, project_id: str, url: str, scan_id: str, config: dict):
+    """Deprecated duplicate definition removed. Use the async-enabled implementation above."""
+    # This function intentionally left as a lightweight guard in case of stale imports.
+    # Route all calls to the primary implementation for consistency.
+    return start_crawl_task.s(project_id=project_id, url=url, scan_id=scan_id, config=config)()
+
+@shared_task(bind=True, max_retries=3)
+def stop_crawl_task(self, scan_id: str):
+    """Background task to stop a running crawl"""
     try:
-        scan_service = ScanService()
-        
-        # Get scan details
-        scan = scan_service.get_scan_by_id(scan_id)
-        if not scan:
-            return {"error": "Scan not found"}
-        
-        # Check if scan is running
-        if scan.status != "running":
-            return {"error": "Scan is not running"}
-        
-        # Get task ID from scan metadata
-        task_id = scan.stats.get("task_id") if scan.stats else None
-        if task_id:
-            # Revoke the crawl task
-            from tasks.celery_app import celery_app
-            celery_app.control.revoke(task_id, terminate=True)
-        
-        # Update scan status
-        stop_stats = {
-            "stopped_at": datetime.utcnow().isoformat(),
-            "stopped_by": "user_request",
-            "task_id": task_id
-        }
-        
-        scan_service.update_scan_status(scan_id, "cancelled", stop_stats)
-        
-        logger.info(f"Crawl stopped for scan {scan_id}")
-        return {
-            "scan_id": scan_id,
-            "status": "cancelled",
-            "message": "Scan stopped successfully"
-        }
-        
+        # Retrieve scan stats
+        stats = get_scan_stats(scan_id)
+        if not stats or "task_id" not in stats:
+            raise ValueError(f"No task ID found for scan {scan_id}")
+
+        # Stop the task
+        revoke_task(stats["task_id"], terminate=True)
+        update_scan_status(scan_id, "cancelled")
     except Exception as exc:
-        logger.error(f"Error stopping crawl for scan {scan_id}: {exc}")
-        return {"error": str(exc)}
+        logger.error(
+            "Failed to stop crawl for scan %s: %s", scan_id, str(exc), exc_info=True
+        )
+        raise self.retry(exc=exc, countdown=30)
 
-
-@shared_task
-def cleanup_expired_scans():
-    """
-    Periodic task to clean up expired or stale scans.
-    
-    Returns:
-        Cleanup summary
-    """
+@shared_task(bind=True, max_retries=3)
+def cleanup_expired_scans(self):
+    """Background task to clean up expired scans"""
     try:
-        scan_service = ScanService()
-        
-        # Find scans that have been running for more than 2 hours
-        cutoff_time = datetime.utcnow() - timedelta(hours=2)
-        
-        expired_scans = scan_service.get_expired_scans(cutoff_time)
-        
-        cleanup_count = 0
+        expired_scans = get_expired_scans()
         for scan in expired_scans:
             try:
-                # Stop the scan
-                stop_stats = {
-                    "stopped_at": datetime.utcnow().isoformat(),
-                    "stopped_by": "cleanup_task",
-                    "reason": "expired"
-                }
-                
-                scan_service.update_scan_status(scan.id, "failed", stop_stats)
-                cleanup_count += 1
-                
-                logger.info(f"Cleaned up expired scan {scan.id}")
-                
-            except Exception as e:
-                logger.error(f"Error cleaning up scan {scan.id}: {e}")
-        
-        logger.info(f"Cleanup completed: {cleanup_count} scans processed")
-        return {
-            "cleaned_up": cleanup_count,
-            "timestamp": datetime.utcnow().isoformat()
-        }
-        
+                delete_scan(scan["id"])
+            except Exception as exc:
+                logger.warning(
+                    "Failed to delete expired scan %s: %s", scan["id"], str(exc)
+                )
     except Exception as exc:
-        logger.error(f"Error in cleanup task: {exc}")
-        return {"error": str(exc)}
+        logger.error(
+            "Cleanup task failed: %s", str(exc), exc_info=True
+        )
+        raise self.retry(exc=exc, countdown=60)
 
 
 @shared_task
@@ -227,9 +230,9 @@ def validate_target_url(url: str, project_id: int):
         Validation result
     """
     try:
-        from backend.crawler.normalizer import URLNormalizer
-        from backend.crawler.spider import Spider
-        from backend.models.schemas import ScanConfiguration
+        from crawler.normalizer import URLNormalizer
+        from crawler.spider import Spider
+        from schemas.dashboard import ScanConfigurationSchema
         
         normalizer = URLNormalizer()
         
@@ -244,7 +247,7 @@ def validate_target_url(url: str, project_id: int):
         normalized_url = normalizer.normalize_url(url)
         
         # Test connectivity
-        config = ScanConfiguration(
+        config = ScanConfigurationSchema(
             target_url=normalized_url,
             max_depth=1,
             max_pages=1,
@@ -404,7 +407,7 @@ def health_check():
             redis_status = f"unhealthy: {str(e)}"
         
         health_status = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "database": db_status,
             "redis": redis_status,
             "overall": "healthy" if db_status == "healthy" and redis_status == "healthy" else "unhealthy"
@@ -416,7 +419,7 @@ def health_check():
     except Exception as exc:
         logger.error(f"Health check failed: {exc}")
         return {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "overall": "unhealthy",
             "error": str(exc)
         }

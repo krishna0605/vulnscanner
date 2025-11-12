@@ -4,7 +4,6 @@ Test Supabase connection and create user if table exists.
 """
 
 import requests
-import json
 from passlib.context import CryptContext
 
 # Supabase configuration

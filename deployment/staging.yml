@@ -1,0 +1,190 @@
+# Enhanced Vulnerability Scanner - Staging Deployment Configuration
+
+environment: staging
+deployment_type: docker-compose
+
+# Health check configuration
+health_check:
+  timeout: 180          # Reduced timeout for staging
+  interval: 5           # More frequent checks
+  retries: 20           # Fewer retries
+  startup_grace: 30     # Shorter grace period
+
+# Service definitions
+services:
+  backend:
+    image: vulscanner/backend:staging
+    health_endpoint: /api/v1/health
+    port: 8000
+    replicas: 1
+    resources:
+      cpu_request: "250m"
+      cpu_limit: "1000m"
+      memory_request: "256Mi"
+      memory_limit: "1Gi"
+    environment:
+      - ENVIRONMENT=staging
+      - LOG_LEVEL=DEBUG
+      - WORKERS=2
+
+  frontend:
+    image: vulscanner/frontend:staging
+    health_endpoint: /
+    port: 3000
+    replicas: 1
+    resources:
+      cpu_request: "100m"
+      cpu_limit: "500m"
+      memory_request: "128Mi"
+      memory_limit: "512Mi"
+
+  celery-worker:
+    image: vulscanner/backend:staging
+    health_command: ["celery", "-A", "tasks.celery_app", "inspect", "ping"]
+    replicas: 1
+    resources:
+      cpu_request: "250m"
+      cpu_limit: "1000m"
+      memory_request: "256Mi"
+      memory_limit: "512Mi"
+    environment:
+      - CELERY_WORKER_CONCURRENCY=2
+      - CELERY_WORKER_PREFETCH_MULTIPLIER=1
+
+  celery-beat:
+    image: vulscanner/backend:staging
+    health_command: ["celery", "-A", "tasks.celery_app", "inspect", "scheduled"]
+    replicas: 1
+    resources:
+      cpu_request: "100m"
+      cpu_limit: "500m"
+      memory_request: "128Mi"
+      memory_limit: "256Mi"
+
+# Database configuration
+database:
+  migration_timeout: 300
+  backup_before_migration: true
+  backup_retention_days: 7
+  connection_pool_size: 10
+  max_overflow: 15
+
+# Load balancer configuration
+load_balancer:
+  type: nginx
+  ssl_enabled: false  # HTTP only for staging
+  rate_limiting:
+    requests_per_minute: 500
+    burst: 25
+
+# Monitoring and alerting
+monitoring:
+  enabled: true
+  slack_webhook: ${SLACK_WEBHOOK_URL_STAGING}
+  email_notifications: false  # Disabled for staging
+  metrics_retention: 7d
+  
+  # Prometheus configuration
+  prometheus:
+    scrape_interval: 30s
+    evaluation_interval: 30s
+    retention: 7d
+  
+  # Grafana dashboards
+  grafana:
+    admin_password: ${GRAFANA_ADMIN_PASSWORD_STAGING}
+    smtp_enabled: false
+  
+  # Log aggregation
+  logging:
+    level: DEBUG
+    format: json
+    retention: 7d
+    elasticsearch_enabled: false
+    loki_enabled: true
+
+# Security configuration (relaxed for staging)
+security:
+  ssl_certificate_path: ""
+  ssl_private_key_path: ""
+  
+  # Security headers (relaxed)
+  headers:
+    strict_transport_security: ""
+    content_security_policy: "default-src 'self' 'unsafe-inline' 'unsafe-eval'"
+    x_frame_options: "SAMEORIGIN"
+    x_content_type_options: "nosniff"
+    referrer_policy: "no-referrer-when-downgrade"
+
+# Backup configuration
+backup:
+  enabled: false  # Disabled for staging
+  schedule: "0 4 * * *"  # Daily at 4 AM if enabled
+  retention_days: 7
+  storage_type: local
+
+# Auto-scaling configuration
+autoscaling:
+  enabled: false  # Disabled for staging
+  min_replicas: 1
+  max_replicas: 3
+  target_cpu_utilization: 80
+  target_memory_utilization: 85
+
+# Deployment strategy
+deployment_strategy:
+  type: rolling_update
+  max_unavailable: 50%  # More aggressive for staging
+  max_surge: 50%
+
+# External dependencies
+external_dependencies:
+  supabase:
+    url: ${SUPABASE_URL_STAGING}
+    service_role_key: ${SUPABASE_SERVICE_ROLE_KEY_STAGING}
+    timeout: 30s
+    retry_attempts: 2
+  
+  redis:
+    url: ${REDIS_URL_STAGING}
+    timeout: 5s
+    retry_attempts: 2
+    max_connections: 50
+  
+  rabbitmq:
+    url: ${RABBITMQ_URL_STAGING}
+    timeout: 10s
+    retry_attempts: 2
+
+# Performance tuning (reduced for staging)
+performance:
+  db_pool_size: 10
+  db_max_overflow: 15
+  db_pool_timeout: 30
+  
+  redis_pool_size: 25
+  redis_pool_timeout: 5
+  
+  http_timeout: 30
+  http_max_connections: 50
+  http_max_connections_per_host: 15
+
+# Feature flags (enable experimental features)
+feature_flags:
+  new_crawler_engine: true
+  advanced_reporting: true
+  real_time_notifications: true
+  api_rate_limiting: false  # Disabled for testing
+  enhanced_security_headers: false
+  experimental_features: true  # Enable all experimental features
+
+# Maintenance windows (more flexible)
+maintenance:
+  allowed_windows:
+    - day: any
+      start_time: "00:00"
+      end_time: "23:59"
+      timezone: "UTC"
+  
+  auto_update_enabled: true
+  security_patch_auto_apply: true

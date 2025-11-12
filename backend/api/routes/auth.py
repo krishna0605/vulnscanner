@@ -1,62 +1,44 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 
-from core.supabase import get_supabase_client, get_supabase_admin_client, is_supabase_configured
-from core.auth_deps import get_current_user, get_current_user_optional, get_user_id
-from core.security import supabase_auth
-from schemas.auth import UserCreate, UserLogin, Token, UserPublic, PasswordReset, EmailVerification
+from core.auth_deps import get_current_user, get_user_id
+from core.supabase import is_supabase_configured, get_supabase_client
+from services.auth_service import auth_service
+from schemas.auth import UserCreate, UserLogin, Token, LoginResponse, UserPublic, PasswordReset, EmailVerification, RefreshTokenRequest
 
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 
+@router.get("/dev-test")
+async def dev_test():
+    """Test endpoint to check development mode."""
+    from core.config import settings
+    return {
+        "development_mode": settings.development_mode,
+        "skip_supabase": settings.skip_supabase,
+        "message": "Development test endpoint"
+    }
+
+
 @router.post("/register", response_model=UserPublic)
 async def register(data: UserCreate):
     """
-    Register a new user with Supabase Auth.
+    Register a new user.
     
-    This endpoint creates a new user account using Supabase authentication.
-    The user will receive an email verification link if email confirmation is enabled.
+    This endpoint creates a new user account. In development mode,
+    it uses the local SQLite database. In production, it uses Supabase Auth.
     """
-    if not is_supabase_configured():
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Authentication service not configured"
-        )
-    
     try:
-        client = get_supabase_client()
-        if not client:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Authentication service unavailable"
-            )
-        
-        # Register user with Supabase
-        response = client.auth.sign_up({
-            "email": data.email,
-            "password": data.password,
-            "options": {
-                "data": {
-                    "full_name": data.full_name
-                }
-            }
-        })
-        
-        if response.user:
-            return UserPublic(
-                id=response.user.id,
-                email=response.user.email,
-                full_name=response.user.user_metadata.get("full_name", ""),
-                email_confirmed=response.user.email_confirmed_at is not None
-            )
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Registration failed"
-            )
-            
+        result = await auth_service.register_user(data)
+        print(f"Registration result: {result}")
+        user, access_token = result
+        return user
+    except HTTPException:
+        # Re-raise HTTP exceptions as-is
+        raise
     except Exception as e:
+        print(f"Registration exception: {type(e).__name__}: {str(e)}")
         if "already registered" in str(e).lower():
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -68,47 +50,20 @@ async def register(data: UserCreate):
         )
 
 
-@router.post("/login", response_model=Token)
+@router.post("/login", response_model=LoginResponse)
 async def login(data: UserLogin):
     """
     Login user with email and password.
     
-    This endpoint authenticates a user with Supabase and returns a JWT token
+    This endpoint authenticates a user and returns a JWT token
     that can be used for subsequent API requests.
     """
-    if not is_supabase_configured():
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Authentication service not configured"
-        )
-    
     try:
-        client = get_supabase_client()
-        if not client:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Authentication service unavailable"
-            )
-        
-        # Authenticate with Supabase
-        response = client.auth.sign_in_with_password({
-            "email": data.email,
-            "password": data.password
-        })
-        
-        if response.session and response.session.access_token:
-            return Token(
-                access_token=response.session.access_token,
-                token_type="bearer",
-                expires_in=response.session.expires_in,
-                refresh_token=response.session.refresh_token
-            )
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid credentials"
-            )
-            
+        token_data = await auth_service.login_user(data)
+        return token_data
+    except HTTPException:
+        # Re-raise HTTP exceptions as-is
+        raise
     except Exception as e:
         if "invalid" in str(e).lower() or "credentials" in str(e).lower():
             raise HTTPException(
@@ -135,7 +90,7 @@ async def logout(user_id: str = Depends(get_user_id)):
         
         return {"message": "Successfully logged out"}
         
-    except Exception as e:
+    except Exception:
         # Even if logout fails, we can return success since the client
         # should discard the token anyway
         return {"message": "Logged out"}
@@ -149,50 +104,25 @@ async def get_current_user_info(current_user: Dict[str, Any] = Depends(get_curre
     This endpoint returns the profile information of the currently authenticated user.
     """
     return UserPublic(
-        id=current_user["id"],
+        id=str(current_user["id"]),
         email=current_user.get("email", ""),
-        full_name=current_user.get("user_metadata", {}).get("full_name", ""),
-        email_confirmed=current_user.get("email_confirmed_at") is not None
+        full_name=current_user.get("full_name", ""),
+        email_confirmed=current_user.get("email_confirmed", True)
     )
 
 
 @router.post("/refresh", response_model=Token)
-async def refresh_token(refresh_token: str):
+async def refresh_token(request: RefreshTokenRequest):
     """
     Refresh access token using refresh token.
     
     This endpoint generates a new access token using a valid refresh token.
     """
-    if not is_supabase_configured():
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Authentication service not configured"
-        )
-    
     try:
-        client = get_supabase_client()
-        if not client:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Authentication service unavailable"
-            )
-        
-        # Refresh the session
-        response = client.auth.refresh_session(refresh_token)
-        
-        if response.session and response.session.access_token:
-            return Token(
-                access_token=response.session.access_token,
-                token_type="bearer",
-                expires_in=response.session.expires_in,
-                refresh_token=response.session.refresh_token
-            )
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid refresh token"
-            )
-            
+        result = await auth_service.refresh_token(request.refresh_token)
+        return Token(**result)
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -222,12 +152,12 @@ async def forgot_password(data: PasswordReset):
             )
         
         # Send password reset email
-        response = client.auth.reset_password_email(data.email)
+        _ = client.auth.reset_password_email(data.email)
         
         # Always return success for security reasons (don't reveal if email exists)
         return {"message": "If the email exists, a password reset link has been sent"}
         
-    except Exception as e:
+    except Exception:
         # Always return success for security reasons
         return {"message": "If the email exists, a password reset link has been sent"}
 
@@ -240,38 +170,17 @@ async def verify_email(data: EmailVerification):
     This endpoint verifies a user's email address using the verification token
     sent to their email.
     """
-    if not is_supabase_configured():
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Authentication service not configured"
-        )
-    
     try:
-        client = get_supabase_client()
-        if not client:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Authentication service unavailable"
-            )
-        
-        # Verify email with token
-        response = client.auth.verify_otp({
-            "email": data.email,
-            "token": data.token,
-            "type": "email"
-        })
-        
-        if response.user:
-            return {"message": "Email verified successfully"}
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid verification token"
-            )
-            
-    except Exception as e:
+        result = await auth_service.verify_email(data.email, data.token)
+        return result
+    except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Email verification failed: {str(e)}"
         )
 
@@ -298,11 +207,11 @@ async def resend_verification_email(email: str):
             )
         
         # Resend verification email
-        response = client.auth.resend({"type": "signup", "email": email})
+        _ = client.auth.resend({"type": "signup", "email": email})
         
         return {"message": "Verification email sent"}
         
-    except Exception as e:
+    except Exception:
         # Return success for security reasons
         return {"message": "If the email exists, a verification email has been sent"}
 

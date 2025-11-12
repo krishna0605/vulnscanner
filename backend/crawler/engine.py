@@ -6,12 +6,11 @@ Handles URL discovery, rate limiting, and data extraction coordination.
 import asyncio
 import logging
 import time
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set
 from urllib.parse import urljoin, urlparse
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 
-import aiohttp
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .spider import WebSpider
@@ -19,8 +18,8 @@ from .parser import HTMLParser
 from .normalizer import URLNormalizer
 from .session import SessionManager
 from .fingerprinter import TechnologyFingerprinter
-from ..models import ScanSession, DiscoveredUrl, ExtractedForm, TechnologyFingerprint
-from ..schemas.dashboard import ScanConfiguration
+from ..models.unified_models import ScanSession, DiscoveredUrl, ExtractedForm, TechnologyFingerprint
+from ..schemas.dashboard import ScanConfigurationSchema
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +32,7 @@ class CrawlStats:
     forms_found: int = 0
     technologies_detected: int = 0
     errors: int = 0
-    start_time: datetime = field(default_factory=datetime.utcnow)
+    start_time: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     end_time: Optional[datetime] = None
     
     def to_dict(self) -> Dict:
@@ -58,7 +57,7 @@ class CrawlerEngine:
     Manages URL queue, rate limiting, and coordinates all extraction components.
     """
     
-    def __init__(self, config: ScanConfiguration, session_id: int, db_session: AsyncSession):
+    def __init__(self, config: ScanConfigurationSchema, session_id: int, db_session: AsyncSession):
         self.config = config
         self.session_id = session_id
         self.db_session = db_session
@@ -67,7 +66,8 @@ class CrawlerEngine:
         self.spider = WebSpider(config)
         self.parser = HTMLParser()
         self.normalizer = URLNormalizer()
-        self.session_manager = SessionManager(config)
+        # Session manager will be wired to the spider's aiohttp session after initialization
+        self.session_manager = SessionManager()
         self.fingerprinter = TechnologyFingerprinter()
         
         # Crawl state
@@ -101,11 +101,19 @@ class CrawlerEngine:
         logger.info(f"Starting crawl for session {self.session_id} with target: {target_url}")
         
         self.is_running = True
-        self.stats.start_time = datetime.utcnow()
+        self.stats.start_time = datetime.now(timezone.utc)
         
         try:
-            # Initialize session manager
-            await self.session_manager.initialize()
+            # Initialize HTTP session via spider and wire session manager
+            await self.spider.initialize()
+            self.session_manager.session = self.spider.session
+            
+            # Configure authentication if provided
+            if self.config.authentication:
+                try:
+                    await self.session_manager.configure_authentication(self.config.authentication, target_url)
+                except Exception as auth_exc:
+                    logger.error(f"Authentication configuration failed: {auth_exc}")
             
             # Normalize and add initial URL
             normalized_url = self.normalizer.normalize_url(target_url)
@@ -117,12 +125,19 @@ class CrawlerEngine:
             await self._update_scan_status("running")
             
             # Start crawler workers
+            worker_count = min(5, self.config.max_concurrent_requests or 5)
             workers = [
                 asyncio.create_task(self._crawler_worker(f"worker-{i}"))
-                for i in range(min(5, self.config.max_concurrent_requests or 5))
+                for i in range(worker_count)
             ]
-            
-            # Wait for all workers to complete
+
+            # Wait for queue to be fully processed to avoid premature termination
+            await self.url_queue.join()
+
+            # Signal workers to stop and wait for them
+            self.should_stop = True
+            for w in workers:
+                w.cancel()
             await asyncio.gather(*workers, return_exceptions=True)
             
         except Exception as e:
@@ -132,10 +147,15 @@ class CrawlerEngine:
             raise
         finally:
             self.is_running = False
-            self.stats.end_time = datetime.utcnow()
+            self.stats.end_time = datetime.now(timezone.utc)
             
             # Close session manager
             await self.session_manager.close()
+            # Ensure HTTP client session is closed
+            try:
+                await self.spider.close()
+            except Exception as close_exc:
+                logger.debug(f"Error closing spider session: {close_exc}")
             
             # Update final statistics
             await self._update_scan_stats()
@@ -169,9 +189,7 @@ class CrawlerEngine:
                         self.url_queue.get(), timeout=5.0
                     )
                 except asyncio.TimeoutError:
-                    # Check if queue is empty and no other workers are active
-                    if self.url_queue.empty():
-                        break
+                    # If queue appears empty, loop to check stop flag or new work
                     continue
                 
                 # Skip if already visited or depth exceeded
@@ -186,7 +204,13 @@ class CrawlerEngine:
             except Exception as e:
                 logger.error(f"Worker {worker_name} error processing URL: {e}")
                 self.stats.errors += 1
-                self.url_queue.task_done()
+                # If an error happened after getting an item but before task_done,
+                # ensure queue is progressed safely.
+                if not self.url_queue.empty():
+                    try:
+                        self.url_queue.task_done()
+                    except Exception:
+                        pass
         
         logger.debug(f"Crawler worker {worker_name} finished")
     
@@ -272,9 +296,16 @@ class CrawlerEngine:
         """
         for link in links:
             try:
+                # Extract URL from link dict or use as string
+                link_url = link.get('url') if isinstance(link, dict) else link
+                
                 # Resolve relative URLs
-                absolute_url = urljoin(base_url, link)
+                absolute_url = urljoin(base_url, link_url)
                 normalized_url = self.normalizer.normalize_url(absolute_url)
+                
+                # Check if URL is valid for crawling (excludes certain file types)
+                if not self.normalizer.is_valid_url(normalized_url):
+                    continue
                 
                 # Check if URL is in scope
                 if not self._is_url_in_scope(normalized_url):
@@ -308,7 +339,7 @@ class CrawlerEngine:
         Returns:
             bool: True if URL is in scope
         """
-        parsed_url = urlparse(url)
+        urlparse(url)
         
         # Check scope patterns
         if self.config.scope_patterns:
@@ -327,16 +358,17 @@ class CrawlerEngine:
         Args:
             url: URL being processed
         """
-        # Global rate limiting
+        # Global rate limiting with lock to prevent race conditions
         async with self.rate_limiter:
-            current_time = time.time()
-            time_since_last = current_time - self.last_request_time
-            min_interval = 1.0 / self.config.requests_per_second
-            
-            if time_since_last < min_interval:
-                await asyncio.sleep(min_interval - time_since_last)
-            
-            self.last_request_time = time.time()
+            async with asyncio.Lock():  # Add lock to prevent race conditions
+                current_time = time.time()
+                time_since_last = current_time - self.last_request_time
+                min_interval = 1.0 / self.config.requests_per_second
+                
+                if time_since_last < min_interval:
+                    await asyncio.sleep(min_interval - time_since_last)
+                
+                self.last_request_time = time.time()
         
         # Per-domain rate limiting
         domain = urlparse(url).netloc
@@ -358,7 +390,6 @@ class CrawlerEngine:
                 content_length=response_data.get('content_length'),
                 response_time=response_data.get('response_time'),
                 page_title=response_data.get('title'),
-                depth=depth
             )
             
             self.db_session.add(discovered_url)
@@ -404,9 +435,7 @@ class CrawlerEngine:
     async def _perform_fingerprinting(self, url: str, response_data: Dict):
         """Perform technology fingerprinting and store results."""
         try:
-            fingerprint_data = await self.fingerprinter.analyze_response(
-                url, response_data
-            )
+            fingerprint_data = await self.fingerprinter.analyze_response(response_data)
             
             if not fingerprint_data:
                 return
@@ -444,13 +473,13 @@ class CrawlerEngine:
     async def _update_scan_status(self, status: str):
         """Update scan session status in database."""
         try:
-            from sqlalchemy import select, update
+            from sqlalchemy import update
             
             stmt = update(ScanSession).where(
                 ScanSession.id == self.session_id
             ).values(
                 status=status,
-                end_time=datetime.utcnow() if status in ["completed", "failed", "cancelled"] else None
+                end_time=datetime.now(timezone.utc) if status in ["completed", "failed", "cancelled"] else None
             )
             
             await self.db_session.execute(stmt)

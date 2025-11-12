@@ -20,7 +20,7 @@ def fix_triggers_in_file(file_path):
         trigger_name = match.group(1)
         # Extract the table name from the trigger context
         # Look for "ON table_name" pattern after the trigger name
-        full_match = match.group(0)
+        # Removed unused variable assignment
         
         # Find the complete trigger statement to extract table name
         start_pos = match.start()

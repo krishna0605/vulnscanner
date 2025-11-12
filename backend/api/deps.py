@@ -5,7 +5,6 @@ from jose import jwt, JWTError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.config import settings
-from core.supabase import get_supabase_client
 from db.session import async_session
 from schemas.auth import TokenPayload
 from api.middleware.auth import (
@@ -15,7 +14,7 @@ from api.middleware.auth import (
     require_permission
 )
 
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
 
 
 async def get_db() -> AsyncSession:
@@ -45,7 +44,7 @@ async def get_current_user_legacy(token: str | None = None) -> TokenPayload | No
 
 # Enhanced authentication dependencies using the new middleware
 async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security)
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)
 ) -> dict:
     """
     Enhanced authentication with session management.
@@ -59,7 +58,45 @@ async def get_current_user(
     Raises:
         HTTPException: If token is invalid or user not found
     """
-    return await get_current_user_with_session(credentials)
+    # Dev-mode fallback: allow requests without token when explicitly enabled
+    if not credentials and (settings.development_mode or settings.skip_supabase):
+        # Construct a deterministic dev user and create a session
+        dev_user = {
+            "id": "11111111-1111-1111-1111-111111111111",
+            "email": "dev@local.dev",
+            "user_metadata": {"role": "user"},
+            "app_metadata": {"role": "user"},
+            "created_at": None,
+            "updated_at": None,
+            "auth_provider": "dev"
+        }
+        await auth_manager._create_session(dev_user)
+        return dev_user
+
+    if not credentials:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required"
+        )
+
+    # Attempt normal token validation; in development, gracefully fall back
+    try:
+        return await get_current_user_with_session(credentials)
+    except HTTPException as e:
+        # If token is invalid but we're in dev mode, allow dev fallback
+        if (settings.development_mode or settings.skip_supabase) and e.status_code == status.HTTP_401_UNAUTHORIZED:
+            dev_user = {
+                "id": "11111111-1111-1111-1111-111111111111",
+                "email": "dev@local.dev",
+                "user_metadata": {"role": "user"},
+                "app_metadata": {"role": "user"},
+                "created_at": None,
+                "updated_at": None,
+                "auth_provider": "dev"
+            }
+            await auth_manager._create_session(dev_user)
+            return dev_user
+        raise
 
 
 async def get_current_user_optional(
@@ -75,11 +112,25 @@ async def get_current_user_optional(
     Returns:
         dict or None: User information with session data or None
     """
+    # Dev-mode fallback to anonymous dev user
+    if not credentials and (settings.development_mode or settings.skip_supabase):
+        dev_user = {
+            "id": "11111111-1111-1111-1111-111111111111",
+            "email": "dev@local.dev",
+            "user_metadata": {"role": "user"},
+            "app_metadata": {"role": "user"},
+            "created_at": None,
+            "updated_at": None,
+            "auth_provider": "dev"
+        }
+        await auth_manager._create_session(dev_user)
+        return dev_user
+
     return await get_current_user_optional_with_session(credentials)
 
 
 # Enhanced permission-based dependencies
-def require_admin(current_user: dict = Depends(get_current_user)) -> dict:
+async def require_admin(current_user: dict = Depends(get_current_user)) -> dict:
     """
     Dependency to require admin role using session-based permissions.
     
@@ -92,7 +143,13 @@ def require_admin(current_user: dict = Depends(get_current_user)) -> dict:
     Raises:
         HTTPException: If user is not admin
     """
-    return require_permission("dashboard_admin")(current_user)
+    session = await auth_manager.get_session(current_user["id"])
+    if not session or not session.get("permissions", {}).get("dashboard_admin", False):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required"
+        )
+    return current_user
 
 
 async def require_dashboard_read(current_user: dict = Depends(get_current_user)) -> dict:
@@ -128,7 +185,7 @@ async def require_realtime_access(current_user: dict = Depends(get_current_user)
     return current_user
 
 
-def require_project_access(project_owner_id: str, current_user: dict = Depends(get_current_user)) -> dict:
+async def require_project_access(project_owner_id: str, current_user: dict = Depends(get_current_user)) -> dict:
     """
     Dependency to require access to a specific project.
     
@@ -145,7 +202,7 @@ def require_project_access(project_owner_id: str, current_user: dict = Depends(g
     user_id = current_user.get("id")
     
     # Check if user has admin permission
-    session = auth_manager.get_session(user_id)
+    session = await auth_manager.get_session(user_id)
     if session and session.get("permissions", {}).get("dashboard_admin", False):
         return current_user
     

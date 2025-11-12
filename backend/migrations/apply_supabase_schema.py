@@ -6,9 +6,7 @@ This script reads the SQL migration file and applies it to the Supabase database
 
 import asyncio
 import sys
-import os
 from pathlib import Path
-from typing import Optional
 
 # Add the backend directory to Python path
 backend_dir = Path(__file__).parent.parent
@@ -18,8 +16,8 @@ sys.path.insert(0, str(backend_dir))
 if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
-import asyncpg
-from core.config import settings
+import asyncpg  # noqa: E402
+from core.config import settings  # noqa: E402
 
 
 class SupabaseSchemaManager:

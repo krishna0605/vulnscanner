@@ -10,9 +10,8 @@ from pathlib import Path
 backend_dir = Path(__file__).parent
 sys.path.insert(0, str(backend_dir))
 
-from db.session import init_db, engine
-# Import SQLite-compatible models to register them with Base metadata
-from models.sqlite_models import User, Project, ScanSession, DiscoveredUrl, ExtractedForm, TechnologyFingerprint
+from db.session import init_db, engine  # noqa: E402
+# Import models using conditional imports to avoid conflicts
 
 async def main():
     """Initialize the SQLite database."""

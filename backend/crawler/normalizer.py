@@ -4,7 +4,6 @@ Ensures consistent URL handling and prevents duplicate crawling.
 """
 
 import logging
-from typing import Set
 from urllib.parse import urlparse, urlunparse, parse_qs, urlencode
 
 logger = logging.getLogger(__name__)
@@ -16,9 +15,9 @@ class URLNormalizer:
     Implements various normalization techniques to reduce duplicate URLs.
     """
     
-    def __init__(self):
-        # Common file extensions to exclude
-        self.excluded_extensions = {
+    def __init__(self, excluded_extensions: set[str] | None = None, tracking_params: set[str] | None = None):
+        # Common file extensions to exclude (configurable)
+        self.excluded_extensions = excluded_extensions or {
             # Images
             '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.svg', '.webp', '.ico',
             # Documents
@@ -31,8 +30,8 @@ class URLNormalizer:
             '.exe', '.dmg', '.pkg', '.deb', '.rpm'
         }
         
-        # Parameters to remove during normalization
-        self.tracking_params = {
+        # Parameters to remove during normalization (configurable)
+        self.tracking_params = tracking_params or {
             'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content',
             'gclid', 'fbclid', 'msclkid', '_ga', '_gid', 'ref', 'referrer'
         }

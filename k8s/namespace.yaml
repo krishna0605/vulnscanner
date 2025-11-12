@@ -1,0 +1,54 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: vulscanner
+  labels:
+    name: vulscanner
+    app.kubernetes.io/name: enhanced-vulnerability-scanner
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/component: namespace
+    app.kubernetes.io/part-of: vulscanner
+    app.kubernetes.io/managed-by: kubectl
+  annotations:
+    description: "Enhanced Vulnerability Scanner - Production Namespace"
+    contact: "security-team@example.com"
+    cost-center: "security"
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: vulscanner-quota
+  namespace: vulscanner
+spec:
+  hard:
+    requests.cpu: "8"
+    requests.memory: 16Gi
+    limits.cpu: "16"
+    limits.memory: 32Gi
+    persistentvolumeclaims: "10"
+    services: "20"
+    secrets: "20"
+    configmaps: "20"
+    pods: "50"
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: vulscanner-limits
+  namespace: vulscanner
+spec:
+  limits:
+  - default:
+      cpu: "1"
+      memory: "2Gi"
+    defaultRequest:
+      cpu: "100m"
+      memory: "256Mi"
+    type: Container
+  - max:
+      cpu: "4"
+      memory: "8Gi"
+    min:
+      cpu: "50m"
+      memory: "128Mi"
+    type: Container

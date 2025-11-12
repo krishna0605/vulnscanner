@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import http from '../services/httpClient.ts';
+import { logger } from '../services/logger.ts';
 
 interface ScanConfiguration {
   max_depth: number;
@@ -13,10 +14,11 @@ interface ScanConfiguration {
   scope_patterns: string[];
   exclude_patterns: string[];
   authentication?: any;
+  target_url?: string;
 }
 
 interface Project {
-  id: number;
+  id: string; // UUID from backend
   name: string;
   target_domain: string;
   description?: string;
@@ -32,36 +34,29 @@ const ScanConfigPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
-  const [selectedProject, setSelectedProject] = useState<number | null>(null);
+  const [selectedProject, setSelectedProject] = useState<string | null>(null);
 
-  const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1';
-
-  const getAuthHeaders = () => {
-    const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-    return token ? { Authorization: `Bearer ${token}` } : {};
-  };
+  // Authorization headers are handled by centralized Axios client
 
   const loadProjects = useCallback(async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/projects`, {
-        headers: getAuthHeaders()
-      });
+      const response = await http.get(`/projects`);
       setProjects(response.data);
       if (response.data.length > 0) {
         setSelectedProject(response.data[0].id);
         setTargetUrl(response.data[0].target_domain);
       }
     } catch (error) {
-      console.error('Failed to load projects:', error);
+      logger.error('Failed to load projects:', error);
       setError('Failed to load projects. Please try again.');
     }
-  }, [API_BASE_URL]);
+  }, []);
 
   useEffect(() => {
     loadProjects();
   }, [loadProjects]);
 
-  const handleProjectChange = (projectId: number) => {
+  const handleProjectChange = (projectId: string) => {
     setSelectedProject(projectId);
     const project = projects.find(p => p.id === projectId);
     if (project) {
@@ -84,43 +79,47 @@ const ScanConfigPage: React.FC = () => {
     setError(null);
 
     try {
+      // Normalize target URL: add https:// if missing
+      const normalizedTarget = targetUrl.trim().match(/^https?:\/\//i)
+        ? targetUrl.trim()
+        : `https://${targetUrl.trim()}`;
+
+      // Convert slider [0..100] to allowed [1..10]
+      const depthLevels = Math.max(1, Math.round((scanDepth / 100) * 10));
+
       const configuration: ScanConfiguration = {
-        max_depth: Math.round((scanDepth / 100) * 10), // Convert 0-100 to 1-10
+        max_depth: depthLevels,
         max_pages: 1000,
         requests_per_second: rateLimit,
         timeout: 30,
         follow_redirects: followRedirects,
         respect_robots: true,
         user_agent: "Enhanced-Vulnerability-Scanner/1.0",
-        scope_patterns: [targetUrl],
-        exclude_patterns: []
+        scope_patterns: [normalizedTarget],
+        exclude_patterns: [],
+        target_url: normalizedTarget
       };
 
-      if (useAuth) {
-        configuration.authentication = {
-          type: 'basic',
-          credentials: {}
-        };
-      }
+      // Do not send empty authentication payload; backend expects credentials when provided
+      // Future: collect credentials and set configuration.authentication accordingly
 
-      const response = await axios.post(
-        `${API_BASE_URL}/projects/${selectedProject}/scans`,
-        { configuration },
-        { headers: getAuthHeaders() }
+      const response = await http.post(
+        `/projects/${selectedProject}/scans`,
+        { configuration }
       );
 
-      console.log('Scan created successfully:', response.data);
+      logger.info('Scan created successfully:', response.data);
       
       // Navigate to dashboard with success message
-      navigate('/dashboard', { 
-        state: { 
+      navigate('/dashboard', {
+        state: {
           message: 'Scan started successfully!',
-          scanId: response.data.id 
+          scanId: response.data?.id ?? response.data?.scan_id ?? null
         }
       });
 
     } catch (error: any) {
-      console.error('Failed to start scan:', error);
+      logger.error('Failed to start scan:', error);
       if (error.response?.data?.detail) {
         setError(error.response.data.detail);
       } else {
@@ -183,8 +182,8 @@ const ScanConfigPage: React.FC = () => {
                 <div className="relative">
                   <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-[#888888]">folder</span>
                   <select 
-                    value={selectedProject || ''} 
-                    onChange={(e) => handleProjectChange(Number(e.target.value))}
+                    value={selectedProject ?? ''} 
+                    onChange={(e) => handleProjectChange(e.target.value)}
                     className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#E0E0E0] focus:outline-0 focus:ring-2 focus:ring-[#4A90E2]/50 border border-[#2E2E3F] bg-[#131523] focus:border-[#4A90E2]/50 h-14 pl-12 pr-4 text-base"
                   >
                     <option value="">Select a project...</option>

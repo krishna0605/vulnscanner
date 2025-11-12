@@ -1,43 +1,51 @@
 """
-Centralized model imports that conditionally load SQLite or PostgreSQL models
-based on the SKIP_SUPABASE configuration setting.
+Centralized model imports using the unified models.
+The unified models work with both SQLite (development) and PostgreSQL (production).
 """
-from core.config import settings
 
-# Import appropriate models based on configuration
-if getattr(settings, 'skip_supabase', False):
-    # Use SQLite-compatible models for local development
-    from models.sqlite_models import (
-        User,
-        Project,
-        ScanSession,
-        DiscoveredUrl,
-        ExtractedForm,
-        TechnologyFingerprint,
-        ScanStatus,
-        RealtimeUpdate
-    )
-else:
-    # Use PostgreSQL models for production with Supabase
-    from models.user import User
-    from models.dashboard import (
-        Project,
-        ScanSession,
-        DiscoveredUrl,
-        ExtractedForm,
-        TechnologyFingerprint,
-        ScanStatus,
-        RealtimeUpdate
-    )
+# Import unified models that work with both SQLite and PostgreSQL
+from .unified_models import (
+    Profile,
+    Project,
+    ScanSession,
+    DiscoveredUrl,
+    ExtractedForm,
+    TechnologyFingerprint,
+    VulnerabilityType,
+    Vulnerability,
+    DashboardMetric,
+    RealtimeUpdate,
+    # Enums
+    UserRole,
+    ScanStatus,
+    ScanType,
+    SeverityLevel,
+    VulnerabilityCategory,
+    VulnerabilityStatus
+)
+
+# For backward compatibility, alias Profile as User
+User = Profile
 
 # Export all models
 __all__ = [
-    'User',
+    # Models
+    'User',  # Alias for Profile
+    'Profile',
     'Project', 
     'ScanSession',
     'DiscoveredUrl',
     'ExtractedForm',
     'TechnologyFingerprint',
+    'VulnerabilityType',
+    'Vulnerability',
+    'DashboardMetric',
+    'RealtimeUpdate',
+    # Enums
+    'UserRole',
     'ScanStatus',
-    'RealtimeUpdate'
+    'ScanType',
+    'SeverityLevel',
+    'VulnerabilityCategory',
+    'VulnerabilityStatus'
 ]

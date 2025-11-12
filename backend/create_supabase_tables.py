@@ -6,7 +6,6 @@ This script creates the users table and inserts a test user.
 
 import asyncio
 import sys
-import os
 from pathlib import Path
 
 # Add the backend directory to Python path
@@ -17,9 +16,9 @@ sys.path.insert(0, str(backend_dir))
 if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
-from supabase import create_client, Client
-from core.config import settings
-from core.security import get_password_hash
+from supabase import create_client, Client  # noqa: E402
+from core.config import settings  # noqa: E402
+from core.security import get_password_hash  # noqa: E402
 
 def get_supabase_client() -> Client:
     """Create and return Supabase client."""
@@ -52,7 +51,7 @@ def create_users_table(supabase: Client):
         """
         
         # Execute the SQL
-        result = supabase.rpc('exec_sql', {'sql': create_table_sql}).execute()
+        _ = supabase.rpc('exec_sql', {'sql': create_table_sql}).execute()
         print("✅ Users table created successfully!")
         return True
         
@@ -62,7 +61,7 @@ def create_users_table(supabase: Client):
         try:
             print("Trying alternative approach...")
             # Check if table exists by trying to select from it
-            result = supabase.table('users').select('id').limit(1).execute()
+            supabase.table('users').select('id').limit(1).execute()
             print("✅ Users table already exists!")
             return True
         except Exception as e2:
@@ -99,7 +98,7 @@ def create_test_user(supabase: Client):
             print(f"✅ Test user created successfully: {test_email}")
             return True
         else:
-            print(f"❌ Failed to create test user")
+            print("❌ Failed to create test user")
             return False
             
     except Exception as e:

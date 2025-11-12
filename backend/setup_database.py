@@ -3,7 +3,6 @@
 Database setup script for Enhanced Vulnerability Scanner
 Applies the complete schema to Supabase PostgreSQL database
 """
-import os
 import sys
 from pathlib import Path
 from core.config import Settings

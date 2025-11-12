@@ -3,7 +3,6 @@
 Test the exact login flow that the frontend uses
 """
 import requests
-import json
 
 def test_frontend_login_flow():
     """Test the exact login flow that the frontend uses"""
@@ -34,16 +33,16 @@ def test_frontend_login_flow():
         
         if response.status_code == 200:
             data = response.json()
-            print(f"✅ Login successful!")
+            print("✅ Login successful!")
             print(f"🎫 Access Token: {data.get('access_token', 'MISSING')[:50]}...")
             print(f"🔐 Token Type: {data.get('token_type', 'MISSING')}")
             return True
         else:
-            print(f"❌ Login failed!")
+            print("❌ Login failed!")
             try:
                 error_data = response.json()
                 print(f"💥 Error Details: {error_data}")
-            except:
+            except Exception:
                 print(f"💥 Raw Response: {response.text}")
             return False
             

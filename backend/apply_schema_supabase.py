@@ -2,8 +2,6 @@
 """
 Apply minimal schema to Supabase using Python client
 """
-import os
-import sys
 from pathlib import Path
 from supabase import create_client, Client
 from core.config import Settings
@@ -50,7 +48,7 @@ def apply_schema():
                 print(f"🔧 Executing statement {i}/{len(statements)}...")
                 
                 # Execute SQL statement
-                result = supabase.rpc('exec_sql', {'sql': statement}).execute()
+                _ = supabase.rpc('exec_sql', {'sql': statement}).execute()
                 
                 success_count += 1
                 print(f"✅ Statement {i} executed successfully")
@@ -142,7 +140,7 @@ def create_tables_directly():
             try:
                 print(f"🔧 Creating {table_name}...")
                 # Try using raw SQL execution
-                result = supabase.postgrest.rpc('exec_sql', {'sql': sql}).execute()
+                _ = supabase.postgrest.rpc('exec_sql', {'sql': sql}).execute()
                 print(f"✅ {table_name} created successfully")
             except Exception as e:
                 error_msg = str(e)
@@ -166,14 +164,14 @@ def test_tables():
         
         # Test users table
         try:
-            result = supabase.table('users').select('count').execute()
+            supabase.table('users').select('count').execute()
             print("✅ Users table accessible")
         except Exception as e:
             print(f"⚠️  Users table issue: {e}")
         
         # Test projects table
         try:
-            result = supabase.table('projects').select('count').execute()
+            supabase.table('projects').select('count').execute()
             print("✅ Projects table accessible")
         except Exception as e:
             print(f"⚠️  Projects table issue: {e}")
@@ -199,7 +197,7 @@ def main():
     
     if schema_success:
         # Test tables
-        test_success = test_tables()
+        test_tables()
         
         print("\n" + "=" * 60)
         print("✅ SCHEMA APPLICATION COMPLETE!")

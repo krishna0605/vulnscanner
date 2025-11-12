@@ -16,7 +16,7 @@ def get_db_connection():
     
     # Get Supabase URL and extract connection details
     supabase_url = os.getenv("SUPABASE_URL")
-    supabase_key = os.getenv("SUPABASE_ANON_KEY")
+    os.getenv("SUPABASE_ANON_KEY")
     
     if not supabase_url:
         print("❌ Missing SUPABASE_URL in .env file")

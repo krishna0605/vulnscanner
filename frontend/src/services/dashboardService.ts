@@ -1,6 +1,4 @@
-import axios from 'axios';
-
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1';
+import http from './httpClient.ts';
 
 export interface DashboardMetrics {
   total_projects: number;
@@ -56,23 +54,8 @@ export interface ActivityItem {
 }
 
 class DashboardService {
-  private getAuthHeaders() {
-    const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken') || localStorage.getItem('supabase.auth.token');
-    return token ? { Authorization: `Bearer ${token}` } : {};
-  }
 
-  private async checkBackendHealth(): Promise<boolean> {
-    try {
-      // Use the public health endpoint that doesn't require authentication
-      const response = await axios.get('http://localhost:8000/api/health', {
-        timeout: 5000
-      });
-      return response.status === 200;
-    } catch (error) {
-      console.warn('Backend health check failed:', error);
-      return false;
-    }
-  }
+  
 
   async getDashboardOverview(): Promise<{
     metrics: DashboardMetrics;
@@ -80,15 +63,8 @@ class DashboardService {
     recent_activity: ActivityItem[];
   }> {
     try {
-      // Check if backend is available
-      const isBackendHealthy = await this.checkBackendHealth();
-      if (!isBackendHealthy) {
-        throw new Error('Backend service is unavailable');
-      }
-
-      // Use the correct /overview endpoint from backend
-      const response = await axios.get(`${API_BASE_URL}/overview`, {
-        headers: this.getAuthHeaders(),
+      // Use the correct /dashboard/overview endpoint from backend
+      const response = await http.get(`/dashboard/overview`, {
         timeout: 10000
       });
       
@@ -120,13 +96,7 @@ class DashboardService {
 
   async getScanStatistics(): Promise<ScanStatistics> {
     try {
-      const isBackendHealthy = await this.checkBackendHealth();
-      if (!isBackendHealthy) {
-        throw new Error('Backend service is unavailable');
-      }
-
-      const response = await axios.get(`${API_BASE_URL}/dashboard/scan-statistics`, {
-        headers: this.getAuthHeaders(),
+      const response = await http.get(`/dashboard/scan-statistics`, {
         timeout: 10000
       });
       return response.data;
@@ -147,14 +117,8 @@ class DashboardService {
 
   async getVulnerabilityTrends(days: number = 30): Promise<VulnerabilityTrend[]> {
     try {
-      const isBackendHealthy = await this.checkBackendHealth();
-      if (!isBackendHealthy) {
-        throw new Error('Backend service is unavailable');
-      }
-
-      const response = await axios.get(`${API_BASE_URL}/dashboard/vulnerability-trends`, {
+      const response = await http.get(`/dashboard/vulnerability-trends`, {
         params: { days },
-        headers: this.getAuthHeaders(),
         timeout: 10000
       });
       return response.data;
@@ -168,13 +132,7 @@ class DashboardService {
 
   async getProjectsSummary(): Promise<ProjectSummary[]> {
     try {
-      const isBackendHealthy = await this.checkBackendHealth();
-      if (!isBackendHealthy) {
-        throw new Error('Backend service is unavailable');
-      }
-
-      const response = await axios.get(`${API_BASE_URL}/dashboard/projects-summary`, {
-        headers: this.getAuthHeaders(),
+      const response = await http.get(`/dashboard/projects-summary`, {
         timeout: 10000
       });
       return response.data;
@@ -188,14 +146,8 @@ class DashboardService {
 
   async getRecentActivity(limit: number = 10): Promise<ActivityItem[]> {
     try {
-      const isBackendHealthy = await this.checkBackendHealth();
-      if (!isBackendHealthy) {
-        throw new Error('Backend service is unavailable');
-      }
-
-      const response = await axios.get(`${API_BASE_URL}/dashboard/recent-activity`, {
+      const response = await http.get(`/dashboard/recent-activity`, {
         params: { limit },
-        headers: this.getAuthHeaders(),
         timeout: 10000
       });
       return response.data;
@@ -214,13 +166,7 @@ class DashboardService {
     memory_usage: number;
   }> {
     try {
-      const isBackendHealthy = await this.checkBackendHealth();
-      if (!isBackendHealthy) {
-        throw new Error('Backend service is unavailable');
-      }
-
-      const response = await axios.get(`${API_BASE_URL}/dashboard/live-metrics`, {
-        headers: this.getAuthHeaders(),
+      const response = await http.get(`/dashboard/live-metrics`, {
         timeout: 10000
       });
       return response.data;

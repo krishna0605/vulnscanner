@@ -1,0 +1,218 @@
+# Enhanced Vulnerability Scanner - Production Deployment Configuration
+
+environment: production
+deployment_type: docker-compose  # or kubernetes
+
+# Health check configuration
+health_check:
+  timeout: 300          # Total timeout in seconds
+  interval: 10          # Check interval in seconds
+  retries: 30           # Maximum retry attempts
+  startup_grace: 60     # Grace period for service startup
+
+# Service definitions
+services:
+  backend:
+    image: vulscanner/backend:latest
+    health_endpoint: /api/v1/health
+    port: 8000
+    replicas: 3
+    resources:
+      cpu_request: "500m"
+      cpu_limit: "2000m"
+      memory_request: "512Mi"
+      memory_limit: "2Gi"
+    environment:
+      - ENVIRONMENT=production
+      - LOG_LEVEL=INFO
+      - WORKERS=4
+
+  frontend:
+    image: vulscanner/frontend:latest
+    health_endpoint: /
+    port: 3000
+    replicas: 2
+    resources:
+      cpu_request: "100m"
+      cpu_limit: "500m"
+      memory_request: "128Mi"
+      memory_limit: "512Mi"
+
+  celery-worker:
+    image: vulscanner/backend:latest
+    health_command: ["celery", "-A", "tasks.celery_app", "inspect", "ping"]
+    replicas: 2
+    resources:
+      cpu_request: "500m"
+      cpu_limit: "1500m"
+      memory_request: "512Mi"
+      memory_limit: "1Gi"
+    environment:
+      - CELERY_WORKER_CONCURRENCY=4
+      - CELERY_WORKER_PREFETCH_MULTIPLIER=1
+
+  celery-beat:
+    image: vulscanner/backend:latest
+    health_command: ["celery", "-A", "tasks.celery_app", "inspect", "scheduled"]
+    replicas: 1
+    resources:
+      cpu_request: "100m"
+      cpu_limit: "500m"
+      memory_request: "256Mi"
+      memory_limit: "512Mi"
+
+# Database configuration
+database:
+  migration_timeout: 600
+  backup_before_migration: true
+  backup_retention_days: 30
+  connection_pool_size: 20
+  max_overflow: 30
+
+# Load balancer configuration
+load_balancer:
+  type: nginx
+  ssl_enabled: true
+  rate_limiting:
+    requests_per_minute: 1000
+    burst: 50
+  health_check_path: /health
+
+# Monitoring and alerting
+monitoring:
+  enabled: true
+  slack_webhook: ${SLACK_WEBHOOK_URL}
+  email_notifications: true
+  metrics_retention: 30d
+  
+  # Prometheus configuration
+  prometheus:
+    scrape_interval: 15s
+    evaluation_interval: 15s
+    retention: 30d
+  
+  # Grafana dashboards
+  grafana:
+    admin_password: ${GRAFANA_ADMIN_PASSWORD}
+    smtp_enabled: true
+    smtp_host: ${SMTP_HOST}
+    smtp_user: ${SMTP_USER}
+    smtp_password: ${SMTP_PASSWORD}
+  
+  # Log aggregation
+  logging:
+    level: INFO
+    format: json
+    retention: 30d
+    elasticsearch_enabled: false
+    loki_enabled: true
+
+# Security configuration
+security:
+  ssl_certificate_path: /etc/ssl/certs/vulscanner.crt
+  ssl_private_key_path: /etc/ssl/private/vulscanner.key
+  
+  # Security headers
+  headers:
+    strict_transport_security: "max-age=31536000; includeSubDomains"
+    content_security_policy: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'"
+    x_frame_options: "DENY"
+    x_content_type_options: "nosniff"
+    referrer_policy: "strict-origin-when-cross-origin"
+
+# Backup configuration
+backup:
+  enabled: true
+  schedule: "0 2 * * *"  # Daily at 2 AM
+  retention_days: 30
+  storage_type: s3  # or local, gcs, azure
+  s3_bucket: ${BACKUP_S3_BUCKET}
+  encryption_enabled: true
+
+# Auto-scaling configuration
+autoscaling:
+  enabled: true
+  min_replicas: 2
+  max_replicas: 10
+  target_cpu_utilization: 70
+  target_memory_utilization: 80
+  scale_up_cooldown: 300s
+  scale_down_cooldown: 600s
+
+# Deployment strategy
+deployment_strategy:
+  type: rolling_update  # or blue_green, canary
+  max_unavailable: 25%
+  max_surge: 25%
+  
+  # Blue-green specific settings
+  blue_green:
+    auto_promotion_enabled: false
+    scaledown_delay: 30s
+    prepromotion_analysis: true
+  
+  # Canary specific settings
+  canary:
+    steps:
+      - setWeight: 20
+      - pause: {duration: 10m}
+      - setWeight: 40
+      - pause: {duration: 10m}
+      - setWeight: 60
+      - pause: {duration: 10m}
+      - setWeight: 80
+      - pause: {duration: 10m}
+
+# External dependencies
+external_dependencies:
+  supabase:
+    url: ${SUPABASE_URL}
+    service_role_key: ${SUPABASE_SERVICE_ROLE_KEY}
+    timeout: 30s
+    retry_attempts: 3
+  
+  redis:
+    url: ${REDIS_URL}
+    timeout: 5s
+    retry_attempts: 3
+    max_connections: 100
+  
+  rabbitmq:
+    url: ${RABBITMQ_URL}
+    timeout: 10s
+    retry_attempts: 3
+
+# Performance tuning
+performance:
+  # Database connection pooling
+  db_pool_size: 20
+  db_max_overflow: 30
+  db_pool_timeout: 30
+  
+  # Redis connection pooling
+  redis_pool_size: 50
+  redis_pool_timeout: 5
+  
+  # HTTP client settings
+  http_timeout: 30
+  http_max_connections: 100
+  http_max_connections_per_host: 30
+
+# Feature flags
+feature_flags:
+  new_crawler_engine: true
+  advanced_reporting: true
+  real_time_notifications: true
+  api_rate_limiting: true
+  enhanced_security_headers: true
+
+# Maintenance windows
+maintenance:
+  allowed_windows:
+    - day: sunday
+      start_time: "02:00"
+      end_time: "06:00"
+      timezone: "UTC"
+  
+  auto_update_enabled: false
+  security_patch_auto_apply: true

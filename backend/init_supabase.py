@@ -4,7 +4,6 @@ This script creates the necessary tables and sets up a test user.
 """
 import asyncio
 import sys
-import os
 from pathlib import Path
 
 # Add the backend directory to Python path
@@ -15,10 +14,9 @@ sys.path.insert(0, str(backend_dir))
 if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
-from sqlalchemy import text
-from db.session import Base, db_url, async_session, engine, init_db
-from models.user import User
-from core.security import get_password_hash
+from sqlalchemy import text  # noqa: E402
+from db.session import db_url, async_session, engine, init_db  # noqa: E402
+from core.security import get_password_hash  # noqa: E402
 
 async def create_tables():
     """Create all tables in the database."""

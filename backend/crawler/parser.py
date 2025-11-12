@@ -5,7 +5,7 @@ Extracts links, forms, scripts, and other relevant data from HTML content.
 
 import logging
 import re
-from typing import Dict, List, Optional, Set
+from typing import Dict, List
 from urllib.parse import urljoin, urlparse
 
 from bs4 import BeautifulSoup, Comment
@@ -43,13 +43,22 @@ class HTMLParser:
             Dict containing extracted data (links, forms, scripts, etc.)
         """
         try:
-            soup = BeautifulSoup(html_content, 'html.parser')
+            # Try fast built-in parser first; fallback to lxml/html5lib if available
+            soup = BeautifulSoup(html_content or "", 'html.parser')
+            if not soup or not soup.contents:
+                try:
+                    soup = BeautifulSoup(html_content or "", 'lxml')  # type: ignore
+                except Exception:
+                    try:
+                        soup = BeautifulSoup(html_content or "", 'html5lib')  # type: ignore
+                    except Exception:
+                        pass
             
             return {
                 'links': self._extract_links(soup, base_url),
                 'forms': self._extract_forms(soup, base_url),
                 'scripts': self._extract_scripts(soup, base_url),
-                'meta_tags': self._extract_meta_tags(soup),
+                'meta': self._extract_meta_tags(soup),
                 'comments': self._extract_comments(soup),
                 'inputs': self._extract_inputs(soup),
                 'images': self._extract_images(soup, base_url),
@@ -63,9 +72,10 @@ class HTMLParser:
             logger.error(f"Error parsing HTML: {e}")
             return {}
     
-    def _extract_links(self, soup: BeautifulSoup, base_url: str) -> List[str]:
+    def _extract_links(self, soup: BeautifulSoup, base_url: str) -> List[Dict]:
         """Extract all links from the HTML."""
-        links = set()
+        links = []
+        seen_urls = set()
         
         try:
             # Extract from <a> tags
@@ -73,14 +83,18 @@ class HTMLParser:
                 href = link['href'].strip()
                 if href and not href.startswith('#') and not href.startswith('javascript:'):
                     absolute_url = urljoin(base_url, href)
-                    links.add(absolute_url)
+                    if absolute_url not in seen_urls:
+                        links.append({'url': absolute_url, 'text': link.get_text(strip=True)})
+                        seen_urls.add(absolute_url)
             
             # Extract from <area> tags (image maps)
             for area in soup.find_all('area', href=True):
                 href = area['href'].strip()
                 if href and not href.startswith('#') and not href.startswith('javascript:'):
                     absolute_url = urljoin(base_url, href)
-                    links.add(absolute_url)
+                    if absolute_url not in seen_urls:
+                        links.append({'url': absolute_url, 'text': area.get('alt', '')})
+                        seen_urls.add(absolute_url)
             
             # Extract from <link> tags (alternate pages, etc.)
             for link in soup.find_all('link', href=True):
@@ -93,12 +107,14 @@ class HTMLParser:
                     href = link['href'].strip()
                     if href:
                         absolute_url = urljoin(base_url, href)
-                        links.add(absolute_url)
+                        if absolute_url not in seen_urls:
+                            links.append({'url': absolute_url, 'text': ''})
+                            seen_urls.add(absolute_url)
         
         except Exception as e:
             logger.error(f"Error extracting links: {e}")
         
-        return list(links)
+        return links
     
     def _extract_forms(self, soup: BeautifulSoup, base_url: str) -> List[Dict]:
         """Extract all forms and their details."""
@@ -108,7 +124,7 @@ class HTMLParser:
             for form in soup.find_all('form'):
                 form_data = {
                     'action': self._get_form_action(form, base_url),
-                    'method': form.get('method', 'GET').upper(),
+                    'method': form.get('method', 'GET').lower(),
                     'enctype': form.get('enctype', 'application/x-www-form-urlencoded'),
                     'fields': self._extract_form_fields(form),
                     'csrf_tokens': self._extract_csrf_tokens(form),
@@ -278,7 +294,6 @@ class HTMLParser:
         try:
             for script in soup.find_all('script'):
                 script_data = {
-                    'src': urljoin(base_url, script.get('src', '')) if script.get('src') else None,
                     'type': script.get('type', 'text/javascript'),
                     'async': script.has_attr('async'),
                     'defer': script.has_attr('defer'),
@@ -286,10 +301,14 @@ class HTMLParser:
                     'content_length': len(script.get_text()) if not script.get('src') else 0
                 }
                 
+                # Add src for external scripts only
+                if script.get('src'):
+                    script_data['src'] = urljoin(base_url, script.get('src'))
+                
                 # Extract inline script content (first 500 chars for analysis)
                 if not script.get('src'):
                     content = script.get_text(strip=True)
-                    script_data['content_preview'] = content[:500] if content else ''
+                    script_data['content'] = content[:500] if content else ''
                 
                 scripts.append(script_data)
         
@@ -389,7 +408,7 @@ class HTMLParser:
         
         return stylesheets
     
-    def _extract_title(self, soup: BeautifulSoup) -> Optional[str]:
+    def _extract_title(self, soup: BeautifulSoup) -> str:
         """Extract page title."""
         try:
             title_tag = soup.find('title')
@@ -398,7 +417,7 @@ class HTMLParser:
         except Exception as e:
             logger.error(f"Error extracting title: {e}")
         
-        return None
+        return ""
     
     def _extract_headings(self, soup: BeautifulSoup) -> Dict[str, List[str]]:
         """Extract heading tags (h1-h6)."""

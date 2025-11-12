@@ -4,7 +4,6 @@ Create tables in Supabase using REST API instead of direct database connection.
 """
 
 import requests
-import json
 from passlib.context import CryptContext
 
 # Supabase configuration
@@ -66,7 +65,7 @@ def create_users_table():
                 print("✅ Users table already exists!")
                 return True
             else:
-                print(f"❌ Users table does not exist and cannot be created")
+                print("❌ Users table does not exist and cannot be created")
                 return False
                 
     except Exception as e:

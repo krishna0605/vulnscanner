@@ -1,0 +1,18 @@
+[
+  {
+    "type": "sqlite",
+    "path": "c:\\Users\\Admin\\Desktop\\vulscAN\\dev.db"
+  },
+  {
+    "type": "sqlite",
+    "path": "c:\\Users\\Admin\\Desktop\\vulscAN\\vulnscanner.db"
+  },
+  {
+    "type": "sqlite",
+    "path": "c:\\Users\\Admin\\Desktop\\vulscAN\\backend\\app.db"
+  },
+  {
+    "type": "sqlite",
+    "path": "c:\\Users\\Admin\\Desktop\\vulscAN\\backend\\dev.db"
+  }
+]

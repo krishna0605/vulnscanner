@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import { useSelector } from 'react-redux';
 import { RootState } from '../store/index.ts';
@@ -12,6 +12,7 @@ import ProjectDistributionChart from '../components/dashboard/ProjectDistributio
 import dashboardService, { DashboardMetrics, ProjectSummary } from '../services/dashboardService.ts';
 import projectService from '../services/projectService.ts';
 import '../styles/dashboard.css';
+// Removed strict backend health gating to avoid blocking UI on transient aborts
 
 const EnhancedDashboardPage: React.FC = () => {
   const navigate = useNavigate();
@@ -120,11 +121,7 @@ const EnhancedDashboardPage: React.FC = () => {
 
         // Load real data from backend API
         try {
-          // Verify backend connectivity first
-          const healthCheck = await fetch('http://localhost:8000/api/health');
-          if (!healthCheck.ok) {
-            throw new Error('Backend service unavailable');
-          }
+          // Proceed without strict health gating; individual calls handle failures gracefully
 
           // Load dashboard overview data
           const data = await dashboardService.getDashboardOverview();
@@ -279,7 +276,29 @@ const EnhancedDashboardPage: React.FC = () => {
                   </div>
                 )}
               </div>
-              
+              {/* Navigation links and search */}
+              <nav className="hidden md:flex items-center gap-4">
+                <Link to="/dashboard" className="text-[#888888] hover:text-white text-sm font-medium">Dashboard</Link>
+                <Link to="/projects" className="text-[#888888] hover:text-white text-sm font-medium">Projects</Link>
+                <Link to="/scans" className="text-[#888888] hover:text-white text-sm font-medium">Scans</Link>
+                <Link to="/reports" className="text-[#888888] hover:text-white text-sm font-medium">Reports</Link>
+                <Link to="/settings" className="text-[#888888] hover:text-white text-sm font-medium">Settings</Link>
+                <div className="relative">
+                  <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#888888]">search</span>
+                  <input
+                    type="text"
+                    placeholder="Search..."
+                    className="h-10 w-56 pl-10 pr-3 rounded-lg bg-[#131523] border border-[#2E2E3F] text-sm text-[#E0E0E0] placeholder:text-[#888888] focus:outline-none focus:ring-2 focus:ring-[#00D9FF]/50"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        const q = (e.target as HTMLInputElement).value.trim();
+                        if (q) navigate(`/search?q=${encodeURIComponent(q)}`);
+                      }
+                    }}
+                  />
+                </div>
+              </nav>
+
               <div className="flex items-center gap-4">
                 <button className="relative flex cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 w-10 bg-[#131523]/80 text-[#E0E0E0] hover:text-[#4A90E2] transition-colors">
                   <span className="material-symbols-outlined">notifications</span>

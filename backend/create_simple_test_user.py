@@ -4,9 +4,9 @@ Simple script to create a test user for authentication testing
 """
 import asyncio
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import text
-from core.database import get_async_session
+from db.session import async_session
 from core.security import get_password_hash
 
 async def create_test_user():
@@ -15,12 +15,12 @@ async def create_test_user():
         print("🚀 Creating test user...")
         
         # Get database session
-        async_session = get_async_session()
+        # async_session is already imported as the sessionmaker
         
         async with async_session() as session:
             # Check if user already exists
             result = await session.execute(
-                text("SELECT id, email FROM users WHERE email = :email"),
+                text("SELECT id, email FROM profiles WHERE email = :email"),
                 {"email": "test@example.com"}
             )
             existing_user = result.fetchone()
@@ -36,7 +36,7 @@ async def create_test_user():
             # Insert user
             await session.execute(
                 text("""
-                    INSERT INTO users (email, full_name, hashed_password, is_active, created_at, updated_at)
+                    INSERT INTO profiles (email, full_name, hashed_password, is_active, created_at, updated_at)
                     VALUES (:email, :full_name, :hashed_password, :is_active, :created_at, :updated_at)
                 """),
                 {
@@ -44,8 +44,8 @@ async def create_test_user():
                     "full_name": "Test User",
                     "hashed_password": hashed_password,
                     "is_active": True,
-                    "created_at": datetime.utcnow(),
-                    "updated_at": datetime.utcnow()
+                    "created_at": datetime.now(timezone.utc),
+                    "updated_at": datetime.now(timezone.utc)
                 }
             )
             await session.commit()

@@ -5,8 +5,7 @@ Identifies frameworks, CMS, programming languages, and security headers.
 
 import logging
 import re
-from typing import Dict, List, Set, Any, Optional
-from urllib.parse import urlparse
+from typing import Dict, List, Any
 import aiohttp
 from bs4 import BeautifulSoup
 
@@ -19,9 +18,19 @@ class TechnologyFingerprinter:
     Uses various fingerprinting techniques including headers, HTML patterns, and JavaScript.
     """
     
-    def __init__(self):
-        self.technology_signatures = self._load_signatures()
+    def __init__(self, technology_signatures: Dict[str, Dict[str, Any]] | None = None):
+        # Allow dynamic configuration/override of signatures
+        self.technology_signatures = technology_signatures or self._load_signatures()
+        self._precompile_signatures(self.technology_signatures)
         self.security_headers = self._get_security_headers()
+
+    def _precompile_signatures(self, signatures: Dict[str, Dict[str, Any]]):
+        """Precompile regex patterns in signatures for performance."""
+        for tech_name, info in signatures.items():
+            if 'patterns' in info and isinstance(info['patterns'], list):
+                info['patterns'] = [re.compile(p, re.IGNORECASE) if not hasattr(p, 'search') else p for p in info['patterns']]
+            if 'html_patterns' in info and isinstance(info['html_patterns'], list):
+                info['html_patterns'] = [re.compile(p, re.IGNORECASE) if not hasattr(p, 'search') else p for p in info['html_patterns']]
     
     def _load_signatures(self) -> Dict[str, Dict[str, Any]]:
         """
@@ -214,6 +223,45 @@ class TechnologyFingerprinter:
             'public-key-pins'
         ]
     
+    async def analyze_response(self, response_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Analyze response data to detect technologies (test-compatible method).
+        
+        Args:
+            response_data: Dictionary containing headers, content, status_code
+            
+        Returns:
+            Dictionary containing detected technologies
+        """
+        fingerprint = {
+            'url': response_data.get('url', ''),
+            'status_code': response_data.get('status_code', 200),
+            'server_software': None,
+            'programming_language': None,
+            'framework': None,
+            'cms': None,
+            'javascript_libraries': [],
+            'css_frameworks': [],
+            'analytics': [],
+            'security_headers': {},
+            'technologies': [],
+            'cdn': None
+        }
+        
+        # Analyze headers
+        headers = response_data.get('headers', {})
+        await self._analyze_headers_dict(headers, fingerprint)
+        
+        # Analyze HTML content if available
+        content = response_data.get('content', '')
+        if content:
+            await self._analyze_html(content, fingerprint)
+        
+        # Detect security headers
+        self._analyze_security_headers_dict(headers, fingerprint)
+        
+        return fingerprint
+    
     async def fingerprint_response(self, response: aiohttp.ClientResponse, html: str = None) -> Dict[str, Any]:
         """
         Fingerprint a web response to detect technologies.
@@ -229,15 +277,15 @@ class TechnologyFingerprinter:
             'url': str(response.url),
             'status_code': response.status,
             'server_software': None,
-            'programming_language': [],
-            'framework': [],
+            'programming_language': None,
+            'framework': None,
             'cms': None,
             'javascript_libraries': [],
             'css_frameworks': [],
             'analytics': [],
             'security_headers': {},
             'technologies': [],
-            'cdn': []
+            'cdn': None
         }
         
         # Analyze headers
@@ -251,6 +299,35 @@ class TechnologyFingerprinter:
         self._analyze_security_headers(response, fingerprint)
         
         return fingerprint
+    
+    async def _analyze_headers_dict(self, headers_dict: Dict[str, str], fingerprint: Dict[str, Any]):
+        """
+        Analyze HTTP headers dictionary for technology indicators.
+        
+        Args:
+            headers_dict: Dictionary of headers
+            fingerprint: Fingerprint dictionary to update
+        """
+        headers = {k.lower(): v.lower() for k, v in headers_dict.items()}
+        
+        for tech_name, tech_info in self.technology_signatures.items():
+            if 'headers' not in tech_info:
+                continue
+            
+            for header_name in tech_info['headers']:
+                if header_name in headers:
+                    header_value = headers[header_name]
+                    
+                    # Check patterns
+                    patterns = tech_info.get('patterns', [])
+                    for pattern in patterns:
+                        if (hasattr(pattern, 'search') and pattern.search(header_value)) or re.search(pattern, header_value, re.IGNORECASE):
+                            self._add_technology(fingerprint, tech_name, tech_info['category'])
+                            break
+        
+        # Extract server software
+        if 'server' in headers:
+            fingerprint['server_software'] = headers['server']
     
     async def _analyze_headers(self, response: aiohttp.ClientResponse, fingerprint: Dict[str, Any]):
         """
@@ -273,7 +350,7 @@ class TechnologyFingerprinter:
                     # Check patterns
                     patterns = tech_info.get('patterns', [])
                     for pattern in patterns:
-                        if re.search(pattern, header_value, re.IGNORECASE):
+                        if (hasattr(pattern, 'search') and pattern.search(header_value)) or re.search(pattern, header_value, re.IGNORECASE):
                             self._add_technology(fingerprint, tech_name, tech_info['category'])
                             break
         
@@ -297,7 +374,7 @@ class TechnologyFingerprinter:
             
             patterns = tech_info['html_patterns']
             for pattern in patterns:
-                if re.search(pattern, html_lower, re.IGNORECASE):
+                if (hasattr(pattern, 'search') and pattern.search(html_lower)) or re.search(pattern, html_lower, re.IGNORECASE):
                     self._add_technology(fingerprint, tech_name, tech_info['category'])
                     break
         
@@ -432,6 +509,23 @@ class TechnologyFingerprinter:
         # Analyze security header quality
         fingerprint['security_score'] = self._calculate_security_score(fingerprint['security_headers'])
     
+    def _analyze_security_headers_dict(self, headers_dict: Dict[str, str], fingerprint: Dict[str, Any]):
+        """
+        Analyze security headers from dictionary.
+        
+        Args:
+            headers_dict: Dictionary of headers
+            fingerprint: Fingerprint dictionary to update
+        """
+        headers = {k.lower(): v for k, v in headers_dict.items()}
+        
+        for header_name in self.security_headers:
+            if header_name in headers:
+                fingerprint['security_headers'][header_name] = headers[header_name]
+        
+        # Analyze security header quality
+        fingerprint['security_score'] = self._calculate_security_score(fingerprint['security_headers'])
+    
     def _calculate_security_score(self, security_headers: Dict[str, str]) -> Dict[str, Any]:
         """
         Calculate security score based on present headers.
@@ -485,11 +579,9 @@ class TechnologyFingerprinter:
         
         # Add to appropriate category list
         if category == 'language':
-            if tech_name not in fingerprint['programming_language']:
-                fingerprint['programming_language'].append(tech_name)
+            fingerprint['programming_language'] = tech_name
         elif category == 'framework':
-            if tech_name not in fingerprint['framework']:
-                fingerprint['framework'].append(tech_name)
+            fingerprint['framework'] = tech_name
         elif category == 'cms':
             fingerprint['cms'] = tech_name
         elif category == 'javascript':
@@ -502,8 +594,7 @@ class TechnologyFingerprinter:
             if tech_name not in fingerprint['analytics']:
                 fingerprint['analytics'].append(tech_name)
         elif category == 'cdn':
-            if tech_name not in fingerprint['cdn']:
-                fingerprint['cdn'].append(tech_name)
+            fingerprint['cdn'] = tech_name
         
         # Add to general technologies list
         if tech_info not in fingerprint['technologies']:

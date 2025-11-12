@@ -1,0 +1,68 @@
+[run]
+source = .
+branch = True
+omit = 
+    */tests/*
+    */test_*
+    */venv/*
+    */env/*
+    */.venv/*
+    */migrations/*
+    */alembic/*
+    setup.py
+    conftest.py
+    */conftest.py
+    */__pycache__/*
+    */site-packages/*
+    */node_modules/*
+    .git/*
+    build/*
+    dist/*
+    *.egg-info/*
+
+[report]
+# Regexes for lines to exclude from consideration
+exclude_lines =
+    # Have to re-enable the standard pragma
+    pragma: no cover
+
+    # Don't complain about missing debug-only code:
+    def __repr__
+    if self\.debug
+
+    # Don't complain if tests don't hit defensive assertion code:
+    raise AssertionError
+    raise NotImplementedError
+
+    # Don't complain if non-runnable code isn't run:
+    if 0:
+    if __name__ == .__main__.:
+
+    # Don't complain about abstract methods
+    @(abc\.)?abstractmethod
+
+    # Don't complain about protocol methods
+    class .*\bProtocol\):
+
+    # Don't complain about type checking imports
+    if TYPE_CHECKING:
+
+    # Don't complain about platform specific code
+    if sys.platform
+
+ignore_errors = True
+show_missing = True
+precision = 2
+skip_covered = False
+skip_empty = False
+
+[html]
+directory = htmlcov
+title = VulnScanner Coverage Report
+
+[xml]
+output = coverage.xml
+
+[json]
+output = coverage.json
+pretty_print = True

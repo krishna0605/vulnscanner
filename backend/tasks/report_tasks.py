@@ -6,13 +6,13 @@ Handles PDF, CSV, and JSON report generation and storage.
 import json
 import csv
 import logging
-from datetime import datetime
-from typing import Dict, Any, List
+from datetime import datetime, timezone, timedelta
+from typing import Dict, Any
 from io import StringIO, BytesIO
 from celery import shared_task
 
-from backend.services.scan_service import ScanService
-from backend.services.storage_service import StorageService
+from services.scan_service import ScanService
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -32,12 +32,11 @@ def generate_report_task(self, scan_id: int, format: str = "json", user_id: int 
     """
     try:
         scan_service = ScanService()
-        storage_service = StorageService()
         
         # Get scan details
         scan = scan_service.get_scan_by_id(scan_id)
         if not scan:
-            return {"error": "Scan not found"}
+            raise ValueError("Scan not found")
         
         # Get scan results
         urls = scan_service.get_scan_urls(scan_id)
@@ -62,34 +61,147 @@ def generate_report_task(self, scan_id: int, format: str = "json", user_id: int 
             file_extension = "pdf"
             
         else:
-            return {"error": f"Unsupported format: {format}"}
+            raise ValueError(f"Unsupported format: {format}")
         
         # Generate filename
-        timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         filename = f"scan_report_{scan_id}_{timestamp}.{file_extension}"
         
-        # Store report file
-        file_url = storage_service.store_report(
-            filename=filename,
-            content=file_content,
-            content_type=content_type,
-            scan_id=scan_id,
-            user_id=user_id
-        )
+        # Store report file (streaming-friendly writes to minimize memory)
+        base_dir = os.path.join(".", "storage", "reports")
+        os.makedirs(base_dir, exist_ok=True)
+        file_path = os.path.join(base_dir, filename)
+
+        if file_extension == "json":
+            # Stream JSON content to file without holding entire string in memory
+            with open(file_path, "w", encoding="utf-8") as f:
+                f.write('{"scan_info": ')
+                json.dump(report_data["scan_info"], f, default=str)
+                f.write(', "discovered_urls": [')
+                first = True
+                for url in urls:
+                    item = {
+                        "id": url.id,
+                        "url": url.url,
+                        "parent_url": url.parent_url,
+                        "method": url.method,
+                        "status_code": url.status_code,
+                        "content_type": url.content_type,
+                        "content_length": url.content_length,
+                        "response_time": url.response_time,
+                        "page_title": url.page_title,
+                        "discovered_at": url.discovered_at.isoformat() if url.discovered_at else None,
+                    }
+                    if not first:
+                        f.write(",")
+                    json.dump(item, f, default=str)
+                    first = False
+                f.write('], "extracted_forms": [')
+                first = True
+                for form in forms:
+                    item = {
+                        "id": form.id,
+                        "url_id": form.url_id,
+                        "form_action": form.form_action,
+                        "form_method": form.form_method,
+                        "form_fields": form.form_fields,
+                        "csrf_tokens": form.csrf_tokens,
+                        "authentication_required": form.authentication_required,
+                    }
+                    if not first:
+                        f.write(",")
+                    json.dump(item, f, default=str)
+                    first = False
+                f.write('], "technology_fingerprints": [')
+                first = True
+                for tech in technologies:
+                    item = {
+                        "id": tech.id,
+                        "url_id": tech.url_id,
+                        "server_software": tech.server_software,
+                        "programming_language": tech.programming_language,
+                        "framework": tech.framework,
+                        "cms": tech.cms,
+                        "javascript_libraries": tech.javascript_libraries,
+                        "security_headers": tech.security_headers,
+                        "detected_at": tech.detected_at.isoformat() if tech.detected_at else None,
+                    }
+                    if not first:
+                        f.write(",")
+                    json.dump(item, f, default=str)
+                    first = False
+                f.write('], "summary": ')
+                json.dump(report_data["summary"], f, default=str)
+                f.write(', "generated_at": ')
+                json.dump(report_data["generated_at"], f, default=str)
+                f.write("}")
+        elif file_extension == "csv":
+            with open(file_path, "w", encoding="utf-8", newline="") as f:
+                writer = csv.writer(f)
+                # Summary
+                f.write("SCAN SUMMARY\n")
+                writer.writerow(["Scan ID", scan.id])
+                writer.writerow(["Project ID", scan.project_id])
+                writer.writerow(["Status", scan.status])
+                writer.writerow(["Created At", scan.created_at])
+                writer.writerow(["Total URLs", len(urls)])
+                writer.writerow(["Total Forms", len(forms)])
+                writer.writerow(["Total Technologies", len(technologies)])
+                f.write("\n")
+                # URLs
+                f.write("DISCOVERED URLS\n")
+                writer.writerow(["ID", "URL", "Parent URL", "Method", "Status Code", "Content Type", "Content Length", "Response Time", "Page Title", "Discovered At"])
+                for url in urls:
+                    writer.writerow([
+                        url.id, url.url, url.parent_url, url.method, url.status_code,
+                        url.content_type, url.content_length, url.response_time,
+                        url.page_title, url.discovered_at
+                    ])
+                f.write("\n")
+                # Forms
+                f.write("EXTRACTED FORMS\n")
+                writer.writerow(["ID", "URL ID", "Form Action", "Form Method", "Field Count", "CSRF Tokens", "Auth Required"])
+                for form in forms:
+                    writer.writerow([
+                        form.id, form.url_id, form.form_action, form.form_method,
+                        len(form.form_fields) if form.form_fields else 0,
+                        len(form.csrf_tokens) if form.csrf_tokens else 0,
+                        form.authentication_required
+                    ])
+                f.write("\n")
+                # Technologies
+                f.write("TECHNOLOGY FINGERPRINTS\n")
+                writer.writerow(["ID", "URL ID", "Server Software", "Programming Language", "Framework", "CMS", "JS Libraries", "Security Headers", "Detected At"])
+                for tech in technologies:
+                    writer.writerow([
+                        tech.id, tech.url_id, tech.server_software, tech.programming_language,
+                        tech.framework, tech.cms,
+                        len(tech.javascript_libraries) if tech.javascript_libraries else 0,
+                        len(tech.security_headers) if tech.security_headers else 0,
+                        tech.detected_at
+                    ])
+        else:
+            # PDF already generated in memory; write bytes
+            with open(file_path, "wb") as f:
+                if isinstance(file_content, str):
+                    f.write(file_content.encode("utf-8"))
+                else:
+                    f.write(file_content)
         
         logger.info(f"Report generated for scan {scan_id}: {filename}")
         return {
             "scan_id": scan_id,
             "format": format,
             "filename": filename,
-            "file_url": file_url,
-            "generated_at": datetime.utcnow().isoformat(),
+            "file_url": file_path,
+            "generated_at": datetime.now(timezone.utc).isoformat(),
             "size_bytes": len(file_content) if isinstance(file_content, str) else len(file_content)
         }
-        
+
     except Exception as exc:
-        logger.error(f"Error generating report for scan {scan_id}: {exc}")
-        return {"error": str(exc)}
+        logger.error(f"Error generating report for scan {scan_id}: {exc}", exc_info=True)
+        # Let Celery handle retries if configured at task level
+        raise
 
 
 def generate_json_report(scan, urls, forms, technologies) -> Dict[str, Any]:
@@ -163,7 +275,7 @@ def generate_json_report(scan, urls, forms, technologies) -> Dict[str, Any]:
             "status_code_distribution": get_status_code_distribution(urls),
             "content_type_distribution": get_content_type_distribution(urls)
         },
-        "generated_at": datetime.utcnow().isoformat()
+        "generated_at": datetime.now(timezone.utc).isoformat()
     }
 
 
@@ -262,7 +374,7 @@ def generate_pdf_report(scan, urls, forms, technologies) -> bytes:
         PDF content as bytes
     """
     try:
-        from reportlab.lib.pagesizes import letter, A4
+        from reportlab.lib.pagesizes import A4
         from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
         from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
         from reportlab.lib.units import inch
@@ -411,7 +523,7 @@ Status Code Distribution:
 Technology Summary:
 {get_technology_summary(technologies)}
 
-Generated At: {datetime.utcnow().isoformat()}
+Generated At: {datetime.now(timezone.utc).isoformat()}
 """
     
     return report_text.encode('utf-8')
@@ -468,6 +580,9 @@ def get_technology_summary(technologies) -> str:
     return "\n".join(summary_lines) if summary_lines else "No specific technologies identified"
 
 
+# Removed legacy duplicate task implementations that referenced undefined helpers.
+
+
 @shared_task
 def cleanup_old_reports():
     """
@@ -480,7 +595,7 @@ def cleanup_old_reports():
         storage_service = StorageService()
         
         # Delete reports older than 30 days
-        cutoff_date = datetime.utcnow() - timedelta(days=30)
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=30)
         
         deleted_count = storage_service.cleanup_old_reports(cutoff_date)
         
@@ -488,7 +603,7 @@ def cleanup_old_reports():
         return {
             "deleted_count": deleted_count,
             "cutoff_date": cutoff_date.isoformat(),
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
         
     except Exception as exc:

@@ -5,14 +5,14 @@ Create test data for the SQLite database.
 import asyncio
 import sys
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 # Add the backend directory to Python path
 backend_dir = Path(__file__).parent
 sys.path.insert(0, str(backend_dir))
 
-from db.session import async_session
-from models.sqlite_models import User, Project, ScanSession, DiscoveredUrl, ScanStatus
+from db.session import async_session  # noqa: E402
+from models.unified_models import Project, ScanSession, DiscoveredUrl, ScanStatus  # noqa: E402
 
 async def create_test_data():
     """Create test data for development."""
@@ -20,8 +20,8 @@ async def create_test_data():
     
     async with async_session() as db:
         try:
-            # Use existing test user with ID 1
-            test_user_id = 1
+            # Use existing test user with UUID (you'll need to create a profile first)
+            test_user_id = "550e8400-e29b-41d4-a716-446655440000"  # Example UUID
             
             # Create test projects
             project1 = Project(
@@ -29,7 +29,7 @@ async def create_test_data():
                 description="Security scan of example.com",
                 owner_id=test_user_id,
                 target_domain="example.com",
-                scope_rules='["https://example.com/*"]'
+                scope_rules=["https://example.com/*"]
             )
             
             project2 = Project(
@@ -37,7 +37,7 @@ async def create_test_data():
                 description="Internal application security assessment",
                 owner_id=test_user_id,
                 target_domain="testapp.local",
-                scope_rules='["https://testapp.local/*"]'
+                scope_rules=["https://testapp.local/*"]
             )
             
             db.add(project1)
@@ -48,8 +48,8 @@ async def create_test_data():
             scan1 = ScanSession(
                 project_id=project1.id,
                 status=ScanStatus.COMPLETED.value,
-                start_time=datetime.utcnow() - timedelta(hours=2),
-                end_time=datetime.utcnow() - timedelta(hours=1),
+                start_time=datetime.now(timezone.utc) - timedelta(hours=2),
+                end_time=datetime.now(timezone.utc) - timedelta(hours=1),
                 configuration='{"max_depth": 3, "max_pages": 100}',
                 stats='{"urls_found": 25, "forms_found": 3, "technologies": 5}',
                 created_by=test_user_id
@@ -58,7 +58,7 @@ async def create_test_data():
             scan2 = ScanSession(
                 project_id=project1.id,
                 status=ScanStatus.RUNNING.value,
-                start_time=datetime.utcnow() - timedelta(minutes=30),
+                start_time=datetime.now(timezone.utc) - timedelta(minutes=30),
                 configuration='{"max_depth": 5, "max_pages": 500}',
                 stats='{"urls_found": 12, "forms_found": 1, "technologies": 3}',
                 created_by=test_user_id
@@ -67,8 +67,8 @@ async def create_test_data():
             scan3 = ScanSession(
                 project_id=project2.id,
                 status=ScanStatus.COMPLETED.value,
-                start_time=datetime.utcnow() - timedelta(days=1),
-                end_time=datetime.utcnow() - timedelta(days=1, hours=-2),
+                start_time=datetime.now(timezone.utc) - timedelta(days=1),
+                end_time=datetime.now(timezone.utc) - timedelta(days=1, hours=-2),
                 configuration='{"max_depth": 2, "max_pages": 50}',
                 stats='{"urls_found": 15, "forms_found": 2, "technologies": 4}',
                 created_by=test_user_id

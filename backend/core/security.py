@@ -1,16 +1,15 @@
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any
 import aiohttp
-import json
 from jose import jwt, JWTError
 from passlib.context import CryptContext
 from fastapi import HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import HTTPBearer
 
 from .config import settings
 
 
-pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
+pwd_context = CryptContext(schemes=["pbkdf2_sha256", "bcrypt"], deprecated="auto")
 security = HTTPBearer()
 
 
@@ -21,14 +20,29 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 def get_password_hash(password: str) -> str:
     """Generate password hash."""
+    if not password:
+        raise ValueError("Password cannot be empty")
     return pwd_context.hash(password)
 
 
-def create_access_token(subject: str, expires_minutes: Optional[int] = None) -> str:
+def create_access_token(data, expires_delta: Optional[timedelta] = None) -> str:
     """Create a JWT access token (fallback for non-Supabase auth)."""
-    expire = datetime.now(timezone.utc) + timedelta(minutes=expires_minutes or settings.jwt_exp_minutes)
-    payload = {"sub": subject, "exp": expire}
-    return jwt.encode(payload, settings.secret_key, algorithm=settings.jwt_algorithm)
+    if isinstance(data, str):
+        # If data is a string, treat it as subject
+        payload = {"sub": data}
+    else:
+        # If data is a dict, use it as payload
+        payload = data.copy()
+    
+    if expires_delta:
+        expire = datetime.now(timezone.utc) + expires_delta
+    else:
+        expire = datetime.now(timezone.utc) + timedelta(minutes=settings.jwt_exp_minutes)
+    
+    payload["exp"] = expire
+    payload["iat"] = datetime.now(timezone.utc).timestamp()
+    
+    return jwt.encode(payload, settings.get_effective_jwt_secret(), algorithm=settings.jwt_algorithm)
 
 
 async def verify_supabase_jwt(token: str) -> Dict[str, Any]:
@@ -54,7 +68,7 @@ async def verify_supabase_jwt(token: str) -> Dict[str, Any]:
             )
         
         # Decode without verification first to get the header
-        unverified_header = jwt.get_unverified_header(token)
+        jwt.get_unverified_header(token)
         
         # For Supabase, we need to verify using the JWT secret
         # In production, you should fetch the public key from Supabase
@@ -108,18 +122,30 @@ async def get_current_user_from_token(token: str) -> Dict[str, Any]:
     Returns:
         Dict containing user information
     """
-    payload = await verify_supabase_jwt(token)
+    # Use Supabase Auth API for proper token verification
+    if 'supabase_auth' not in globals() or supabase_auth is None:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Supabase not configured"
+        )
+    user_data = await supabase_auth.verify_user_token(token)
     
     return {
-        "id": payload.get("sub"),
-        "email": payload.get("email"),
-        "role": payload.get("role", "authenticated"),
-        "aud": payload.get("aud"),
-        "exp": payload.get("exp"),
-        "iat": payload.get("iat"),
-        "iss": payload.get("iss"),
-        "user_metadata": payload.get("user_metadata", {}),
-        "app_metadata": payload.get("app_metadata", {})
+        "id": user_data.get("id"),
+        "email": user_data.get("email"),
+        "role": user_data.get("role", "authenticated"),
+        "aud": user_data.get("aud"),
+        "exp": user_data.get("exp"),
+        "iat": user_data.get("iat"),
+        "iss": user_data.get("iss"),
+        "user_metadata": user_data.get("user_metadata", {}),
+        "app_metadata": user_data.get("app_metadata", {}),
+        "email_confirmed_at": user_data.get("email_confirmed_at"),
+        "phone_confirmed_at": user_data.get("phone_confirmed_at"),
+        "confirmed_at": user_data.get("confirmed_at"),
+        "last_sign_in_at": user_data.get("last_sign_in_at"),
+        "created_at": user_data.get("created_at"),
+        "updated_at": user_data.get("updated_at")
     }
 
 
@@ -178,5 +204,30 @@ class SupabaseAuth:
             )
 
 
+def verify_token(token: str) -> Optional[Dict[str, Any]]:
+    """
+    Verify JWT token and return payload (for testing/fallback).
+    
+    Args:
+        token: JWT token to verify
+        
+    Returns:
+        Token payload if valid, None if invalid
+    """
+    try:
+        payload = jwt.decode(
+            token,
+            settings.get_effective_jwt_secret(),
+            algorithms=[settings.jwt_algorithm]
+        )
+        return payload
+    except JWTError:
+        return None
+
+
 # Global instance
-supabase_auth = SupabaseAuth()
+try:
+    supabase_auth = SupabaseAuth()
+except Exception:
+    # In development without Supabase settings, avoid crashing at import time
+    supabase_auth = None

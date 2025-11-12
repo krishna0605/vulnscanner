@@ -3,8 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { loginStart, loginSuccess, loginFailure } from '../store/slices/authSlice.ts';
 import { RootState } from '../store';
-import { useAuth } from '../hooks/useAuth.ts';
-import { auth } from '../lib/supabase.ts';
+import { useAuth } from '../contexts/AuthContext.tsx';
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -21,8 +20,8 @@ const LoginPage: React.FC = () => {
   const pendingPurchase = typeof window !== 'undefined' ? sessionStorage.getItem('pendingPurchase') : null;
   const { loading, error } = useSelector((state: RootState) => state.auth);
   
-  // Supabase auth hook
-  const { signIn, loading: supabaseLoading, error: supabaseError } = useAuth();
+  // Local backend auth via AuthContext
+  const { signIn, loading: authLoading } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,143 +35,20 @@ const LoginPage: React.FC = () => {
     dispatch(loginStart());
     setSuccessMessage('');
     
-    // Check if we should skip Supabase auth for development
-    const isDevelopment = process.env.REACT_APP_ENVIRONMENT === 'development';
-    const skipSupabase = isDevelopment || process.env.REACT_APP_SKIP_SUPABASE === 'true';
-
-    if (skipSupabase) {
-      console.log('Development mode: Using backend API authentication directly');
-      
-      // Go directly to backend API authentication
-      try {
-        const API_BASE_URL = (process.env as any)?.REACT_APP_API_BASE_URL || 'http://127.0.0.1:8000';
-        const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password }),
-        });
-        
-        if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
-          throw new Error(data?.detail || 'Invalid credentials');
-        }
-        
-        const data = await res.json();
-        const token: string | undefined = data?.access_token;
-        
-        if (!token) {
-          throw new Error('Login failed: token missing');
-        }
-        
-        dispatch(loginSuccess({ email }));
-        
-        // Persist JWT token and email
-        try {
-          const storage = rememberMe ? localStorage : sessionStorage;
-          storage.setItem('authToken', token);
-          storage.setItem('authUserEmail', email);
-        } catch {}
-        
-        // Show success message before redirect
-        setSuccessMessage('Login successful! Redirecting to dashboard...');
-        
-        // Add a small delay to ensure state is updated before navigation
-        setTimeout(() => {
-          // Clear form only after successful navigation
-          setEmail('');
-          setPassword('');
-          navigate(redirect, { replace: true });
-        }, 1500);
-        return;
-      } catch (apiErr: any) {
-        dispatch(loginFailure(apiErr?.message || 'Login failed'));
-        return;
-      }
-    }
-
     try {
-      // Try Supabase authentication first
-      const result = await signIn(email, password);
-      
-      if (!result || result.error) {
-        throw new Error(result?.error?.message || 'Supabase sign-in failed');
+      const { user, error } = await signIn(email, password);
+      if (error) {
+        throw new Error(error?.message || 'Invalid credentials');
       }
-
-      // Supabase authentication successful
-      const currentUser = await auth.getCurrentUser();
-      const currentSession = await auth.getCurrentSession();
-
-      dispatch(loginSuccess({ email: currentUser?.email || email }));
-
-      // Persist session info
-      try {
-        const storage = rememberMe ? localStorage : sessionStorage;
-        if (currentSession?.access_token) {
-          storage.setItem('authToken', currentSession.access_token);
-        }
-        storage.setItem('authUserEmail', currentUser?.email || email);
-        if (currentSession) {
-          storage.setItem('supabaseSession', JSON.stringify(currentSession));
-        }
-      } catch {}
-      
-      // Show success message before redirect
+      dispatch(loginSuccess({ email: user?.email || email }));
       setSuccessMessage('Login successful! Redirecting to dashboard...');
-      
-      // Add a small delay to ensure state is updated before navigation
       setTimeout(() => {
-        // Clear form only after successful navigation
         setEmail('');
         setPassword('');
         navigate(redirect, { replace: true });
       }, 1500);
-      return;
-    } catch (supabaseErr: any) {
-      console.warn('Supabase auth failed, falling back to API:', supabaseErr?.message);
-      
-      // Fallback to existing API authentication
-      try {
-        const API_BASE_URL = (process.env as any)?.REACT_APP_API_BASE_URL || 'http://127.0.0.1:8000';
-        const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password }),
-        });
-        
-        if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
-          throw new Error(data?.detail || 'Invalid credentials');
-        }
-        
-        const data = await res.json();
-        const token: string | undefined = data?.access_token;
-        
-        if (!token) {
-          throw new Error('Login failed: token missing');
-        }
-        
-        dispatch(loginSuccess({ email }));
-        
-        // Persist JWT token and email
-        try {
-          const storage = rememberMe ? localStorage : sessionStorage;
-          storage.setItem('authToken', token);
-          storage.setItem('authUserEmail', email);
-        } catch {}
-        
-        // Show success message before redirect
-        setSuccessMessage('Login successful! Redirecting to dashboard...');
-        
-        // Add a small delay to ensure state is updated before navigation
-        setTimeout(() => {
-          // Clear form only after successful navigation
-          setEmail('');
-          setPassword('');
-          navigate(redirect, { replace: true });
-        }, 1500);
-      } catch (apiErr: any) {
-        dispatch(loginFailure(apiErr?.message || 'Login failed'));
-      }
+    } catch (apiErr: any) {
+      dispatch(loginFailure(apiErr?.message || 'Login failed'));
     }
   };
 
@@ -268,10 +144,10 @@ const LoginPage: React.FC = () => {
           <div className="pt-2">
             <button 
               type="submit"
-              disabled={loading || supabaseLoading}
+              disabled={loading || authLoading}
               className="btn-trail relative flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-md h-11 px-5 text-base font-medium tracking-wide text-white bg-primary/20 border border-primary-faint hover:bg-primary/30 transition-colors duration-300"
             >
-              {(loading || supabaseLoading) ? (
+              {(loading || authLoading) ? (
                 <span className="flex items-center">
                   <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -297,9 +173,9 @@ const LoginPage: React.FC = () => {
           )}
 
           {/* Error message */}
-          {(error || supabaseError) && !successMessage && (
+          {error && !successMessage && (
             <div className="text-red-500 text-sm text-center mt-2">
-              {error || supabaseError}
+              {error}
             </div>
           )}
           

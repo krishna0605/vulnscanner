@@ -3,7 +3,6 @@
 Create tables in Supabase using direct HTTP requests
 """
 import requests
-import json
 from core.config import Settings
 
 def create_tables():

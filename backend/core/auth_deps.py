@@ -1,5 +1,5 @@
 """
-Authentication dependencies for FastAPI with Supabase integration.
+Authentication dependencies for FastAPI (local-only JWT).
 
 This module provides dependency functions for authenticating users
 and extracting user information from JWT tokens.
@@ -9,16 +9,15 @@ from typing import Dict, Any, Optional
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
-from .security import supabase_auth, get_current_user_from_token
-from .supabase import get_supabase_client
+from services.auth_service import auth_service
 from .config import settings
 
 
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
 
 
 async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security)
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)
 ) -> Dict[str, Any]:
     """
     Get current authenticated user from JWT token.
@@ -35,32 +34,44 @@ async def get_current_user(
     Raises:
         HTTPException: If token is invalid or user not found
     """
+    if not credentials:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required"
+        )
+
     try:
-        # In development mode, allow bypassing authentication
-        if settings.development_mode:
-            token = credentials.credentials
-            if token == "dev-bypass" or token == "test-token":
-                return {
-                    "id": "c4727d0f-73e1-4ff9-a3d9-8636e3597c25",  # Use real UUID from existing admin user
-                    "email": "admin@vulnscan.local",
-                    "role": "authenticated",
-                    "user_metadata": {},
-                    "app_metadata": {}
-                }
+        # Verify token using auth service
+        payload = await auth_service.verify_token(credentials.credentials)
         
-        # Extract token from credentials
-        token = credentials.credentials
-        
-        # Verify token and get user info
-        user_info = await get_current_user_from_token(token)
-        
-        if not user_info or not user_info.get("id"):
+        # Get user ID from token
+        user_id = payload.get("sub")
+        if not user_id:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid user token"
+                detail="Invalid token: missing user ID"
             )
         
-        return user_info
+        # Get user information
+        user = await auth_service.get_user_by_id(user_id)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User not found"
+            )
+        
+        # Return user information in expected format
+        return {
+            "id": user.id,
+            "email": user.email,
+            "username": user.username,
+            "full_name": user.full_name,
+            "role": user.role,
+            "is_active": user.is_active,
+            "email_verified": user.email_verified,
+            "exp": payload.get("exp"),
+            "iat": payload.get("iat")
+        }
         
     except HTTPException:
         raise
@@ -91,8 +102,33 @@ async def get_current_user_optional(
         return None
     
     try:
-        return await get_current_user(credentials)
-    except HTTPException:
+        # Verify token using auth service
+        payload = await auth_service.verify_token(credentials.credentials)
+        
+        # Get user ID from token
+        user_id = payload.get("sub")
+        if not user_id:
+            return None
+        
+        # Get user information
+        user = await auth_service.get_user_by_id(user_id)
+        if not user:
+            return None
+        
+        # Return user information in expected format
+        return {
+            "id": user.id,
+            "email": user.email,
+            "username": user.username,
+            "full_name": user.full_name,
+            "role": user.role,
+            "is_active": user.is_active,
+            "email_verified": user.email_verified,
+            "exp": payload.get("exp"),
+            "iat": payload.get("iat")
+        }
+        
+    except Exception:
         return None
 
 
@@ -145,7 +181,7 @@ async def require_admin_user(
     Raises:
         HTTPException: If user is not an admin
     """
-    user_role = current_user.get("app_metadata", {}).get("role", "user")
+    user_role = current_user.get("role", "user")
     
     if user_role not in ["admin", "super_admin"]:
         raise HTTPException(
@@ -168,46 +204,21 @@ async def get_user_id(
         current_user: Current user from get_current_user dependency
         
     Returns:
-        User ID string
+        User ID as string (UUID format)
     """
-    return current_user["id"]
-
-
-async def verify_supabase_webhook(
-    credentials: HTTPAuthorizationCredentials = Depends(security)
-) -> bool:
-    """
-    Verify Supabase webhook signature.
     
-    This dependency verifies that the request is coming from Supabase
-    by validating the webhook signature.
+    user_id = current_user.get("id")
     
-    Args:
-        credentials: HTTP Bearer credentials containing webhook signature
-        
-    Returns:
-        True if webhook is valid
-        
-    Raises:
-        HTTPException: If webhook signature is invalid
-    """
-    # TODO: Implement webhook signature verification
-    # This would involve checking the webhook secret and signature
-    # For now, we'll just check if the token matches our service role key
-    
-    token = credentials.credentials
-    
-    # In production, you should implement proper webhook signature verification
-    # For now, we'll use a simple token check
-    from .config import settings
-    
-    if token != settings.supabase_service_role_key:
+    if not user_id:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid webhook signature"
+            detail="User ID not found in token"
         )
     
-    return True
+    return str(user_id)
+
+
+# Supabase webhook verification removed; local-only auth enforced
 
 
 class UserPermissions:
@@ -226,7 +237,7 @@ class UserPermissions:
             True if user can access the project
         """
         user_id = user.get("id")
-        user_role = user.get("app_metadata", {}).get("role", "user")
+        user_role = user.get("role", "user")
         
         # Admin users can access all projects
         if user_role in ["admin", "super_admin"]:
@@ -254,7 +265,7 @@ class UserPermissions:
             True if user can modify the project
         """
         user_id = user.get("id")
-        user_role = user.get("app_metadata", {}).get("role", "user")
+        user_role = user.get("role", "user")
         
         # Admin users can modify all projects
         if user_role in ["admin", "super_admin"]:

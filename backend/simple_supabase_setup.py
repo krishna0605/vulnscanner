@@ -5,7 +5,6 @@ Simple script to create tables in Supabase using direct SQL connection.
 
 import asyncio
 import sys
-import os
 from pathlib import Path
 
 # Add the backend directory to Python path
@@ -16,8 +15,8 @@ sys.path.insert(0, str(backend_dir))
 if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
-import asyncpg
-from passlib.context import CryptContext
+import asyncpg  # noqa: E402
+from passlib.context import CryptContext  # noqa: E402
 
 # Database URL from environment
 DATABASE_URL = "postgresql://postgres.ewijwxhjthqsmldaulwh:NktZcudu0PobVb2-7dMC70QaGHXcYfucyPnp4eqJ5fE@aws-0-us-west-1.pooler.supabase.com:6543/postgres"

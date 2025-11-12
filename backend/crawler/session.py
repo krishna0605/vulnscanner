@@ -4,7 +4,6 @@ Manages login sessions, CSRF tokens, and cookie persistence during crawling.
 """
 
 import logging
-import asyncio
 from typing import Dict, Optional, Any
 from urllib.parse import urljoin, urlparse
 import aiohttp
@@ -19,7 +18,7 @@ class SessionManager:
     Handles login flows, CSRF tokens, and session state.
     """
     
-    def __init__(self, session: aiohttp.ClientSession):
+    def __init__(self, session: Optional[aiohttp.ClientSession] = None):
         self.session = session
         self.authenticated = False
         self.csrf_tokens: Dict[str, str] = {}
@@ -58,7 +57,7 @@ class SessionManager:
                 await self._bearer_auth()
             
         except Exception as e:
-            logger.error(f"Login failed: {e}")
+            logger.error("Login failed")
     
     async def _form_login(self):
         """
@@ -128,7 +127,7 @@ class SessionManager:
                         logger.error(f"Login failed with status: {login_response.status}")
         
         except Exception as e:
-            logger.error(f"Form login error: {e}")
+            logger.error("Form login error")
     
     async def _basic_auth(self):
         """
@@ -204,9 +203,34 @@ class SessionManager:
         except Exception as e:
             logger.error(f"Error extracting CSRF tokens: {e}")
     
+    def get_stored_csrf_token(self, url: str) -> Optional[str]:
+        """
+        Get stored CSRF token for a URL with domain matching.
+        
+        Args:
+            url: URL to get CSRF token for
+            
+        Returns:
+            CSRF token if found
+        """
+        # First try exact match
+        if url in self.csrf_tokens:
+            return self.csrf_tokens[url]
+        
+        # Try domain matching - find the best match
+        parsed_url = urlparse(url)
+        base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
+        
+        # Look for tokens from the same domain
+        for stored_url, token in self.csrf_tokens.items():
+            if stored_url.startswith(base_url):
+                return token
+        
+        return None
+
     async def get_csrf_token(self, url: str) -> Optional[str]:
         """
-        Get CSRF token for a specific URL.
+        Get CSRF token for a specific URL by fetching the page.
         
         Args:
             url: URL to get CSRF token for
@@ -225,7 +249,7 @@ class SessionManager:
                         return list(self.csrf_tokens.values())[0]
         
         except Exception as e:
-            logger.error(f"Error getting CSRF token from {url}: {e}")
+            logger.error("Error getting CSRF token")
         
         return None
     
@@ -250,7 +274,7 @@ class SessionManager:
         
         return data
     
-    async def is_authenticated(self) -> bool:
+    def is_authenticated(self) -> bool:
         """
         Check if session is authenticated.
         
@@ -311,6 +335,16 @@ class SessionManager:
             self.authenticated = False
             self.csrf_tokens.clear()
             await self._perform_login()
+
+    def _redact_login_config(self) -> Dict[str, Any]:
+        """Return a redacted copy of login_config for any potential logging (never log raw secrets)."""
+        if not self.login_config:
+            return {}
+        redacted = dict(self.login_config)
+        for key in ['username', 'password', 'token', 'client_secret', 'api_key', 'authorization']:
+            if key in redacted and redacted[key]:
+                redacted[key] = '***REDACTED***'
+        return redacted
     
     def get_session_info(self) -> Dict[str, Any]:
         """
@@ -325,3 +359,89 @@ class SessionManager:
             'cookies_count': len(self.session.cookie_jar),
             'auth_type': self.login_config.get('type') if self.login_config else None
         }
+    
+    async def update_csrf_token(self, url: str, token: str):
+        """
+        Update CSRF token for a specific URL.
+        
+        Args:
+            url: URL to associate with the token
+            token: CSRF token value
+        """
+        self.csrf_tokens[url] = token
+        logger.debug(f"Updated CSRF token for {url}")
+    
+    async def logout(self):
+        """
+        Logout and clear session state.
+        """
+        self.authenticated = False
+        self.csrf_tokens.clear()
+        
+        # Clear session cookies if possible
+        if hasattr(self.session, 'cookie_jar') and hasattr(self.session.cookie_jar, 'clear'):
+            self.session.cookie_jar.clear()
+        
+        logger.info("Logged out and cleared session state")
+    
+    async def get_session_cookies(self, url: str) -> Optional[Dict[str, str]]:
+        """
+        Get session cookies for a specific URL.
+        
+        Args:
+            url: URL to get cookies for
+            
+        Returns:
+            Dictionary of cookies or None
+        """
+        try:
+            if hasattr(self.session, 'cookie_jar'):
+                from urllib.parse import urlparse
+                urlparse(url)
+                
+                # Filter cookies for the domain
+                if hasattr(self.session.cookie_jar, 'filter_cookies'):
+                    filtered_cookies = self.session.cookie_jar.filter_cookies(url)
+                    return {cookie.key: cookie.value for cookie in filtered_cookies.values()}
+                else:
+                    # Fallback: return all cookies as dict
+                    cookies = {}
+                    for cookie in self.session.cookie_jar:
+                        if cookie.domain in url or url.endswith(cookie.domain):
+                            cookies[cookie.key] = cookie.value
+                    return cookies
+        except Exception as e:
+            logger.error(f"Error getting session cookies: {e}")
+        
+        return None
+    
+    async def set_custom_headers(self, headers: Dict[str, str]):
+        """
+        Set custom headers for all requests.
+        
+        Args:
+            headers: Dictionary of headers to set
+        """
+        if not hasattr(self, 'custom_headers'):
+            self.custom_headers = {}
+        
+        self.custom_headers.update(headers)
+        
+        # Update session headers
+        if hasattr(self.session, 'headers'):
+            self.session.headers.update(headers)
+        
+        logger.debug(f"Set custom headers: {list(headers.keys())}")
+    
+    async def close(self):
+        """
+        Close the session manager and clean up resources.
+        """
+        # Clear authentication state
+        self.authenticated = False
+        self.csrf_tokens.clear()
+        
+        # Note: We don't close the aiohttp session here as it's managed externally
+        # The session is passed in during initialization and should be closed by the caller
+        
+        logger.debug("Session manager closed")

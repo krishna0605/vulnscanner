@@ -11,6 +11,15 @@ class Token(BaseModel):
     refresh_token: Optional[str] = None
 
 
+class LoginResponse(BaseModel):
+    """Login response model with token and user information."""
+    access_token: str
+    token_type: str = "bearer"
+    expires_in: Optional[int] = None
+    refresh_token: Optional[str] = None
+    user: "UserPublic"
+
+
 class TokenPayload(BaseModel):
     """JWT token payload model."""
     sub: str  # Subject (user ID)
@@ -38,8 +47,12 @@ class UserPublic(BaseModel):
     """Public user information model."""
     id: str  # Supabase uses UUID strings
     email: EmailStr
+    username: Optional[str] = None
     full_name: Optional[str] = None
+    role: Optional[str] = None
+    is_active: bool = True
     email_confirmed: bool = False
+    email_verified: bool = False
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
@@ -48,6 +61,11 @@ class UserUpdate(BaseModel):
     """User profile update model."""
     full_name: Optional[str] = Field(None, max_length=100)
     email: Optional[EmailStr] = None
+
+
+class RefreshTokenRequest(BaseModel):
+    """Refresh token request model."""
+    refresh_token: str
 
 
 class PasswordReset(BaseModel):

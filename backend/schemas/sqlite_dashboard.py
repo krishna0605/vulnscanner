@@ -21,7 +21,6 @@ class ProjectBase(BaseModel):
 
 class ProjectCreate(ProjectBase):
     """Schema for creating a new project."""
-    pass
 
 
 class ProjectUpdate(BaseModel):
@@ -36,8 +35,8 @@ class ProjectResponse(ProjectBase):
     """Schema for project response."""
     model_config = ConfigDict(from_attributes=True)
     
-    id: int
-    owner_id: int
+    id: str
+    owner_id: str
     created_at: datetime
     updated_at: datetime
     
@@ -77,14 +76,14 @@ class ScanSessionResponse(BaseModel):
     """Schema for scan session response."""
     model_config = ConfigDict(from_attributes=True)
     
-    id: int
-    project_id: int
+    id: str
+    project_id: str
     status: ScanStatus
     start_time: datetime
     end_time: Optional[datetime]
     configuration: Dict[str, Any]
     stats: Dict[str, Any]
-    created_by: int
+    created_by: str
     
     @field_validator('configuration', mode='before')
     @classmethod
@@ -204,7 +203,7 @@ class TechnologyFingerprintResponse(BaseModel):
 # Summary schemas
 class ProjectSummary(BaseModel):
     """Summary information for a project."""
-    id: int
+    id: str
     name: str
     target_domain: str
     total_scans: int
@@ -215,8 +214,8 @@ class ProjectSummary(BaseModel):
 
 class ScanSummary(BaseModel):
     """Summary information for a scan session."""
-    id: int
-    project_id: int
+    id: str
+    project_id: str
     status: ScanStatus
     start_time: datetime
     end_time: Optional[datetime]

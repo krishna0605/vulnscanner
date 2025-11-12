@@ -23,7 +23,7 @@ def fix_clean_triggers():
     
     # Pattern to match CREATE TRIGGER statements with table detection
     # This will match: CREATE TRIGGER trigger_name ... ON table_name
-    trigger_pattern = r'CREATE TRIGGER\s+(\w+)\s+.*?\s+ON\s+([^\s]+)'
+    # Removed unused detailed trigger pattern to avoid lint warning
     
     def replace_trigger(match):
         trigger_name = match.group(1)
@@ -37,7 +37,7 @@ def fix_clean_triggers():
     
     def replace_simple_trigger(match):
         trigger_name = match.group(1)
-        full_match = match.group(0)
+        # Removed unused variable assignment
         
         # Try to find the table name in the following lines
         remaining_text = content[match.end():]
@@ -62,7 +62,7 @@ def fix_clean_triggers():
     
     print(f"✅ Successfully added DROP TRIGGER IF EXISTS to {drop_count} triggers in {file_path}")
     print(f"📁 File size: {len(modified_content)} bytes")
-    print(f"🔧 Added conditional trigger creation to avoid conflicts")
+    print("🔧 Added conditional trigger creation to avoid conflicts")
     
     return True
 

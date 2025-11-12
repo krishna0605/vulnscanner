@@ -3,7 +3,6 @@
 Test script to check database schema and content for scan functionality.
 """
 import sqlite3
-import json
 from datetime import datetime, timezone
 import uuid
 

@@ -3,8 +3,6 @@
 Test script to authenticate and test project creation through FastAPI backend
 """
 import requests
-import json
-import sys
 from datetime import datetime
 
 # API base URL
@@ -151,7 +149,7 @@ def main():
     test_project_creation_without_auth()
     
     # Test project creation with auth (if token available)
-    project_id = test_project_creation_with_auth(token)
+    test_project_creation_with_auth(token)
     
     # Test project listing
     test_project_listing(token)
