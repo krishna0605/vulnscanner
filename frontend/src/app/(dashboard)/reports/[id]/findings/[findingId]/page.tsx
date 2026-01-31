@@ -1,4 +1,4 @@
-import { getFindingDetails } from '@/lib/api';
+import { getFindingDetails, getRelatedFindings } from '@/lib/api';
 import { FindingDetailsClient } from '@/components/findings/finding-details-client';
 import { notFound } from 'next/navigation';
 
@@ -19,5 +19,8 @@ export default async function FindingDetailsPage({ params }: PageProps) {
     notFound();
   }
 
-  return <FindingDetailsClient finding={finding} />;
+  // Fetch all findings of the same type in this scan (grouped view)
+  const relatedFindings = await getRelatedFindings(finding.scan_id, finding.title, finding.severity);
+
+  return <FindingDetailsClient finding={finding} relatedFindings={relatedFindings} />;
 }

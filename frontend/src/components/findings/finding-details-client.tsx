@@ -12,9 +12,10 @@ import { motion } from 'framer-motion';
 
 interface FindingDetailsClientProps {
   finding: FindingDetails;
+  relatedFindings?: FindingDetails[];
 }
 
-export function FindingDetailsClient({ finding }: FindingDetailsClientProps) {
+export function FindingDetailsClient({ finding, relatedFindings = [] }: FindingDetailsClientProps) {
   return (
     <div className="relative min-h-screen pb-20">
       {/* Animated Background Grid */}
@@ -40,7 +41,7 @@ export function FindingDetailsClient({ finding }: FindingDetailsClientProps) {
 
           {/* Center Column: Content */}
           <div className="col-span-12 lg:col-span-6">
-            <FindingContent finding={finding} />
+            <FindingContent finding={finding} relatedFindings={relatedFindings} />
             <FindingComments findingId={finding.id} severity={finding.severity} />
           </div>
 

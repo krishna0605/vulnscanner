@@ -5,9 +5,10 @@ import { FindingDetails } from '@/lib/api';
 
 interface FindingContentProps {
   finding: FindingDetails;
+  relatedFindings?: FindingDetails[];
 }
 
-export function FindingContent({ finding }: FindingContentProps) {
+export function FindingContent({ finding, relatedFindings = [] }: FindingContentProps) {
   const [activeTab, setActiveTab] = useState<'request' | 'response'>('request');
 
   const getSeverityColors = (s: string) => {
@@ -85,14 +86,32 @@ export function FindingContent({ finding }: FindingContentProps) {
             </summary>
             <div className="mt-2 text-gray-400 leading-relaxed border-t border-white/5 pt-4">
               <p>{finding.description}</p>
-              {finding.location && (
-                <div className="mt-4 pt-4 border-t border-white/5 flex flex-wrap gap-2 items-center">
-                  <span className={`text-sm font-semibold ${colors.text}`}>Location:</span>
-                  <code className="text-xs bg-black/40 px-2 py-1.5 rounded text-gray-300 font-mono border border-white/5">
-                    {finding.location}
-                  </code>
-                </div>
-              )}
+              
+              {/* Affected Locations List */}
+               <div className="mt-6 pt-4 border-t border-white/5">
+                <h4 className={`text-sm font-semibold ${colors.text} mb-3 flex items-center gap-2`}>
+                   <span className="material-symbols-outlined text-sm">public</span>
+                   Affected Locations ({relatedFindings.length > 0 ? relatedFindings.length : 1})
+                </h4>
+                
+                {relatedFindings.length > 1 ? (
+                  <div className="max-h-[300px] overflow-y-auto pr-2 custom-scrollbar space-y-2">
+                     {relatedFindings.map((f, i) => (
+                        <div key={i} className="flex items-center gap-2 bg-black/40 px-3 py-2 rounded border border-white/5 text-xs text-gray-300 font-mono break-all hover:bg-white/5 transition-colors">
+                           <span className="text-slate-500 w-6 text-right">{i+1}.</span>
+                           {f.location || 'Unknown Location'}
+                        </div>
+                     ))}
+                  </div>
+                ) : (
+                   finding.location && (
+                    <div className="bg-black/40 px-3 py-2 rounded border border-white/5 text-xs text-gray-300 font-mono break-all inline-block">
+                       {finding.location}
+                    </div>
+                   )
+                )}
+              </div>
+
             </div>
           </details>
         </div>

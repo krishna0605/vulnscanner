@@ -750,6 +750,7 @@ export interface FindingDetails {
   created_at: string;
 }
 
+
 export async function getFindingDetails(findingId: string): Promise<FindingDetails | null> {
   const supabase = createClient();
   console.log(`[getFindingDetails] Fetching finding via RPC: ${findingId}`);
@@ -762,6 +763,23 @@ export async function getFindingDetails(findingId: string): Promise<FindingDetai
   }
 
   return data as FindingDetails;
+}
+
+export async function getRelatedFindings(scanId: string, title: string, severity: string): Promise<FindingDetails[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from('findings')
+    .select('*')
+    .eq('scan_id', scanId)
+    .eq('title', title)
+    .eq('severity', severity);
+
+  if (error) {
+    console.error('Error fetching related findings:', error);
+    return [];
+  }
+  
+  return (data || []) as unknown as FindingDetails[];
 }
 
 // -- Project Details Page --

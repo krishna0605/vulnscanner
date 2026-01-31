@@ -9,6 +9,27 @@ interface DetailedFindingsProps {
 }
 
 export function DetailedFindings({ findings = [], scanId }: DetailedFindingsProps) {
+  // Group findings by Title + Severity
+  const groupedFindings = findings.reduce((acc: any, finding) => {
+    const key = `${finding.title}|${finding.severity}`;
+    if (!acc[key]) {
+      acc[key] = {
+        ...finding,
+        count: 0,
+        instances: []
+      };
+    }
+    acc[key].count++;
+    acc[key].instances.push(finding);
+    return acc;
+  }, {});
+
+  const groups = Object.values(groupedFindings).sort((a: any, b: any) => {
+     // Sort by severity rank
+     const severityRank: any = { critical: 4, high: 3, medium: 2, low: 1, info: 0 };
+     return severityRank[b.severity] - severityRank[a.severity];
+  });
+
   const getSeverityColor = (severity: string) => {
     switch (severity.toLowerCase()) {
       case 'critical':
@@ -38,23 +59,29 @@ export function DetailedFindings({ findings = [], scanId }: DetailedFindingsProp
 
   return (
     <div className="mt-4">
-      <h2 className="text-2xl font-bold text-white mb-6">Detailed Findings</h2>
-      {findings.length === 0 ? (
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-2xl font-bold text-white">Detailed Findings</h2>
+        <div className="text-sm text-slate-400">
+           Showing {groups.length} unique issues ({findings.length} total instances)
+        </div>
+      </div>
+      
+      {groups.length === 0 ? (
         <div className="text-slate-400 italic">No findings reported for this scan.</div>
       ) : (
         <div className="space-y-6">
-          {findings.map((finding, idx) => {
-            const severityColor = getSeverityColor(finding.severity || 'info');
-            const statusColor = getStatusColor(finding.status || 'open');
-            const isCritical = finding.severity === 'critical';
-            const isHigh = finding.severity === 'high';
+          {groups.map((group: any, idx: number) => {
+            const severityColor = getSeverityColor(group.severity || 'info');
+            const statusColor = getStatusColor(group.status || 'open');
+            const isCritical = group.severity === 'critical';
+            const isHigh = group.severity === 'high';
 
             return (
               <motion.div
-                key={finding.id}
+                key={group.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6 + idx * 0.1 }}
+                transition={{ delay: 0.1 + idx * 0.05 }}
                 className="glass-panel p-8 rounded-[24px] hover:bg-white/[0.08] transition-all duration-300 group cursor-default relative overflow-hidden"
               >
                 {/* Status Strip */}
@@ -65,17 +92,22 @@ export function DetailedFindings({ findings = [], scanId }: DetailedFindingsProp
                 <div className="flex flex-col md:flex-row md:items-start justify-between mb-4 gap-4">
                   <div>
                     <h3 className="text-xl font-bold text-white mb-3 group-hover:text-cyan-400 transition-colors">
-                      {finding.title}
+                      {group.title}
                     </h3>
                     <div className="flex flex-wrap items-center gap-3 text-sm">
                       <span
                         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border ${isCritical ? 'bg-rose-500/10 text-rose-500 border-rose-500/20' : isHigh ? 'bg-orange-500/10 text-orange-500 border-orange-500/20' : 'bg-slate-500/10 text-slate-300 border-slate-500/20'}`}
                       >
                         <span className={`w-1.5 h-1.5 rounded-full ${severityColor} mr-2`}></span>{' '}
-                        {finding.severity}
+                        {group.severity}
                       </span>
-                      {finding.cve_id && (
-                        <span className="text-slate-500 font-mono"># {finding.cve_id}</span>
+                      {group.count > 1 && (
+                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-white/10 text-white border border-white/10">
+                            {group.count} Instances
+                         </span>
+                      )}
+                      {group.cve_id && (
+                        <span className="text-slate-500 font-mono"># {group.cve_id}</span>
                       )}
                     </div>
                   </div>
@@ -83,10 +115,10 @@ export function DetailedFindings({ findings = [], scanId }: DetailedFindingsProp
                     <span
                       className={`inline-flex items-center px-3 py-1 rounded-lg text-xs font-medium border ${statusColor}`}
                     >
-                      {finding.status}
+                      {group.status}
                     </span>
                     <Link
-                      href={`/reports/${scanId}/findings/${finding.id}`}
+                      href={`/reports/${scanId}/findings/${group.id}`}
                       className="inline-flex items-center px-3 py-1 rounded-lg text-xs font-bold bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 border border-cyan-500/20 transition-all hover:scale-105"
                     >
                       View Details{' '}
@@ -100,12 +132,12 @@ export function DetailedFindings({ findings = [], scanId }: DetailedFindingsProp
                     Description & Remediation
                   </h4>
                   <p className="text-slate-400 text-sm leading-relaxed max-w-4xl">
-                    {finding.description}
-                    {finding.remediation && (
+                    {group.description}
+                    {group.remediation && (
                       <>
                         <br />
                         <br />
-                        <strong>Fix:</strong> {finding.remediation}
+                        <strong>Fix:</strong> {group.remediation}
                       </>
                     )}
                   </p>
