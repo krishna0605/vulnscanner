@@ -273,6 +273,21 @@ export class CrawlerService {
         } else if (this.queue.length === 0) {
           break; // Done
         }
+
+        // --- STOP SCAN CHECK ---
+        // Check if user cancelled the scan
+        const { data: currentScan } = await supabase
+          .from('scans')
+          .select('status')
+          .eq('id', this.scanId)
+          .single();
+
+        if (currentScan && (currentScan.status === 'failed' || currentScan.status === 'cancelled')) {
+             await this.log('🛑 Scan stopped by user command.', 'warn');
+             // Cancel all active page loads if possible (browser context close will handle it)
+             break; 
+        }
+        // -----------------------
       }
 
       // Stability Fix: Wait for remaining active workers to finish

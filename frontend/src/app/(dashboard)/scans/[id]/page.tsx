@@ -55,16 +55,14 @@ export default function ScanDetailsPage({ params }: { params: { id: string } }) 
   const [scan, setScan] = useState<ScanDetail | null>(null);
   const [logs, setLogs] = useState<ScanLog[]>([]);
   const [findings, setFindings] = useState<Finding[]>([]);
+  const [isConnected, setIsConnected] = useState(false);
   const logsEndRef = useRef<HTMLDivElement>(null);
   const supabase = createClient();
 
   // Params unwrap removed - using direct id access
 
-  // 2. Initial Data Fetch
-  useEffect(() => {
-    if (!id) return;
-
-    const fetchData = async () => {
+  // Data Fetcher Helper
+  const fetchData = async () => {
       // Fetch Scan
       const { data: scanData } = await supabase.from('scans').select('*').eq('id', id).single();
       if (scanData) setScan(scanData);
@@ -80,8 +78,11 @@ export default function ScanDetailsPage({ params }: { params: { id: string } }) 
       // Fetch Findings
       const { data: findingData } = await supabase.from('findings').select('*').eq('scan_id', id);
       if (findingData) setFindings(findingData);
-    };
+  };
 
+  // 2. Initial Data Fetch
+  useEffect(() => {
+    if (!id) return;
     fetchData();
 
     // 3. Realtime Subscription
@@ -108,7 +109,15 @@ export default function ScanDetailsPage({ params }: { params: { id: string } }) 
           setFindings((current) => [...current, payload.new as Finding]);
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          setIsConnected(true);
+          // Re-fetch once connected to ensure we didn't miss logs during connection time
+          fetchData();
+        } else {
+          setIsConnected(false);
+        }
+      });
 
     return () => {
       supabase.removeChannel(channel);
@@ -272,8 +281,14 @@ export default function ScanDetailsPage({ params }: { params: { id: string } }) 
             value="console"
             className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400"
           >
-            <Terminal className="mr-2 h-4 w-4" />
-            Live Console
+            <div className="flex items-center gap-2">
+              <Terminal className="h-4 w-4" />
+              Live Console
+              <span className={`relative flex h-2 w-2 ml-1`}>
+                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isConnected ? 'bg-green-400' : 'bg-gray-500'}`}></span>
+                <span className={`relative inline-flex rounded-full h-2 w-2 ${isConnected ? 'bg-green-500' : 'bg-gray-600'}`}></span>
+              </span>
+            </div>
           </TabsTrigger>
           <TabsTrigger
             value="findings"
