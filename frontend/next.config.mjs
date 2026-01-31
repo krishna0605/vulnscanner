@@ -4,10 +4,12 @@ const nextConfig = {
   output: 'standalone',
   
   async rewrites() {
+    const backendUrl = process.env.BACKEND_URL || 'http://127.0.0.1:3001';
+    const normalizedUrl = backendUrl.startsWith('http') ? backendUrl : `https://${backendUrl}`;
     return [
       {
         source: '/api/:path*',
-        destination: `${process.env.BACKEND_URL || 'http://127.0.0.1:3001'}/:path*`,
+        destination: `${normalizedUrl}/:path*`,
       },
     ]
   },
