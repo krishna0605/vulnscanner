@@ -246,6 +246,9 @@ export class CrawlerService {
           // Create a promise for this page
           const p = (async () => {
             const page = await context.newPage();
+            // Optimization: Block extensive resources
+            await page.route('**/*.{png,jpg,jpeg,gif,svg,css,woff,woff2,mp4,webm}', route => route.abort());
+            
             try {
               await this.updateProgress(
                 Math.min(90, Math.floor((this.pagesScanned / maxPages) * 100)),
@@ -270,6 +273,12 @@ export class CrawlerService {
         } else if (this.queue.length === 0) {
           break; // Done
         }
+      }
+
+      // Stability Fix: Wait for remaining active workers to finish
+      if (activePromises.size > 0) {
+          await this.log(`Waiting for ${activePromises.size} active pages to complete...`, 'info');
+          await Promise.all(activePromises);
       }
 
       await this.log(`Scan complete. Analyzed ${this.pagesScanned} pages.`, 'success');
@@ -581,7 +590,7 @@ export class CrawlerService {
   private async processPage(page: Page, url: string, depth: number, maxDepth: number) {
     await this.log(`Navigating to ${url}`, 'info');
 
-    const response = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 20000 });
+    const response = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 15000 });
     if (!response) {
       await this.log(`No response for ${url}`, 'warn');
       return;

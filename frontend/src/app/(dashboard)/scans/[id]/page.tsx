@@ -7,6 +7,15 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertTriangle, Terminal, Play, Loader2, CheckCircle2, XCircle } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface ScanLog {
   id: number;
@@ -22,6 +31,7 @@ interface Finding {
   description: string;
   evidence: string;
   remediation?: string;
+  location?: string; // Added this based on the dialog content
 }
 
 interface ScanDetail {
@@ -30,6 +40,14 @@ interface ScanDetail {
   status: 'queued' | 'scanning' | 'completed' | 'failed';
   progress: number;
   current_action: string;
+}
+
+interface GroupedFinding {
+  title: string;
+  severity: 'critical' | 'high' | 'medium' | 'low' | 'info';
+  description: string;
+  count: number;
+  findings: Finding[];
 }
 
 export default function ScanDetailsPage({ params }: { params: { id: string } }) {
@@ -101,6 +119,36 @@ export default function ScanDetailsPage({ params }: { params: { id: string } }) 
   useEffect(() => {
     logsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [logs]);
+
+  // Helper to group findings
+  const groupFindings = (allFindings: Finding[]) => {
+    const groups: { [key: string]: GroupedFinding } = {};
+    
+    allFindings.forEach(f => {
+      const key = `${f.title}-${f.severity}`;
+      if (!groups[key]) {
+        groups[key] = {
+          title: f.title,
+          severity: f.severity,
+          description: f.description,
+          count: 0,
+          findings: []
+        };
+      }
+      groups[key].count++;
+      groups[key].findings.push(f);
+    });
+    
+    // Sort by severity (Critical -> Info) and then count
+    const severityWeight = { critical: 5, high: 4, medium: 3, low: 2, info: 1 };
+    return Object.values(groups).sort((a, b) => {
+      const diff = severityWeight[b.severity] - severityWeight[a.severity];
+      if (diff !== 0) return diff;
+      return b.count - a.count;
+    });
+  };
+
+  const groupedFindings = groupFindings(findings);
 
   if (!scan)
     return (
@@ -289,58 +337,88 @@ export default function ScanDetailsPage({ params }: { params: { id: string } }) 
                 <p className="text-slate-500">No vulnerabilities found yet.</p>
               </div>
             ) : (
-              findings.map((f) => (
+              groupedFindings.map((group) => (
                 <div
-                  key={f.id}
+                  key={`${group.title}-${group.severity}`}
                   className="group relative overflow-hidden rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition-all duration-300"
                 >
-                  {/* Severity Stripe */}
                   <div
                     className={`absolute left-0 top-0 bottom-0 w-1 ${
-                      f.severity === 'critical'
+                      group.severity === 'critical'
                         ? 'bg-red-600'
-                        : f.severity === 'high'
+                        : group.severity === 'high'
                           ? 'bg-orange-500'
-                          : f.severity === 'medium'
+                          : group.severity === 'medium'
                             ? 'bg-amber-400'
                             : 'bg-blue-400'
                     }`}
                   ></div>
 
-                  <div className="p-6 pl-8">
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <h4 className="font-bold text-lg text-white mb-1">{f.title}</h4>
-                        <p className="text-sm text-slate-400">{f.description}</p>
-                      </div>
-                      <Badge
-                        variant="outline"
-                        className={`uppercase tracking-widest text-[10px] ${
-                          f.severity === 'critical'
-                            ? 'border-red-500 text-red-500'
-                            : f.severity === 'high'
-                              ? 'border-orange-500 text-orange-500'
-                              : f.severity === 'medium'
-                                ? 'border-amber-500 text-amber-500'
-                                : 'border-blue-500 text-blue-500'
-                        }`}
-                      >
-                        {f.severity}
-                      </Badge>
+                  <div className="p-6 pl-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="space-y-1">
+                       <div className="flex items-center gap-3">
+                        <h4 className="font-bold text-lg text-white">{group.title}</h4>
+                        <Badge
+                          variant="outline"
+                          className={`uppercase tracking-widest text-[10px] ${
+                            group.severity === 'critical'
+                              ? 'border-red-500 text-red-500'
+                              : group.severity === 'high'
+                                ? 'border-orange-500 text-orange-500'
+                                : group.severity === 'medium'
+                                  ? 'border-amber-500 text-amber-500'
+                                  : 'border-blue-500 text-blue-500'
+                          }`}
+                        >
+                          {group.severity}
+                        </Badge>
+                       </div>
+                       <p className="text-sm text-slate-400">{group.description}</p>
                     </div>
 
-                    {f.evidence && (
-                      <div className="mt-4 bg-black/50 rounded-lg p-3 border border-white/5 font-mono text-xs text-slate-300 overflow-x-auto">
-                        {f.evidence}
-                      </div>
-                    )}
-
-                    {f.remediation && (
-                      <div className="mt-4 flex items-start gap-2 text-sm text-emerald-400/80">
-                        <CheckCircle2 className="h-4 w-4 mt-0.5" />
-                        <p>{f.remediation}</p>
-                      </div>
-                    )}
+                    <div className="flex items-center gap-4">
+                        <div className="flex flex-col items-end">
+                            <span className="text-2xl font-bold text-white">{group.count}</span>
+                            <span className="text-xs text-slate-500 uppercase">Instances</span>
+                        </div>
+                        
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="outline" className="border-white/10 hover:bg-white/5">
+                               View Details
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="bg-[#1a1a1a] border-white/10 text-white max-w-3xl max-h-[80vh]">
+                            <DialogHeader>
+                              <DialogTitle className="flex items-center gap-2">
+                                {group.title}
+                                <Badge variant="secondary">{group.count}</Badge>
+                              </DialogTitle>
+                              <DialogDescription>
+                                {group.description}
+                              </DialogDescription>
+                            </DialogHeader>
+                            
+                            <ScrollArea className="mt-4 h-[50vh] pr-4">
+                                <div className="space-y-4">
+                                    {group.findings.map((f, i) => (
+                                        <div key={i} className="bg-black/20 p-4 rounded-lg border border-white/5">
+                                            <div className="flex items-center gap-2 mb-2 text-sm font-mono text-cyan-400 break-all">
+                                                <span className="material-symbols-outlined text-[14px]">link</span>
+                                                {f.location}
+                                            </div>
+                                            {f.evidence && (
+                                                <div className="bg-black/50 p-2 rounded text-xs font-mono text-slate-400 overflow-x-auto whitespace-pre-wrap">
+                                                    {f.evidence}
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </ScrollArea>
+                          </DialogContent>
+                        </Dialog>
+                    </div>
                   </div>
                 </div>
               ))
