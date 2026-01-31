@@ -13,7 +13,16 @@ const clientEnvSchema = z.object({
  * Server-side environment schema (all vars, only available on server)
  */
 const serverEnvSchema = clientEnvSchema.extend({
-  BACKEND_URL: z.string().url().optional().default('http://localhost:3001'),
+  BACKEND_URL: z
+    .string()
+    .transform((val) => {
+      if (!val) return 'http://localhost:3001';
+      if (val.startsWith('http')) return val;
+      return `https://${val}`;
+    })
+    .pipe(z.string().url())
+    .optional()
+    .default('http://localhost:3001'),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
 });
 
