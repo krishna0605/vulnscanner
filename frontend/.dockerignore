@@ -1,0 +1,33 @@
+# Ignore node_modules
+node_modules
+npm-debug.log
+
+# Ignore Next.js build output (we build in container)
+.next
+out
+
+# Ignore environment files
+.env
+.env.*
+!.env.example
+
+# Ignore development files
+.git
+.gitignore
+*.md
+!README.md
+
+# Ignore test files
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+__tests__
+coverage
+playwright-report
+test-results
+
+# Ignore IDE files
+.vscode
+.idea
+*.swp
+*.swo
