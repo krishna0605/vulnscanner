@@ -92,7 +92,14 @@ export function ScanForm() {
       if (projData) setProjects(projData);
 
       try {
-        const res = await fetch('/api/profiles');
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        const res = await fetch('/api/profiles', {
+          headers: {
+            Authorization: `Bearer ${session?.access_token}`,
+          },
+        });
         if (res.ok) {
           const profData = await res.json();
           setProfiles(profData);
@@ -102,15 +109,12 @@ export function ScanForm() {
       }
     }
     initData();
-  }, []);
+  }, [supabase]); // added supabase dependency
 
   const handleProfileChange = (profileId: string) => {
     setSelectedProfileId(profileId);
     const profile = profiles.find((p) => p.id === profileId);
     if (profile && profile.config) {
-      // Merge config into formData
-      // We need to map config keys to formData keys if they differ
-      // Currently they map 1:1 mostly, except flattened structure in formData
       setFormData((prev) => ({
         ...prev,
         scanType: profile.config.scanType || 'standard',
@@ -118,17 +122,14 @@ export function ScanForm() {
         checkHeaders: profile.config.checkHeaders ?? true,
         checkMixedContent: profile.config.checkMixedContent ?? true,
         checkComments: profile.config.checkComments ?? true,
-        // Advanced
         authEnabled: profile.config.authEnabled ?? false,
         authLoginUrl: profile.config.authLoginUrl || '',
         authUsername: profile.config.authUsername || '',
         authPassword: profile.config.authPassword || '',
-
         vectorSQLi: profile.config.vectorSQLi ?? true,
         vectorXSS: profile.config.vectorXSS ?? true,
         vectorSSRF: profile.config.vectorSSRF ?? false,
         vectorMisconfig: profile.config.vectorMisconfig ?? true,
-
         rateLimit: profile.config.rateLimit ?? 10,
         concurrency: profile.config.concurrency ?? 5,
       }));
@@ -143,9 +144,15 @@ export function ScanForm() {
     if (!newProfileName) return;
 
     try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       const res = await fetch('/api/profiles', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session?.access_token}`,
+        },
         body: JSON.stringify({
           name: newProfileName,
           description: newProfileDesc,
@@ -155,7 +162,6 @@ export function ScanForm() {
             checkHeaders: formData.checkHeaders,
             checkMixedContent: formData.checkMixedContent,
             checkComments: formData.checkComments,
-            // Advanced
             authEnabled: formData.authEnabled,
             authLoginUrl: formData.authLoginUrl,
             authUsername: formData.authUsername,
@@ -195,9 +201,15 @@ export function ScanForm() {
 
     setLoading(true);
     try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       const res = await fetch('/api/scans', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session?.access_token}`,
+        },
         body: JSON.stringify({
           projectId: formData.projectId,
           targetUrl: formData.url,
@@ -210,7 +222,6 @@ export function ScanForm() {
             checkComments: formData.checkComments,
             isScheduled: formData.isScheduled,
             scheduleCron: formData.isScheduled ? formData.scheduleCron : null,
-            // Advanced
             authEnabled: formData.authEnabled,
             authLoginUrl: formData.authLoginUrl,
             authUsername: formData.authUsername,
