@@ -2,7 +2,7 @@
 rootDirectory = "backend"
 watchPatterns = ["backend/**"]
 builder = "DOCKERFILE"
-dockerfilePath = "Dockerfile"
+dockerfilePath = "backend/Dockerfile"
 
 [deploy]
 
