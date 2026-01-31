@@ -52,5 +52,6 @@ export default defineConfig({
     command: 'npm run dev',
     url: BASE_URL,
     reuseExistingServer: !process.env.CI,
+    cwd: './frontend',
   },
 });
