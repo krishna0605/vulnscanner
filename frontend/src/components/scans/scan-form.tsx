@@ -102,7 +102,12 @@ export function ScanForm() {
         });
         if (res.ok) {
           const profData = await res.json();
-          setProfiles(profData);
+          // Backend returns { success: true, data: [...] }
+          if (profData.success && Array.isArray(profData.data)) {
+            setProfiles(profData.data);
+          } else {
+            setProfiles([]);
+          }
         }
       } catch (e) {
         logger.error('Failed to fetch profiles', { error: e });
@@ -177,13 +182,19 @@ export function ScanForm() {
       });
 
       if (res.ok) {
-        const newProfile = await res.json();
-        setProfiles([...profiles, newProfile]);
-        setSelectedProfileId(newProfile.id);
-        setSaveDialogOpen(false);
-        setNewProfileName('');
-        setNewProfileDesc('');
-        alert('Profile saved successfully!');
+        const responseData = await res.json();
+        // Backend returns { success: true, data: {...} }
+        if (responseData.success && responseData.data) {
+          const newProfile = responseData.data;
+          setProfiles([...profiles, newProfile]);
+          setSelectedProfileId(newProfile.id);
+          setSaveDialogOpen(false);
+          setNewProfileName('');
+          setNewProfileDesc('');
+          alert('Profile saved successfully!');
+        } else {
+          alert('Failed to save profile: Invalid response');
+        }
       } else {
         alert('Failed to save profile');
       }
@@ -236,8 +247,11 @@ export function ScanForm() {
         }),
       });
       const data = await res.json();
-      if (data.id) {
-        router.push(`/scans/${data.id}`);
+      // Handle wrapped response
+      const scanId = data.success ? data.data?.id : data.id; 
+      
+      if (scanId) {
+        router.push(`/scans/${scanId}`);
       } else {
         alert(data.error || 'Failed to start scan');
       }
