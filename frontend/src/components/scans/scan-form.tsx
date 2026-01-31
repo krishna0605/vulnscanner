@@ -382,16 +382,22 @@ export function ScanForm() {
               <SelectValue placeholder="Choose a profile..." />
             </SelectTrigger>
             <SelectContent className="bg-[#313131] border-white/10 text-white">
-              {profiles.map((profile) => (
-                <SelectItem key={profile.id} value={profile.id}>
-                  <div className="flex flex-col items-start py-1">
-                    <span className="font-medium text-white">{profile.name}</span>
-                    {profile.description && (
-                      <span className="text-xs text-slate-400">{profile.description}</span>
-                    )}
-                  </div>
+              {profiles.length === 0 ? (
+                <SelectItem value="none" disabled className="text-slate-400">
+                  No profiles found. Save a new config to create one.
                 </SelectItem>
-              ))}
+              ) : (
+                profiles.map((profile) => (
+                  <SelectItem key={profile.id} value={profile.id}>
+                    <div className="flex flex-col items-start py-1">
+                      <span className="font-medium text-white">{profile.name}</span>
+                      {profile.description && (
+                        <span className="text-xs text-slate-400">{profile.description}</span>
+                      )}
+                    </div>
+                  </SelectItem>
+                ))
+              )}
             </SelectContent>
           </Select>
 
