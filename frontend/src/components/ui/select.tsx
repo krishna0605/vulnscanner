@@ -100,8 +100,8 @@ SelectContent.displayName = 'SelectContent';
 
 const SelectItem = React.forwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement> & { value: string }
->(({ className, children, value, ...props }, ref) => {
+  React.HTMLAttributes<HTMLDivElement> & { value: string; disabled?: boolean }
+>(({ className, children, value, disabled, ...props }, ref) => {
   const context = React.useContext(SelectContext);
   if (!context) throw new Error('SelectItem must be used within Select');
 
@@ -109,11 +109,12 @@ const SelectItem = React.forwardRef<
     <div
       ref={ref}
       onClick={(e) => {
-        // e.stopPropagation()
+        if (disabled) return;
         context.setValue(value);
       }}
       className={cn(
         'relative flex w-full select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-white/10 hover:text-white cursor-pointer',
+        disabled && 'pointer-events-none opacity-50',
         className
       )}
       {...props}
