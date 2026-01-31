@@ -2,7 +2,7 @@
 rootDirectory = "backend"
 watchPatterns = ["backend/**"]
 builder = "DOCKERFILE"
-dockerfilePath = "/backend/Dockerfile"
+dockerfilePath = "/backend/Dockerfile.railway"
 
 [deploy]
 
