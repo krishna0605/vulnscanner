@@ -33,15 +33,14 @@ export function FindingComments({ findingId, severity }: FindingCommentsProps) {
   const colors = getSeverityColors(severity);
 
   useEffect(() => {
+    const loadComments = async () => {
+      setLoading(true);
+      const data = await getFindingComments(findingId);
+      setComments(data);
+      setLoading(false);
+    };
     loadComments();
   }, [findingId]);
-
-  const loadComments = async () => {
-    setLoading(true);
-    const data = await getFindingComments(findingId);
-    setComments(data);
-    setLoading(false);
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
