@@ -1,3 +1,7 @@
 [build]
 rootDirectory = "backend"
 watchPatterns = ["backend/**"]
+
+[deploy]
+startCommand = "npm start"
+
