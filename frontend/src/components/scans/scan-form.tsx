@@ -58,8 +58,13 @@ export function ScanForm() {
     scanType: 'quick',
     maxDepth: 0,
     checkHeaders: true,
+    checkCookies: true,
+    checkSSL: true,
+    checkOSINT: true,
     checkMixedContent: true,
     checkComments: true,
+    checkSCA: false,
+    checkProbing: false,
     userAgent: 'chrome',
     isScheduled: false,
     scheduleCron: '0 0 * * *',
@@ -72,6 +77,8 @@ export function ScanForm() {
     // Attack Vectors
     vectorSQLi: true,
     vectorXSS: true,
+    vectorLFI: false,
+    vectorCmdInj: false,
     vectorSSRF: false,
     vectorMisconfig: true,
 
@@ -82,39 +89,109 @@ export function ScanForm() {
   const router = useRouter();
   const supabase = createClient();
 
-  const [profiles, setProfiles] = useState<any[]>([]);
-  const [selectedProfileId, setSelectedProfileId] = useState<string>('');
+  // Static Scan Types Definition
+  const DEFAULT_SCAN_TYPES = [
+    {
+      id: 'quick',
+      name: 'Quick Scan',
+      description: 'Passive recon: Headers, SSL, Cookies, and Email/Social extraction.',
+      config: {
+        scanType: 'quick',
+        maxDepth: 0,
+        maxPages: 10,
+        checkHeaders: true,
+        checkCookies: true,
+        checkSSL: true,
+        checkOSINT: true,
+        checkMixedContent: false,
+        checkComments: false,
+        checkRobots: true,
+        checkSCA: false,
+        checkProbing: false,
+        authEnabled: false,
+        vectorSQLi: false,
+        vectorXSS: false,
+        vectorLFI: false,
+        vectorCmdInj: false,
+        vectorSSRF: false,
+        vectorMisconfig: true,
+        rateLimit: 10,
+        concurrency: 5,
+      },
+    },
+    {
+      id: 'standard',
+      name: 'Standard Scan',
+      description: 'Health check: Outdated libs, exposed files (.env), and basic vectors.',
+      config: {
+        scanType: 'standard',
+        maxDepth: 2,
+        maxPages: 50,
+        checkHeaders: true,
+        checkCookies: true,
+        checkSSL: true,
+        checkOSINT: true,
+        checkMixedContent: true,
+        checkComments: true,
+        checkRobots: true,
+        checkSCA: true,
+        checkProbing: true,
+        authEnabled: false,
+        vectorSQLi: true,
+        vectorXSS: true,
+        vectorLFI: false,
+        vectorCmdInj: false,
+        vectorSSRF: false,
+        vectorMisconfig: true,
+        rateLimit: 10,
+        concurrency: 5,
+      },
+    },
+    {
+      id: 'deep',
+      name: 'Deep Scan',
+      description: 'Full Audit: Heavy fuzzing (SQLi/XSS/LFI/CmdInj) and Sitemap parsing.',
+      config: {
+        scanType: 'deep',
+        maxDepth: 3,
+        maxPages: 200,
+        checkHeaders: true,
+        checkCookies: true,
+        checkSSL: true,
+        checkOSINT: true,
+        checkMixedContent: true,
+        checkComments: true,
+        checkRobots: true,
+        checkSCA: true,
+        checkProbing: true,
+        authEnabled: false,
+        vectorSQLi: true,
+        vectorXSS: true,
+        vectorLFI: true,
+        vectorCmdInj: true,
+        vectorSSRF: true,
+        vectorMisconfig: true,
+        rateLimit: 10,
+        concurrency: 3,
+      },
+    },
+  ];
+
+  const [profiles, setProfiles] = useState<any[]>(DEFAULT_SCAN_TYPES);
+  const [selectedProfileId, setSelectedProfileId] = useState<string>('standard');
 
   useEffect(() => {
-    // Fetch Projects & Profiles
+    // Fetch Projects Only
     async function initData() {
       const { data: projData } = await supabase.from('projects').select('id, name');
       if (projData) setProjects(projData);
-
-      try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        const res = await fetch('/api/profiles', {
-          headers: {
-            Authorization: `Bearer ${session?.access_token}`,
-          },
-        });
-        if (res.ok) {
-          const profData = await res.json();
-          // Backend returns { success: true, data: [...] }
-          if (profData.success && Array.isArray(profData.data)) {
-            setProfiles(profData.data);
-          } else {
-            setProfiles([]);
-          }
-        }
-      } catch (e) {
-        logger.error('Failed to fetch profiles', { error: e });
-      }
+      
+      // Auto-select standard profile logic
+      handleProfileChange('standard');
     }
     initData();
-  }, [supabase]); // added supabase dependency
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [supabase]);
 
   const handleProfileChange = (profileId: string) => {
     setSelectedProfileId(profileId);
@@ -125,14 +202,21 @@ export function ScanForm() {
         scanType: profile.config.scanType || 'standard',
         maxDepth: profile.config.maxDepth ?? 2,
         checkHeaders: profile.config.checkHeaders ?? true,
+        checkCookies: profile.config.checkCookies ?? true,
+        checkSSL: profile.config.checkSSL ?? true,
+        checkOSINT: profile.config.checkOSINT ?? true,
         checkMixedContent: profile.config.checkMixedContent ?? true,
         checkComments: profile.config.checkComments ?? true,
+        checkSCA: profile.config.checkSCA ?? false,
+        checkProbing: profile.config.checkProbing ?? false,
         authEnabled: profile.config.authEnabled ?? false,
         authLoginUrl: profile.config.authLoginUrl || '',
         authUsername: profile.config.authUsername || '',
         authPassword: profile.config.authPassword || '',
         vectorSQLi: profile.config.vectorSQLi ?? true,
         vectorXSS: profile.config.vectorXSS ?? true,
+        vectorLFI: profile.config.vectorLFI ?? false,
+        vectorCmdInj: profile.config.vectorCmdInj ?? false,
         vectorSSRF: profile.config.vectorSSRF ?? false,
         vectorMisconfig: profile.config.vectorMisconfig ?? true,
         rateLimit: profile.config.rateLimit ?? 10,
@@ -141,68 +225,7 @@ export function ScanForm() {
     }
   };
 
-  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
-  const [newProfileName, setNewProfileName] = useState('');
-  const [newProfileDesc, setNewProfileDesc] = useState('');
 
-  const handleSaveProfile = async () => {
-    if (!newProfileName) return;
-
-    try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      const res = await fetch('/api/profiles', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session?.access_token}`,
-        },
-        body: JSON.stringify({
-          name: newProfileName,
-          description: newProfileDesc,
-          config: {
-            scanType: formData.scanType,
-            maxDepth: formData.maxDepth,
-            checkHeaders: formData.checkHeaders,
-            checkMixedContent: formData.checkMixedContent,
-            checkComments: formData.checkComments,
-            authEnabled: formData.authEnabled,
-            authLoginUrl: formData.authLoginUrl,
-            authUsername: formData.authUsername,
-            authPassword: formData.authPassword,
-            vectorSQLi: formData.vectorSQLi,
-            vectorXSS: formData.vectorXSS,
-            vectorSSRF: formData.vectorSSRF,
-            vectorMisconfig: formData.vectorMisconfig,
-            rateLimit: formData.rateLimit,
-            concurrency: formData.concurrency,
-          },
-        }),
-      });
-
-      if (res.ok) {
-        const responseData = await res.json();
-        // Backend returns { success: true, data: {...} }
-        if (responseData.success && responseData.data) {
-          const newProfile = responseData.data;
-          setProfiles([...profiles, newProfile]);
-          setSelectedProfileId(newProfile.id);
-          setSaveDialogOpen(false);
-          setNewProfileName('');
-          setNewProfileDesc('');
-          alert('Profile saved successfully!');
-        } else {
-          alert('Failed to save profile: Invalid response');
-        }
-      } else {
-        alert('Failed to save profile');
-      }
-    } catch (e) {
-      logger.error('Failed to start scan', { error: e });
-      alert('Error saving profile');
-    }
-  };
 
   const handleStartScan = async () => {
     if (!formData.projectId || !formData.url) {
@@ -229,8 +252,13 @@ export function ScanForm() {
             maxDepth: formData.maxDepth,
             maxPages: formData.scanType === 'deep' ? 200 : 50,
             checkHeaders: formData.checkHeaders,
+            checkCookies: formData.checkCookies,
+            checkSSL: formData.checkSSL,
+            checkOSINT: formData.checkOSINT,
             checkMixedContent: formData.checkMixedContent,
             checkComments: formData.checkComments,
+            checkSCA: formData.checkSCA,
+            checkProbing: formData.checkProbing,
             isScheduled: formData.isScheduled,
             scheduleCron: formData.isScheduled ? formData.scheduleCron : null,
             authEnabled: formData.authEnabled,
@@ -239,6 +267,8 @@ export function ScanForm() {
             authPassword: formData.authPassword,
             vectorSQLi: formData.vectorSQLi,
             vectorXSS: formData.vectorXSS,
+            vectorLFI: formData.vectorLFI,
+            vectorCmdInj: formData.vectorCmdInj,
             vectorSSRF: formData.vectorSSRF,
             vectorMisconfig: formData.vectorMisconfig,
             rateLimit: formData.rateLimit,
@@ -316,61 +346,9 @@ export function ScanForm() {
         </span>
 
         <div className="flex justify-between items-center mb-6">
-          <h3 className="text-xl font-bold text-white">Scan Profile</h3>
+          <h3 className="text-xl font-bold text-white">Scan Configuration</h3>
 
-          <Dialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
-            <DialogTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className="bg-white/5 border-white/10 hover:bg-white/10 text-cyan-400"
-              >
-                <Save className="mr-2 h-4 w-4" />
-                Save Current Config
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="bg-[#1e1e1e] border-white/10 text-white">
-              <DialogHeader>
-                <DialogTitle>Save Scan Profile</DialogTitle>
-                <DialogDescription className="text-slate-400">
-                  Save your current configuration settings as a reusable profile.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="name" className="text-right text-slate-400">
-                    Name
-                  </Label>
-                  <Input
-                    id="name"
-                    value={newProfileName}
-                    onChange={(e) => setNewProfileName(e.target.value)}
-                    className="col-span-3 bg-white/5 border-white/10 text-white"
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="desc" className="text-right text-slate-400">
-                    Description
-                  </Label>
-                  <Input
-                    id="desc"
-                    value={newProfileDesc}
-                    onChange={(e) => setNewProfileDesc(e.target.value)}
-                    className="col-span-3 bg-white/5 border-white/10 text-white"
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button
-                  type="submit"
-                  onClick={handleSaveProfile}
-                  className="bg-cyan-500 hover:bg-cyan-400 text-black font-bold"
-                >
-                  Save Profile
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+
         </div>
 
         <div className="space-y-4">
@@ -384,7 +362,7 @@ export function ScanForm() {
             <SelectContent className="bg-[#313131] border-white/10 text-white">
               {profiles.length === 0 ? (
                 <SelectItem value="none" disabled className="text-slate-400">
-                  No profiles found. Save a new config to create one.
+                  No config types available.
                 </SelectItem>
               ) : (
                 profiles.map((profile) => (

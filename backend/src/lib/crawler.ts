@@ -25,8 +25,17 @@ export interface ScanConfig {
 
   vectorSQLi?: boolean;
   vectorXSS?: boolean;
+  vectorLFI?: boolean;
+  vectorCmdInj?: boolean;
   vectorSSRF?: boolean;
   vectorMisconfig?: boolean;
+  
+  // Passive Checks
+  checkCookies?: boolean;
+  checkSSL?: boolean; // Note: SSL info usually requires lower level socket access, but we can check protocol
+  checkOSINT?: boolean;
+  checkSCA?: boolean;
+  checkProbing?: boolean;
 
   rateLimit?: number;
   concurrency?: number;
@@ -344,6 +353,231 @@ export class CrawlerService {
     }
   }
 
+  // Sitemap Processing
+  private async processSitemap(url: string, depth: number) {
+    if (!url.endsWith('xml')) return;
+    try {
+      const response = await fetch(url);
+      if (response.ok) {
+        const text = await response.text();
+        const locs = text.match(/<loc>(.*?)<\/loc>/g);
+        if (locs) {
+          await this.log(`Found ${locs.length} URLs in sitemap: ${url}`, 'info');
+          for (const locTag of locs) {
+            const cleanUrl = locTag.replace(/<\/?loc>/g, '');
+            const normalized = this.normalizer.normalizeUrl(cleanUrl);
+             if (
+              normalized &&
+              this.normalizer.isValidUrl(normalized) &&
+              this.normalizer.isSameDomain(normalized, url) &&
+              !this.visited.has(normalized)
+            ) {
+              this.queue.push({ url: normalized, depth: depth + 1 });
+            }
+          }
+        }
+      }
+    } catch (e) {
+      // console.error('Sitemap error', e);
+    }
+  }
+
+  // Active Fuzzing
+  private async fuzzPage(page: Page, url: string) {
+    if (!this.config.vectorSQLi && !this.config.vectorXSS && !this.config.vectorLFI && !this.config.vectorCmdInj) return;
+
+    const forms = await page.$$('form');
+    if (forms.length > 0) {
+      await this.log(`Fuzzing ${forms.length} forms on ${url}`, 'info');
+    }
+
+    // Polyglots & Payloads
+    const payloads = [];
+    if (this.config.vectorSQLi) payloads.push("' OR '1'='1");
+    if (this.config.vectorXSS) payloads.push("<script>console.log('VULN_XSS')</script>");
+    if (this.config.vectorLFI) payloads.push("../../../../etc/passwd");
+    if (this.config.vectorCmdInj) payloads.push("| whoami");
+
+    for (const form of forms) {
+      try {
+        const inputs = await form.$$('input:not([type="hidden"]):not([type="submit"])');
+        if (inputs.length === 0) continue;
+
+        for (const payload of payloads) {
+          // Fill all inputs with payload
+          for (const input of inputs) {
+            await input.fill(payload);
+          }
+          
+          // Listen for dialogs (XSS)
+          const dialogHandler = (dialog: any) => {
+             if (dialog.message().includes('VULN_XSS')) {
+               this.reportFinding({
+                 title: 'Reflected XSS Detected',
+                 description: 'Alert dialog triggered by payload.',
+                 severity: 'high',
+                 location: url,
+                 evidence: 'Alert: VULN_XSS',
+                 cwe_id: 'CWE-79'
+               });
+             }
+             dialog.dismiss().catch(() => {});
+          };
+          page.on('dialog', dialogHandler);
+
+          // Submit
+          const submitBtn = await form.$('button[type="submit"], input[type="submit"]');
+          if (submitBtn) {
+             const navPromise = page.waitForNavigation({ timeout: 5000 }).catch(() => {});
+             await submitBtn.click();
+             await navPromise;
+
+             // Check Response for Vulnerabilities
+             const content = await page.content();
+             
+             // SQLi
+             if (this.config.vectorSQLi && (
+               content.includes('syntax error') || 
+               content.includes('ORA-') || 
+               content.includes('MySQL Error')
+             )) {
+               await this.reportFinding({
+                 title: 'Potential SQL Injection',
+                 description: 'Database error message revealed in response.',
+                 severity: 'critical',
+                 location: url,
+                 evidence: 'Database error text found',
+                 cwe_id: 'CWE-89'
+               });
+             }
+
+             // LFI
+             if (this.config.vectorLFI && (content.includes('root:x:0:0:') || content.includes('[extensions]'))) {
+                await this.reportFinding({
+                 title: 'Local File Inclusion (LFI)',
+                 description: 'System file content revealed.',
+                 severity: 'critical',
+                 location: url,
+                 evidence: 'Found /etc/passwd or win.ini content',
+                 cwe_id: 'CWE-22'
+               });
+             }
+
+              // Command Injection
+             if (this.config.vectorCmdInj && (content.includes('uid=0(root)') || content.includes('nt authority\\system'))) {
+                await this.reportFinding({
+                 title: 'OS Command Injection',
+                 description: 'Command output revealed.',
+                 severity: 'critical',
+                 location: url,
+                 evidence: 'Found whoami output',
+                 cwe_id: 'CWE-78'
+               });
+             }
+          }
+          
+          page.off('dialog', dialogHandler);
+          // Go back for next payload if we navigated
+          if (page.url() !== url) {
+            await page.goto(url, { waitUntil: 'domcontentloaded' });
+          }
+        }
+      } catch (e) {
+        // Fuzzing error
+      }
+    }
+  }
+
+  // Helper Modules
+  private async analyzeCookies(headers: any, url: string) {
+      if (!this.config.checkCookies) return;
+      const setCookie = headers['set-cookie'];
+      if (!setCookie) return;
+
+      const cookies = Array.isArray(setCookie) ? setCookie : setCookie.split('\n');
+      for (const cookie of cookies) {
+          if (!cookie.toLowerCase().includes('httponly')) {
+               await this.reportFinding({
+                  title: 'Cookie Missing HttpOnly',
+                  description: 'Cookie set without HttpOnly flag, accessible to JS.',
+                  severity: 'low',
+                  location: url,
+                  evidence: cookie,
+                  cwe_id: 'CWE-1004'
+              });
+          }
+          if (!cookie.toLowerCase().includes('secure') && url.startsWith('https')) {
+               await this.reportFinding({
+                  title: 'Cookie Missing Secure Flag',
+                  description: 'Cookie set without Secure flag over HTTPS.',
+                  severity: 'low',
+                  location: url,
+                  evidence: cookie,
+                  cwe_id: 'CWE-614'
+              });
+          }
+      }
+  }
+
+  private async extractOSINT(content: string, url: string) {
+      if (!this.config.checkOSINT) return;
+      // Emails
+      const emails = content.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g);
+      if (emails) {
+          const unique = [...new Set(emails)].slice(0, 10); // Check max 10
+          if (unique.length > 0) {
+               await this.log(`OSINT: Found ${unique.length} emails`, 'info');
+               // Optionally report as info finding
+               /* await this.reportFinding({
+                  title: 'Email Addresses Disclosed',
+                  description: 'Found email addresses in source.',
+                  severity: 'info',
+                  location: url,
+                  evidence: unique.join(', '),
+                  cwe_id: 'CWE-200'
+              }); */
+          }
+      }
+  }
+
+  private async probeFiles(url: string) {
+      if (!this.config.checkProbing) return;
+      const baseUrl = new URL(url).origin;
+      const files = ['/.env', '/.git/HEAD', '/wp-config.php.bak', '/backup.sql', '/package.json'];
+      
+      for (const file of files) {
+          try {
+              const target = `${baseUrl}${file}`;
+              const res = await fetch(target);
+              if (res.ok && res.status === 200) {
+                  await this.reportFinding({
+                      title: 'Sensitive File Exposed',
+                      description: `Accessible sensitive file found: ${file}`,
+                      severity: 'high',
+                      location: target,
+                      evidence: `Status 200 OK`,
+                      cwe_id: 'CWE-538'
+                  });
+              }
+          } catch(e) {}
+      }
+  }
+
+  private async auditLibraries(content: string, url: string) {
+      if (!this.config.checkSCA) return;
+      // Simple regex checks for deprecated versions
+      if (/jquery[.-]1\.[0-9]/.test(content)) {
+           await this.reportFinding({
+              title: 'Outdated Library: jQuery 1.x',
+              description: 'Legacy jQuery version detected.',
+              severity: 'medium',
+              location: url,
+              evidence: 'Matches regex jquery 1.x',
+              cwe_id: 'CWE-1104'
+          });
+      }
+  }
+
   private async processPage(page: Page, url: string, depth: number, maxDepth: number) {
     await this.log(`Navigating to ${url}`, 'info');
 
@@ -388,9 +622,6 @@ export class CrawlerService {
         }
 
         // Update status of asset with technologies
-        // Note: Ideally we would do this in the initial insert, but fingerprint is calculated after content is read.
-        // Actually, we can just update the metadata of the asset we just created.
-        // Or better, move the asset insertion AFTER fingerprinting to include techs in metadata.
         await supabase
           .from('assets')
           .update({
@@ -472,9 +703,35 @@ export class CrawlerService {
       }
     }
 
-    // 3. Asset Discovery (Links)
+    // 3. Active Fuzzing (New)
+    try {
+        await this.fuzzPage(page, url);
+    } catch (e) {
+        // console.error('Fuzzing failed', e);
+    }
+
+
+    // New Modules: Cookies & OSINT & SCA
+    await this.analyzeCookies(headers, url);
+    await this.extractOSINT(content, url);
+    await this.auditLibraries(content, url);
+    
+    // Probing (Only at root)
+    if (depth === 0) {
+        this.probeFiles(url).catch(e => console.error('Probing failed', e));
+    }
+
+    // 4. Asset Discovery (Links & Sitemap)
     // Only crawl deeper if we haven't hit max depth and it's same origin
     if (depth < maxDepth) {
+      // Check sitemap at root
+      if (depth === 0) {
+         try {
+             const sitemapUrl = new URL('/sitemap.xml', url).href;
+             await this.processSitemap(sitemapUrl, depth);
+         } catch(e) {}
+      }
+
       const hrefs = await page.$$eval('a', (as) => as.map((a) => a.href));
 
       let newLinksCount = 0;
@@ -488,8 +745,6 @@ export class CrawlerService {
           this.normalizer.isSameDomain(normalized, url) &&
           !this.visited.has(normalized)
         ) {
-          // Future: Check robots.txt here too to avoid queueing disallowed links?
-          // For now, checking at queue processing is safer/easier.
           this.queue.push({ url: normalized, depth: depth + 1 });
           newLinksCount++;
         }
