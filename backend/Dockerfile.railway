@@ -28,25 +28,22 @@ RUN npm prune --production
 # =============================================================================
 # Stage 2: Runner
 # =============================================================================
-FROM node:20-alpine AS runner
+# =============================================================================
+# Stage 2: Runner
+# =============================================================================
+FROM mcr.microsoft.com/playwright:v1.49.0-jammy AS runner
 
 WORKDIR /app
 
-# Install Playwright dependencies (Chromium for crawling)
-RUN apk add --no-cache \
-    chromium \
-    nss \
-    freetype \
-    freetype-dev \
-    harfbuzz \
-    ca-certificates \
-    ttf-freefont \
-    dumb-init \
-    curl
+# Remove manual Chromium install as the base image has browsers
+# We just need curl/dumb-init if not present (Playwright image is Ubuntu-based)
+RUN apt-get update && apt-get install -y dumb-init curl && rm -rf /var/lib/apt/lists/*
 
-# Set Playwright to use system Chromium
-ENV PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium-browser
-ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+# Unset these skip flags so Playwright finds its internal browsers (or use system if configured)
+# The official image has browsers pre-installed in specific locations.
+# But often we just rely on standard npx install logic if we weren't using the base image.
+# Since we ARE using the base image, browsers are at /ms-playwright.
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 
 # Create non-root user for security
 RUN addgroup --system --gid 1001 nodejs \
