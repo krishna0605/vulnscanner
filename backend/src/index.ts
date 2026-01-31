@@ -36,6 +36,7 @@ const start = async () => {
       '🚀 Server started successfully'
     );
   } catch (err) {
+    console.error('CRITIAL STARTUP ERROR:', err);
     logger.fatal({ err }, 'Failed to start server');
     process.exit(1);
   }
