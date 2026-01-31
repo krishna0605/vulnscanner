@@ -53,5 +53,6 @@ export default defineConfig({
     url: BASE_URL,
     reuseExistingServer: !process.env.CI,
     cwd: './frontend',
+    timeout: 120 * 1000,
   },
 });
