@@ -16,9 +16,19 @@ declare module 'fastify' {
 }
 
 // Initialize Supabase client for token verification
-const supabaseUrl = process.env.SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+// Validate required environment variables
+if (!supabaseUrl || !supabaseServiceKey) {
+  console.error('[Auth] CRITICAL: Missing required environment variables!');
+  console.error('[Auth] SUPABASE_URL:', supabaseUrl ? 'SET' : 'MISSING');
+  console.error('[Auth] SUPABASE_SERVICE_ROLE_KEY:', supabaseServiceKey ? 'SET' : 'MISSING');
+}
+
+const supabase = supabaseUrl && supabaseServiceKey 
+  ? createClient(supabaseUrl, supabaseServiceKey)
+  : null;
 
 /**
  * JWT Authentication Middleware
@@ -42,6 +52,17 @@ export async function authenticateRequest(
   const token = authHeader.substring(7); // Remove 'Bearer ' prefix
 
   try {
+    // Check if Supabase is properly configured
+    if (!supabase) {
+      console.error('[Auth] Supabase client not initialized - missing env vars');
+      reply.status(500).send({
+        statusCode: 500,
+        error: 'Server Configuration Error',
+        message: 'Authentication service not properly configured',
+      });
+      return;
+    }
+
     // Verify the token with Supabase
     const {
       data: { user },
