@@ -144,43 +144,60 @@ export async function mfaRoutes(fastify: FastifyInstance) {
     const userId = request.user!.id;
     const email = request.user!.email || 'user';
 
-    // Check if MFA is already enabled
-    const { data: existing } = await supabase
-      .from('user_mfa_settings')
-      .select('mfa_enabled')
-      .eq('user_id', userId)
-      .single();
+    console.log('[MFA Setup] Starting setup for user:', userId);
 
-    if (existing?.mfa_enabled) {
-      throw new AppError('MFA is already enabled. Disable it first to set up again.', 400, 'MFA_ALREADY_ENABLED');
+    try {
+      // Check if MFA is already enabled
+      const { data: existing, error: fetchError } = await supabase
+        .from('user_mfa_settings')
+        .select('mfa_enabled')
+        .eq('user_id', userId)
+        .single();
+
+      console.log('[MFA Setup] Existing settings:', existing, 'Error:', fetchError?.message);
+
+      if (existing?.mfa_enabled) {
+        throw new AppError('MFA is already enabled. Disable it first to set up again.', 400, 'MFA_ALREADY_ENABLED');
+      }
+
+      // Generate new secret
+      console.log('[MFA Setup] Generating secret...');
+      const secret = authenticator.generateSecret();
+      
+      // Generate QR code
+      console.log('[MFA Setup] Generating QR code...');
+      const otpauth = authenticator.keyuri(email, 'VulnScanner', secret);
+      const qrCodeDataUrl = await QRCode.toDataURL(otpauth);
+
+      // Store encrypted secret (pending verification)
+      console.log('[MFA Setup] Encrypting secret...');
+      const encryptedSecret = encrypt(secret);
+      
+      console.log('[MFA Setup] Saving to database...');
+      const { error } = await supabase
+        .from('user_mfa_settings')
+        .upsert({
+          user_id: userId,
+          totp_secret: encryptedSecret,
+          mfa_enabled: false,
+          mfa_type: null,
+        }, { onConflict: 'user_id' });
+
+      if (error) {
+        console.error('[MFA Setup] Database error:', error.message);
+        throw new DatabaseError(error.message);
+      }
+
+      console.log('[MFA Setup] Success!');
+      return success({
+        qrCode: qrCodeDataUrl,
+        secret: secret, // For manual entry (show only once)
+        message: 'Scan QR code with your authenticator app, then verify with a code',
+      });
+    } catch (err: any) {
+      console.error('[MFA Setup] Error:', err.message, err.stack);
+      throw err;
     }
-
-    // Generate new secret
-    const secret = authenticator.generateSecret();
-    
-    // Generate QR code
-    const otpauth = authenticator.keyuri(email, 'VulnScanner', secret);
-    const qrCodeDataUrl = await QRCode.toDataURL(otpauth);
-
-    // Store encrypted secret (pending verification)
-    const encryptedSecret = encrypt(secret);
-    
-    const { error } = await supabase
-      .from('user_mfa_settings')
-      .upsert({
-        user_id: userId,
-        totp_secret: encryptedSecret,
-        mfa_enabled: false,
-        mfa_type: null,
-      }, { onConflict: 'user_id' });
-
-    if (error) throw new DatabaseError(error.message);
-
-    return success({
-      qrCode: qrCodeDataUrl,
-      secret: secret, // For manual entry (show only once)
-      message: 'Scan QR code with your authenticator app, then verify with a code',
-    });
   });
 
   // POST /mfa/verify - Verify TOTP during setup to enable MFA

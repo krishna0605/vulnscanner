@@ -1,145 +1,160 @@
-# Email OTP Fix - Implementation Plan
+# MFA Authentication Flow - Implementation Plan
 
-## Problem Identified
+## Current Issues
 
-The "Email me a code instead" feature fails because:
+| # | Issue | Status |
+|---|-------|--------|
+| 1 | OAuth redirect to localhost | ✅ **Fixed** |
+| 2 | MFA setup not working | ❌ **Needs Fix** |
+| 3 | Post-login MFA detection | ❌ **Needs Verification** |
 
-1. **Frontend Issue**: Missing `body: JSON.stringify({})` in POST request (Fastify requires body with JSON content-type)
-2. **Backend Issue**: Uses `supabase.auth.admin.generateLink` which generates **magic links**, NOT OTP emails
+---
+
+## Issue #2: MFA Setup Not Working
+
+### Root Cause
+The `NEXT_PUBLIC_API_URL` in Vercel is missing the `https://` protocol.
+
+```
+Current:   vulnscanner-production.up.railway.app
+Required:  https://vulnscanner-production.up.railway.app
+```
+
+### Fix Required
+
+**In Vercel → Settings → Environment Variables:**
+
+| Variable | Value |
+|----------|-------|
+| `NEXT_PUBLIC_API_URL` | `https://vulnscanner-production.up.railway.app` |
+
+> ⚠️ **Critical**: Must include `https://` prefix!
+
+---
+
+## Issue #3: Post-Login MFA Detection Flow
+
+### Expected Behavior
 
 ```mermaid
-flowchart TB
-    subgraph Current[Current Broken Flow]
-        A[User clicks 'Email me a code'] --> B[Frontend: POST /api/mfa/send-email-otp]
-        B --> C[Backend: /mfa/send-email-otp]
-        C --> D[supabase.auth.admin.generateLink]
-        D --> E[❌ Generates magic link, not OTP]
-        E --> F[Error or wrong email sent]
+flowchart TD
+    A["User clicks Sign in with Google"] --> B["Google OAuth"]
+    B --> C["auth/callback"]
+    C --> D{"Exchange code for session"}
+    D -->|Success| E["Call /mfa/status API"]
+    D -->|Fail| F["Redirect to login error"]
+    
+    E --> G{"MFA enabled?"}
+    G -->|"Yes - has TOTP"| H["Redirect to verify-2fa TOTP"]
+    G -->|No| I["Send Email OTP via Resend"]
+    
+    H --> J["User enters Authenticator code"]
+    I --> K["Redirect to verify-2fa email"]
+    K --> L["User enters Email OTP"]
+    
+    J --> M{"Code valid?"}
+    L --> M
+    M -->|Yes| N["Redirect to dashboard"]
+    M -->|No| O["Show error, retry"]
+```
+
+### Current Implementation Status
+
+| Component | File | Status |
+|-----------|------|--------|
+| OAuth Callback | [auth/callback/route.ts](file:///c:/Users/Admin/Desktop/vulscanner/frontend/src/app/auth/callback/route.ts) | ✅ Logic correct |
+| MFA Status Check | Backend `/mfa/status` | ✅ Returns `mfaEnabled`, `suggestEmailOtp` |
+| Email OTP Send | Backend `/mfa/send-email-otp` | ✅ Uses Resend API |
+| Verify 2FA Page | [verify-2fa/page.tsx](file:///c:/Users/Admin/Desktop/vulscanner/frontend/src/app/%28auth%29/verify-2fa/page.tsx) | ✅ Handles both modes |
+| **API URL Config** | `NEXT_PUBLIC_API_URL` | ❌ **Missing https://** |
+
+---
+
+## Complete Fix Checklist
+
+### Step 1: Fix Vercel Environment Variables
+
+```
+NEXT_PUBLIC_API_URL = https://vulnscanner-production.up.railway.app
+NEXT_PUBLIC_SITE_URL = https://vulnscanner.tech
+```
+
+### Step 2: Verify Railway Environment Variables
+
+```
+SUPABASE_URL = https://djiiorrvmonqdccnftyq.supabase.co
+SUPABASE_SERVICE_ROLE_KEY = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+DATABASE_URL = postgresql://postgres:Krishna%402003%23kapoor@db.djiiorrvmonqdccnftyq.supabase.co:5432/postgres
+MFA_ENCRYPTION_KEY = fa330b076f1a51fbb7a61f6fbde21fc63a9afe2709d41a215627e19e6c662fee
+RESEND_API_KEY = re_VpGkLvun_Jra8itEjRwL1NSeSu3kw5Rbb
+RESEND_FROM_EMAIL = VulnScanner <noreply@vulnscanner.tech>
+PORT = 3001
+```
+
+### Step 3: Redeploy Vercel
+- Go to Vercel Deployments → Redeploy latest
+
+---
+
+## Authentication Flow Diagram
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant V as vulnscanner.tech (Vercel)
+    participant R as Backend (Railway)
+    participant S as Supabase
+    participant E as Resend (Email)
+    
+    rect rgb(240, 248, 255)
+        Note over U,S: Login Flow
+        U->>V: Click "Sign in with Google"
+        V->>S: signInWithOAuth
+        S-->>U: Google OAuth screen
+        U->>S: Authenticate with Google
+        S->>V: Redirect to /auth/callback
+    end
+    
+    rect rgb(255, 248, 240)
+        Note over V,R: MFA Check
+        V->>R: GET /mfa/status
+        R->>S: Query user_mfa_settings
+        S-->>R: MFA data
+        R-->>V: { mfaEnabled, suggestEmailOtp }
+    end
+    
+    alt MFA Enabled (TOTP)
+        rect rgb(240, 255, 240)
+            Note over V,U: TOTP Verification
+            V->>U: Redirect /verify-2fa?mode=totp
+            U->>V: Enter Authenticator code
+            V->>R: POST /mfa/challenge
+            R-->>V: Success
+            V->>U: Redirect to /dashboard
+        end
+    else No MFA (Email OTP)
+        rect rgb(255, 240, 255)
+            Note over V,E: Email OTP Verification
+            V->>R: POST /mfa/send-email-otp
+            R->>E: Send OTP email via Resend
+            E-->>U: Email with 6-digit OTP
+            V->>U: Redirect /verify-2fa?mode=email_verify
+            U->>V: Enter Email OTP
+            V->>R: POST /mfa/challenge
+            R-->>V: Success
+            V->>U: Redirect to /dashboard
+        end
     end
 ```
 
 ---
 
-## Solution
+## Verification Tests
 
-```mermaid
-flowchart TB
-    subgraph Fixed[Fixed Flow]
-        A[User clicks 'Email me a code'] --> B[Frontend: POST /api/mfa/send-email-otp\nwith empty body]
-        B --> C[Backend: /mfa/send-email-otp]
-        C --> D[Generate 6-digit OTP]
-        D --> E[Store hashed OTP in DB]
-        E --> F{Email Service?}
-        F -->|Development| G[Log OTP to console]
-        F -->|Production| H[Send via Resend/SMTP]
-        G --> I[✅ Return success]
-        H --> I
-    end
-```
-
----
-
-## Proposed Changes
-
-### 1. Fix Frontend API Route
-
-**File**: [frontend/src/app/api/mfa/send-email-otp/route.ts](file:///c:/Users/Admin/Desktop/vulscanner/frontend/src/app/api/mfa/send-email-otp/route.ts)
-
-Add `body: JSON.stringify({})` to the fetch call (same fix as setup route).
-
----
-
-### 2. Fix Backend Email Sending
-
-**File**: [backend/src/routes/mfa.ts](file:///c:/Users/Admin/Desktop/vulscanner/backend/src/routes/mfa.ts)
-
-**Option A: Development Mode (Simplest)**
-- Log OTP to console for testing
-- Always return success so users can verify using logged OTP
-
-**Option B: Supabase Email (Using Edge Functions)**
-- Create a Supabase Edge Function to send emails
-- Call it from the backend
-
-**Option C: Resend API (Recommended for Production)**
-- Integrate Resend (free tier: 100 emails/day)
-- Send proper HTML email with OTP code
-
----
-
-## Implementation Steps
-
-### Step 1: Fix Frontend (Quick Fix)
-
-```typescript
-// frontend/src/app/api/mfa/send-email-otp/route.ts
-const response = await fetch(`${BACKEND_URL}/mfa/send-email-otp`, {
-  method: 'POST',
-  headers: {
-    'Authorization': `Bearer ${token}`,
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({}),  // ADD THIS LINE
-});
-```
-
-### Step 2: Fix Backend (Development Mode)
-
-Remove the broken `supabase.auth.admin.generateLink` call and just log the OTP:
-
-```typescript
-// backend/src/routes/mfa.ts - send-email-otp route
-// Generate and store OTP (already works)
-const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
-// Store in database (already works)
-await supabase.from('email_otp_codes').insert({...});
-
-// For development: Just log the OTP
-console.log(`📧 OTP for ${email}: ${otp}`);
-
-// Return success
-return success({
-  sent: true,
-  message: `Verification code sent to ${maskedEmail}`,
-  // DEV ONLY: Include OTP in response for testing
-  ...(process.env.NODE_ENV === 'development' && { _devOtp: otp }),
-});
-```
-
-### Step 3: (Optional) Add Resend for Production
-
-```bash
-npm install resend
-```
-
-```typescript
-import { Resend } from 'resend';
-const resend = new Resend(process.env.RESEND_API_KEY);
-
-await resend.emails.send({
-  from: 'VulnScanner <noreply@vulnscanner.tech>',
-  to: email,
-  subject: 'Your VulnScanner Verification Code',
-  html: `<h1>Your code: ${otp}</h1><p>Expires in 10 minutes.</p>`,
-});
-```
-
----
-
-## Verification Plan
-
-| Test | Expected Result |
-|------|-----------------|
-| Click "Email me a code instead" | No error, success message shown |
-| Check backend console | OTP logged: `📧 OTP for user@email.com: 123456` |
-| Enter logged OTP code | Successfully verifies and redirects to dashboard |
-
----
-
-## Environment Variables (for Production)
-
-```env
-# Backend .env
-RESEND_API_KEY=re_xxxxxxxxxxxx
-```
+| Step | Action | Expected Result |
+|------|--------|-----------------|
+| 1 | Login with Google (new user) | Receive email OTP → Enter code → Dashboard |
+| 2 | Go to Settings → Setup 2FA | QR code displays |
+| 3 | Scan QR, enter code | MFA enabled successfully |
+| 4 | Logout and login again | Asked for Authenticator code (not email) |
+| 5 | Enter Authenticator code | Successfully reach dashboard |
