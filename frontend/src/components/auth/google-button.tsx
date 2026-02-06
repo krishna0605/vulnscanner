@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { signInWithGoogle } from '@/app/(auth)/actions';
+import { createClient } from '@/utils/supabase/client';
 
 export function GoogleButton() {
   const [loading, setLoading] = useState(false);
@@ -12,13 +12,27 @@ export function GoogleButton() {
     setError(null);
     
     try {
-      const result = await signInWithGoogle();
-      if (result?.error) {
-        setError(result.error);
+      const supabase = createClient();
+      
+      // Use window.location.origin as fallback for SITE_URL
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
+      
+      const { error: oauthError } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${siteUrl}/auth/callback`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        },
+      });
+
+      if (oauthError) {
+        setError(oauthError.message);
         setLoading(false);
-      } else if (result?.url) {
-        window.location.href = result.url;
       }
+      // The browser will automatically redirect to Google
     } catch (err) {
       setError('An unexpected error occurred');
       setLoading(false);
