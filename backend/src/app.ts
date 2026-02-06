@@ -279,6 +279,7 @@ export async function buildApp(): Promise<FastifyInstance> {
 
   // Health check endpoints (public, no auth required)
   fastify.get('/', async function handler(request, reply) {
+    console.log('[Health] Root endpoint hit');
     return { status: 'healthy', timestamp: new Date().toISOString() };
   });
 

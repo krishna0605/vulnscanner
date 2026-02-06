@@ -1,5 +1,5 @@
 # =============================================================================
-# VulnScanner Backend Dockerfile (Railway Monorepo Version)
+# VulnScanner Backend Dockerfile (Railway Simplified Version)
 # =============================================================================
 
 # Stage 1: Builder
@@ -26,24 +26,14 @@ RUN npm run build
 RUN npm prune --production
 
 # =============================================================================
-# Stage 2: Runner
+# Stage 2: Runner (Lightweight - no Playwright for now)
 # =============================================================================
-# =============================================================================
-# Stage 2: Runner
-# =============================================================================
-FROM mcr.microsoft.com/playwright:v1.58.0-jammy AS runner
+FROM node:20-alpine AS runner
 
 WORKDIR /app
 
-# Remove manual Chromium install as the base image has browsers
-# We just need curl/dumb-init if not present (Playwright image is Ubuntu-based)
-RUN apt-get update && apt-get install -y dumb-init curl && rm -rf /var/lib/apt/lists/*
-
-# Unset these skip flags so Playwright finds its internal browsers (or use system if configured)
-# The official image has browsers pre-installed in specific locations.
-# But often we just rely on standard npx install logic if we weren't using the base image.
-# Since we ARE using the base image, browsers are at /ms-playwright.
-ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+# Install minimal runtime dependencies
+RUN apk add --no-cache dumb-init curl
 
 # Create non-root user for security
 RUN addgroup --system --gid 1001 nodejs \
@@ -60,12 +50,12 @@ COPY --from=builder --chown=fastify:nodejs /app/package*.json ./
 # Switch to non-root user
 USER fastify
 
-# Expose port
+# Expose port (Railway will set PORT env var)
 EXPOSE 3001
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-    CMD curl -f http://localhost:3001/health || exit 1
+# Health check - using simple curl
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:${PORT:-3001}/ || exit 1
 
 # Use dumb-init for proper signal handling
 ENTRYPOINT ["dumb-init", "--"]
