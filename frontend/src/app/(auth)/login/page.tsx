@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { login } from '../actions';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { GoogleButton } from '@/components/auth/google-button';
+
 
 export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
@@ -160,6 +162,19 @@ export default function LoginPage() {
                 </button>
               </div>
             </form>
+
+            {/* Divider */}
+            <div className="mt-6 flex items-center">
+              <div className="flex-grow border-t border-white/10"></div>
+              <span className="px-4 text-xs text-slate-500 font-mono uppercase tracking-wider">or</span>
+              <div className="flex-grow border-t border-white/10"></div>
+            </div>
+
+            {/* Google OAuth Button */}
+            <div className="mt-6">
+              <GoogleButton />
+            </div>
+
             <div className="mt-8 pt-6 border-t border-white/5 text-center">
               <p className="text-sm text-slate-500">
                 Don&apos;t have an account?
