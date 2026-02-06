@@ -45,12 +45,6 @@ export default function FeaturesPage() {
                 </Link>
                 <Link
                   className="text-slate-300 hover:text-white hover:bg-white/5 px-4 py-2 rounded-full text-sm font-medium transition-all"
-                  href="/pricing"
-                >
-                  Pricing
-                </Link>
-                <Link
-                  className="text-slate-300 hover:text-white hover:bg-white/5 px-4 py-2 rounded-full text-sm font-medium transition-all"
                   href="/learn"
                 >
                   Learn
@@ -326,110 +320,6 @@ export default function FeaturesPage() {
                 </div>
               </div>
               <div className="absolute -z-10 -right-10 bottom-10 w-64 h-64 bg-white/5 rounded-full blur-[80px]"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="py-24 relative bg-section-dark/20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-sans font-bold text-white mb-4">Compare Plans</h2>
-            <p className="text-slate-400 font-light">
-              Choose the security level that matches your scale.
-            </p>
-          </div>
-          <div className="glass-panel rounded-[32px] overflow-hidden border border-white/10">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-white/5 border-b border-white/10">
-                    <th className="p-6 text-sm font-mono text-slate-400 uppercase tracking-wider w-1/4">
-                      Features
-                    </th>
-                    <th className="p-6 text-center text-white font-bold text-lg w-1/4">Starter</th>
-                    <th className="p-6 text-center text-white font-bold text-lg w-1/4 relative">
-                      Professional
-                      <span className="absolute top-2 right-1/2 translate-x-1/2 text-[10px] bg-white text-black px-2 py-0.5 rounded-full uppercase">
-                        Popular
-                      </span>
-                    </th>
-                    <th className="p-6 text-center text-white font-bold text-lg w-1/4">
-                      Enterprise
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5">
-                  <tr className="hover:bg-white/5 transition-colors">
-                    <td className="p-6 text-slate-300 font-medium">Automated Scanning</td>
-                    <td className="p-6 text-center text-slate-400">Daily</td>
-                    <td className="p-6 text-center text-white font-bold">Continuous</td>
-                    <td className="p-6 text-center text-white font-bold">Continuous + Custom</td>
-                  </tr>
-                  <tr className="hover:bg-white/5 transition-colors">
-                    <td className="p-6 text-slate-300 font-medium">Real-time Alerts</td>
-                    <td className="p-6 text-center">
-                      <span className="material-symbols-outlined text-slate-600">remove</span>
-                    </td>
-                    <td className="p-6 text-center">
-                      <span className="material-symbols-outlined text-green-400">check</span>
-                    </td>
-                    <td className="p-6 text-center">
-                      <span className="material-symbols-outlined text-green-400">check</span>
-                    </td>
-                  </tr>
-                  <tr className="hover:bg-white/5 transition-colors">
-                    <td className="p-6 text-slate-300 font-medium">API Security Shield</td>
-                    <td className="p-6 text-center">
-                      <span className="material-symbols-outlined text-slate-600">remove</span>
-                    </td>
-                    <td className="p-6 text-center text-slate-400">Basic</td>
-                    <td className="p-6 text-center text-white font-bold">Advanced</td>
-                  </tr>
-                  <tr className="hover:bg-white/5 transition-colors">
-                    <td className="p-6 text-slate-300 font-medium">Data Retention</td>
-                    <td className="p-6 text-center text-slate-400">30 Days</td>
-                    <td className="p-6 text-center text-slate-400">1 Year</td>
-                    <td className="p-6 text-center text-white font-bold">Unlimited</td>
-                  </tr>
-                  <tr className="hover:bg-white/5 transition-colors">
-                    <td className="p-6 text-slate-300 font-medium">Team Members</td>
-                    <td className="p-6 text-center text-slate-400">3</td>
-                    <td className="p-6 text-center text-slate-400">10</td>
-                    <td className="p-6 text-center text-white font-bold">Unlimited</td>
-                  </tr>
-                  <tr className="hover:bg-white/5 transition-colors">
-                    <td className="p-6 text-slate-300 font-medium">SSO Integration</td>
-                    <td className="p-6 text-center">
-                      <span className="material-symbols-outlined text-slate-600">remove</span>
-                    </td>
-                    <td className="p-6 text-center">
-                      <span className="material-symbols-outlined text-green-400">check</span>
-                    </td>
-                    <td className="p-6 text-center">
-                      <span className="material-symbols-outlined text-green-400">check</span>
-                    </td>
-                  </tr>
-                  <tr className="bg-white/5">
-                    <td className="p-6"></td>
-                    <td className="p-6 text-center">
-                      <button className="px-6 py-2 rounded-xl border border-white/20 text-white hover:bg-white hover:text-black transition-all text-sm font-bold w-full">
-                        Start Free
-                      </button>
-                    </td>
-                    <td className="p-6 text-center">
-                      <button className="px-6 py-2 rounded-xl bg-white text-black hover:bg-gray-200 transition-all text-sm font-bold w-full shadow-glow">
-                        Get Pro
-                      </button>
-                    </td>
-                    <td className="p-6 text-center">
-                      <button className="px-6 py-2 rounded-xl bg-interactive-dark border border-white/10 text-white hover:bg-white/20 transition-all text-sm font-bold w-full">
-                        Contact Sales
-                      </button>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
             </div>
           </div>
         </div>

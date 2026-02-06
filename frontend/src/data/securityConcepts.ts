@@ -85,3 +85,131 @@ export const resources: Resource[] = [
 ];
 
 export const conceptsList = Object.values(concepts);
+
+// Knowledge Base items for Core Principles and Essential Precautions
+export interface KnowledgeItem {
+  id: string;
+  category: 'principle' | 'precaution';
+  title: string;
+  icon: string;
+  description: string;
+  tips: string[];
+  learnMoreUrl: string;
+}
+
+export const knowledgeItems: KnowledgeItem[] = [
+  // Core Principles
+  {
+    id: 'least-privilege',
+    category: 'principle',
+    title: 'Principle of Least Privilege',
+    icon: 'check_circle',
+    description: 'Users, programs, and systems should only have the minimum access rights necessary to perform their tasks. This limits the potential damage from accidents, errors, or unauthorized use.',
+    tips: [
+      'Grant permissions on a need-to-know basis only',
+      'Regularly audit and revoke unnecessary access rights',
+      'Use role-based access control (RBAC) for scalable management',
+      'Implement time-limited elevated privileges when needed'
+    ],
+    learnMoreUrl: '/learn#least-privilege'
+  },
+  {
+    id: 'secure-coding',
+    category: 'principle',
+    title: 'Secure Coding Practices',
+    icon: 'check_circle',
+    description: 'Writing code with security in mind from the start prevents vulnerabilities before they reach production. This includes input validation, output encoding, and proper error handling.',
+    tips: [
+      'Validate and sanitize all user inputs',
+      'Use parameterized queries to prevent SQL injection',
+      'Implement proper error handling without exposing sensitive info',
+      'Keep dependencies updated and scan for known vulnerabilities'
+    ],
+    learnMoreUrl: '/learn#secure-coding'
+  },
+  {
+    id: 'patch-management',
+    category: 'principle',
+    title: 'Continuous Patch Management',
+    icon: 'check_circle',
+    description: 'Regularly updating software and systems closes security gaps before attackers can exploit them. A structured patch management process is essential for maintaining security.',
+    tips: [
+      'Establish a regular patching schedule (e.g., weekly or monthly)',
+      'Prioritize critical security patches for immediate deployment',
+      'Test patches in staging before production rollout',
+      'Maintain an inventory of all software and dependencies'
+    ],
+    learnMoreUrl: '/learn#patch-management'
+  },
+  {
+    id: 'mfa-principle',
+    category: 'principle',
+    title: 'Multi-Factor Authentication (MFA)',
+    icon: 'check_circle',
+    description: 'MFA adds extra layers of security by requiring multiple forms of verification. Even if one factor is compromised, attackers cannot gain access without the others.',
+    tips: [
+      'Enable MFA on all critical accounts and systems',
+      'Prefer authenticator apps or hardware keys over SMS',
+      'Educate users on recognizing MFA phishing attempts',
+      'Have backup recovery codes stored securely'
+    ],
+    learnMoreUrl: '/learn#mfa-principle'
+  },
+  // Essential Precautions
+  {
+    id: 'phishing',
+    category: 'precaution',
+    title: 'Phishing & Social Engineering',
+    icon: 'shield_lock',
+    description: 'Social engineering attacks manipulate people into revealing sensitive information or performing actions that compromise security. Awareness is the first line of defense.',
+    tips: [
+      'Verify sender identity before clicking links or attachments',
+      'Look for urgency tactics and suspicious requests',
+      'Report suspected phishing attempts immediately',
+      'Conduct regular security awareness training'
+    ],
+    learnMoreUrl: '/learn#phishing'
+  },
+  {
+    id: 'secrets',
+    category: 'precaution',
+    title: 'Secrets Management & Hygiene',
+    icon: 'shield_lock',
+    description: 'Proper handling of secrets (API keys, passwords, tokens) prevents unauthorized access. Never hardcode secrets and use dedicated tools for secure storage.',
+    tips: [
+      'Never commit secrets to version control',
+      'Use environment variables or secret management tools',
+      'Rotate secrets regularly and after any suspected breach',
+      'Implement least privilege access to secret stores'
+    ],
+    learnMoreUrl: '/learn#secrets'
+  },
+  {
+    id: 'backups',
+    category: 'precaution',
+    title: 'Reliable Data Backups',
+    icon: 'shield_lock',
+    description: 'Regular backups protect against data loss from ransomware, hardware failure, or accidental deletion. Follow the 3-2-1 rule for maximum protection.',
+    tips: [
+      'Keep 3 copies of data on 2 different media, 1 offsite',
+      'Test backup restoration regularly',
+      'Encrypt backups and protect access credentials',
+      'Automate backup processes to ensure consistency'
+    ],
+    learnMoreUrl: '/learn#backups'
+  },
+  {
+    id: 'logging',
+    category: 'precaution',
+    title: 'Comprehensive Logging',
+    icon: 'shield_lock',
+    description: 'Detailed logs enable detection of security incidents, forensic analysis, and compliance auditing. Log all security-relevant events and protect log integrity.',
+    tips: [
+      'Log authentication attempts, access to sensitive data, and admin actions',
+      'Centralize logs for easier monitoring and analysis',
+      'Set up alerts for suspicious patterns',
+      'Retain logs according to compliance requirements'
+    ],
+    learnMoreUrl: '/learn#logging'
+  }
+];

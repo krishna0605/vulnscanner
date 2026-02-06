@@ -5,12 +5,18 @@ import { useState } from 'react';
 import ConceptModal from '@/components/landing/ConceptModal';
 import ResourcesModal from '@/components/landing/ResourcesModal';
 import VideoModal from '@/components/landing/VideoModal';
-import { concepts, resources, Concept } from '@/data/securityConcepts';
+import KnowledgeItemModal from '@/components/landing/KnowledgeItemModal';
+import { concepts, resources, Concept, knowledgeItems, KnowledgeItem } from '@/data/securityConcepts';
 
 export default function LandingPage() {
   const [selectedConcept, setSelectedConcept] = useState<Concept | null>(null);
   const [isResourcesOpen, setIsResourcesOpen] = useState(false);
   const [isVideoOpen, setIsVideoOpen] = useState(false);
+  const [selectedKnowledgeItem, setSelectedKnowledgeItem] = useState<KnowledgeItem | null>(null);
+
+  // Get items by category for easier rendering
+  const principles = knowledgeItems.filter(item => item.category === 'principle');
+  const precautions = knowledgeItems.filter(item => item.category === 'precaution');
 
   return (
     <>
@@ -329,8 +335,8 @@ export default function LandingPage() {
               >
                 <img
                   alt="Cybersecurity Visualization"
-                  className="w-full h-full object-cover opacity-60 grayscale group-hover:opacity-40 transition-opacity duration-500 scale-105 group-hover:scale-100"
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuCQbAhRKEybaDXnSUXNP0A964O9FHIc8_xu9OcPOVA-E6uHG8LcZ-WlQjTp90CtLe3ZSSKe6JmSoWOLzslFlnGsLF5FT8xdOioRsmYq18s1xFv6eCjtQaDjOPHyxeLaqY7exDRw-0CBNWQLPqLUj9pZxvHNz3gTaPYgUJLNklMoghznNSYppQgkYhFcdGZtGiimLZPZSlFYpkdKDmCvxVPHq3r4ZKo_lLxOrPU9S1_QnuZzXKnwt-jwV96zTpzTOC7yvC3yLM0h1-Y"
+                  className="w-full h-full object-cover opacity-80 group-hover:opacity-60 transition-opacity duration-500 scale-105 group-hover:scale-100"
+                  src="https://img.youtube.com/vi/X-O1-l0gP5Q/maxresdefault.jpg"
                 />
                 <div className="absolute inset-0 flex items-center justify-center z-20">
                   <div className="w-20 h-20 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-glow">
@@ -517,30 +523,22 @@ export default function LandingPage() {
                 <h3 className="text-2xl font-bold text-white">Core Principles</h3>
               </div>
               <ul className="space-y-4 relative z-10">
-                <li className="flex items-center text-sm text-slate-300 font-mono">
-                  <span className="material-symbols-outlined text-white text-base mr-3">
-                    check_circle
-                  </span>
-                  Principle of Least Privilege
-                </li>
-                <li className="flex items-center text-sm text-slate-300 font-mono">
-                  <span className="material-symbols-outlined text-white text-base mr-3">
-                    check_circle
-                  </span>
-                  Secure Coding Practices
-                </li>
-                <li className="flex items-center text-sm text-slate-300 font-mono">
-                  <span className="material-symbols-outlined text-white text-base mr-3">
-                    check_circle
-                  </span>
-                  Continuous Patch Management
-                </li>
-                <li className="flex items-center text-sm text-slate-300 font-mono">
-                  <span className="material-symbols-outlined text-white text-base mr-3">
-                    check_circle
-                  </span>
-                  Multi-Factor Authentication (MFA)
-                </li>
+                {principles.map((item) => (
+                  <li key={item.id}>
+                    <button
+                      onClick={() => setSelectedKnowledgeItem(item)}
+                      className="flex items-center text-sm text-slate-300 font-mono w-full text-left hover:text-white transition-colors group/item cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-white text-base mr-3 group-hover/item:scale-110 transition-transform">
+                        check_circle
+                      </span>
+                      <span className="group-hover/item:translate-x-1 transition-transform">{item.title}</span>
+                      <span className="material-symbols-outlined text-xs ml-auto opacity-0 group-hover/item:opacity-100 transition-opacity">
+                        arrow_forward
+                      </span>
+                    </button>
+                  </li>
+                ))}
               </ul>
             </div>
 
@@ -555,30 +553,22 @@ export default function LandingPage() {
                 <h3 className="text-2xl font-bold text-white">Essential Precautions</h3>
               </div>
               <ul className="space-y-4 relative z-10">
-                <li className="flex items-center text-sm text-slate-300 font-mono">
-                  <span className="material-symbols-outlined text-white text-base mr-3">
-                    shield_lock
-                  </span>
-                  Phishing & Social Engineering
-                </li>
-                <li className="flex items-center text-sm text-slate-300 font-mono">
-                  <span className="material-symbols-outlined text-white text-base mr-3">
-                    shield_lock
-                  </span>
-                  Secrets Management & Hygiene
-                </li>
-                <li className="flex items-center text-sm text-slate-300 font-mono">
-                  <span className="material-symbols-outlined text-white text-base mr-3">
-                    shield_lock
-                  </span>
-                  Reliable Data Backups
-                </li>
-                <li className="flex items-center text-sm text-slate-300 font-mono">
-                  <span className="material-symbols-outlined text-white text-base mr-3">
-                    shield_lock
-                  </span>
-                  Comprehensive Logging
-                </li>
+                {precautions.map((item) => (
+                  <li key={item.id}>
+                    <button
+                      onClick={() => setSelectedKnowledgeItem(item)}
+                      className="flex items-center text-sm text-slate-300 font-mono w-full text-left hover:text-white transition-colors group/item cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-white text-base mr-3 group-hover/item:scale-110 transition-transform">
+                        shield_lock
+                      </span>
+                      <span className="group-hover/item:translate-x-1 transition-transform">{item.title}</span>
+                      <span className="material-symbols-outlined text-xs ml-auto opacity-0 group-hover/item:opacity-100 transition-opacity">
+                        arrow_forward
+                      </span>
+                    </button>
+                  </li>
+                ))}
               </ul>
             </div>
           </div>
@@ -731,6 +721,12 @@ export default function LandingPage() {
         videoId="X-O1-l0gP5Q"
         isOpen={isVideoOpen}
         onClose={() => setIsVideoOpen(false)}
+      />
+
+      <KnowledgeItemModal
+        item={selectedKnowledgeItem}
+        isOpen={!!selectedKnowledgeItem}
+        onClose={() => setSelectedKnowledgeItem(null)}
       />
     </>
   );

@@ -1,8 +1,13 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
+import { services, Service } from '@/data/servicesData';
+import ServiceModal from '@/components/services/ServiceModal';
 
 export default function ServicesPage() {
+  const [selectedService, setSelectedService] = useState<Service | null>(null);
+
   return (
     <>
       {/* Background Elements */}
@@ -47,12 +52,6 @@ export default function ServicesPage() {
                   href="/services"
                 >
                   Services
-                </Link>
-                <Link
-                  className="text-slate-300 hover:text-white hover:bg-white/5 px-4 py-2 rounded-full text-sm font-medium transition-all"
-                  href="/pricing"
-                >
-                  Pricing
                 </Link>
                 <Link
                   className="text-slate-300 hover:text-white hover:bg-white/5 px-4 py-2 rounded-full text-sm font-medium transition-all"
@@ -123,15 +122,15 @@ export default function ServicesPage() {
                 identifies and neutralizes threats before they impact operations.
               </p>
               <div className="pt-4 mt-auto border-t border-white/5">
-                <a
-                  className="inline-flex items-center text-white text-xs font-mono font-bold uppercase tracking-wider hover:text-gray-300 transition-colors"
-                  href="#"
+                <button
+                  onClick={() => setSelectedService(services[0])}
+                  className="inline-flex items-center text-white text-xs font-mono font-bold uppercase tracking-wider hover:text-gray-300 transition-colors cursor-pointer"
                 >
                   Learn more{' '}
                   <span className="material-symbols-outlined text-sm ml-2 group-hover:translate-x-1 transition-transform">
                     arrow_forward
                   </span>
-                </a>
+                </button>
               </div>
             </div>
             <div className="glass-panel p-8 rounded-[24px] hover:bg-section-dark transition-all duration-300 group border-t border-white/10 flex flex-col h-full">
@@ -144,15 +143,15 @@ export default function ServicesPage() {
                 27001, HIPAA). We provide the roadmap to certification.
               </p>
               <div className="pt-4 mt-auto border-t border-white/5">
-                <a
-                  className="inline-flex items-center text-white text-xs font-mono font-bold uppercase tracking-wider hover:text-gray-300 transition-colors"
-                  href="#"
+                <button
+                  onClick={() => setSelectedService(services[1])}
+                  className="inline-flex items-center text-white text-xs font-mono font-bold uppercase tracking-wider hover:text-gray-300 transition-colors cursor-pointer"
                 >
                   Learn more{' '}
                   <span className="material-symbols-outlined text-sm ml-2 group-hover:translate-x-1 transition-transform">
                     arrow_forward
                   </span>
-                </a>
+                </button>
               </div>
             </div>
             <div className="glass-panel p-8 rounded-[24px] hover:bg-section-dark transition-all duration-300 group border-t border-white/10 flex flex-col h-full">
@@ -165,15 +164,15 @@ export default function ServicesPage() {
                 eradicate the adversary, and restore normal operations swiftly.
               </p>
               <div className="pt-4 mt-auto border-t border-white/5">
-                <a
-                  className="inline-flex items-center text-white text-xs font-mono font-bold uppercase tracking-wider hover:text-gray-300 transition-colors"
-                  href="#"
+                <button
+                  onClick={() => setSelectedService(services[2])}
+                  className="inline-flex items-center text-white text-xs font-mono font-bold uppercase tracking-wider hover:text-gray-300 transition-colors cursor-pointer"
                 >
                   Learn more{' '}
                   <span className="material-symbols-outlined text-sm ml-2 group-hover:translate-x-1 transition-transform">
                     arrow_forward
                   </span>
-                </a>
+                </button>
               </div>
             </div>
             <div className="glass-panel p-8 rounded-[24px] hover:bg-section-dark transition-all duration-300 group border-t border-white/10 flex flex-col h-full">
@@ -186,15 +185,15 @@ export default function ServicesPage() {
                 Comprehensive reporting for web, mobile, and network.
               </p>
               <div className="pt-4 mt-auto border-t border-white/5">
-                <a
-                  className="inline-flex items-center text-white text-xs font-mono font-bold uppercase tracking-wider hover:text-gray-300 transition-colors"
-                  href="#"
+                <button
+                  onClick={() => setSelectedService(services[3])}
+                  className="inline-flex items-center text-white text-xs font-mono font-bold uppercase tracking-wider hover:text-gray-300 transition-colors cursor-pointer"
                 >
                   Learn more{' '}
                   <span className="material-symbols-outlined text-sm ml-2 group-hover:translate-x-1 transition-transform">
                     arrow_forward
                   </span>
-                </a>
+                </button>
               </div>
             </div>
             <div className="glass-panel p-8 rounded-[24px] hover:bg-section-dark transition-all duration-300 group border-t border-white/10 flex flex-col h-full">
@@ -207,15 +206,15 @@ export default function ServicesPage() {
                 scale with your business while minimizing attack surface.
               </p>
               <div className="pt-4 mt-auto border-t border-white/5">
-                <a
-                  className="inline-flex items-center text-white text-xs font-mono font-bold uppercase tracking-wider hover:text-gray-300 transition-colors"
-                  href="#"
+                <button
+                  onClick={() => setSelectedService(services[4])}
+                  className="inline-flex items-center text-white text-xs font-mono font-bold uppercase tracking-wider hover:text-gray-300 transition-colors cursor-pointer"
                 >
                   Learn more{' '}
                   <span className="material-symbols-outlined text-sm ml-2 group-hover:translate-x-1 transition-transform">
                     arrow_forward
                   </span>
-                </a>
+                </button>
               </div>
             </div>
             <div className="glass-panel p-8 rounded-[24px] hover:bg-section-dark transition-all duration-300 group border-t border-white/10 flex flex-col h-full">
@@ -228,15 +227,15 @@ export default function ServicesPage() {
                 and board reporting without the full-time cost.
               </p>
               <div className="pt-4 mt-auto border-t border-white/5">
-                <a
-                  className="inline-flex items-center text-white text-xs font-mono font-bold uppercase tracking-wider hover:text-gray-300 transition-colors"
-                  href="#"
+                <button
+                  onClick={() => setSelectedService(services[5])}
+                  className="inline-flex items-center text-white text-xs font-mono font-bold uppercase tracking-wider hover:text-gray-300 transition-colors cursor-pointer"
                 >
                   Learn more{' '}
                   <span className="material-symbols-outlined text-sm ml-2 group-hover:translate-x-1 transition-transform">
                     arrow_forward
                   </span>
-                </a>
+                </button>
               </div>
             </div>
           </div>
@@ -461,6 +460,12 @@ export default function ServicesPage() {
           </div>
         </div>
       </footer>
+
+      <ServiceModal
+        service={selectedService}
+        isOpen={!!selectedService}
+        onClose={() => setSelectedService(null)}
+      />
     </>
   );
 }

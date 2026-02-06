@@ -13,8 +13,8 @@ export function MarketingHeader() {
         <Link href="/" className="text-sm font-medium hover:underline">
           Features
         </Link>
-        <Link href="/pricing" className="text-sm font-medium hover:underline">
-          Pricing
+        <Link href="/learn" className="text-sm font-medium hover:underline">
+          Learn
         </Link>
         <Link href="/about" className="text-sm font-medium hover:underline">
           About
