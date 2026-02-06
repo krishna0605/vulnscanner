@@ -400,10 +400,10 @@ export default function LandingPage() {
                 Continuously scan your applications for known vulnerabilities with scheduled
                 automation.
               </p>
-              <div className="flex items-center text-white text-xs font-bold uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity">
+              <Link href="/services" className="flex items-center text-white text-xs font-bold uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity hover:text-gray-300">
                 Learn more{' '}
                 <span className="material-symbols-outlined text-sm ml-1">arrow_forward</span>
-              </div>
+              </Link>
             </div>
             {/* ... other service cards ... */}
             <div className="glass-panel p-8 rounded-[24px] hover:bg-section-dark transition-all duration-300 group border-t border-white/10">
@@ -414,10 +414,10 @@ export default function LandingPage() {
               <p className="text-sm text-slate-400 leading-relaxed mb-4">
                 Get instant alerts on new threats and suspicious activities across your network.
               </p>
-              <div className="flex items-center text-white text-xs font-bold uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity">
+              <Link href="/services" className="flex items-center text-white text-xs font-bold uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity hover:text-gray-300">
                 Learn more{' '}
                 <span className="material-symbols-outlined text-sm ml-1">arrow_forward</span>
-              </div>
+              </Link>
             </div>
             <div className="glass-panel p-8 rounded-[24px] hover:bg-section-dark transition-all duration-300 group border-t border-white/10">
               <div className="w-12 h-12 rounded-lg bg-white/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
@@ -427,10 +427,10 @@ export default function LandingPage() {
               <p className="text-sm text-slate-400 leading-relaxed mb-4">
                 Receive insightful reports to understand your security posture and trends over time.
               </p>
-              <div className="flex items-center text-white text-xs font-bold uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity">
+              <Link href="/services" className="flex items-center text-white text-xs font-bold uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity hover:text-gray-300">
                 Learn more{' '}
                 <span className="material-symbols-outlined text-sm ml-1">arrow_forward</span>
-              </div>
+              </Link>
             </div>
             <div className="glass-panel p-8 rounded-[24px] hover:bg-section-dark transition-all duration-300 group border-t border-white/10">
               <div className="w-12 h-12 rounded-lg bg-white/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
@@ -440,10 +440,10 @@ export default function LandingPage() {
               <p className="text-sm text-slate-400 leading-relaxed mb-4">
                 Connect with your favorite developer tools and platforms seamlessly.
               </p>
-              <div className="flex items-center text-white text-xs font-bold uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity">
+              <Link href="/services" className="flex items-center text-white text-xs font-bold uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity hover:text-gray-300">
                 Learn more{' '}
                 <span className="material-symbols-outlined text-sm ml-1">arrow_forward</span>
-              </div>
+              </Link>
             </div>
             <div className="glass-panel p-8 rounded-[24px] hover:bg-section-dark transition-all duration-300 group border-t border-white/10">
               <div className="w-12 h-12 rounded-lg bg-white/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
@@ -453,10 +453,10 @@ export default function LandingPage() {
               <p className="text-sm text-slate-400 leading-relaxed mb-4">
                 Streamline adherence to industry standards like PCI-DSS and GDPR effortlessly.
               </p>
-              <div className="flex items-center text-white text-xs font-bold uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity">
+              <Link href="/services" className="flex items-center text-white text-xs font-bold uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity hover:text-gray-300">
                 Learn more{' '}
                 <span className="material-symbols-outlined text-sm ml-1">arrow_forward</span>
-              </div>
+              </Link>
             </div>
             <div className="glass-panel p-8 rounded-[24px] hover:bg-section-dark transition-all duration-300 group border-t border-white/10">
               <div className="w-12 h-12 rounded-lg bg-white/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
@@ -466,10 +466,10 @@ export default function LandingPage() {
               <p className="text-sm text-slate-400 leading-relaxed mb-4">
                 Step-by-step guidance to help your team fix vulnerabilities fast and correctly.
               </p>
-              <div className="flex items-center text-white text-xs font-bold uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity">
+              <Link href="/services" className="flex items-center text-white text-xs font-bold uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity hover:text-gray-300">
                 Learn more{' '}
                 <span className="material-symbols-outlined text-sm ml-1">arrow_forward</span>
-              </div>
+              </Link>
             </div>
           </div>
         </div>
