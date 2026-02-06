@@ -1,13 +1,31 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { TOTPInput } from '@/components/auth/totp-input';
 
 type VerifyMethod = 'totp' | 'backup' | 'email';
 
+// Loading fallback component
+function LoadingFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+    </div>
+  );
+}
+
+// Main component wrapped in Suspense boundary
 export default function Verify2FAPage() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <Verify2FAContent />
+    </Suspense>
+  );
+}
+
+function Verify2FAContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const mode = searchParams.get('mode'); // 'totp', 'email', or 'email_verify'
