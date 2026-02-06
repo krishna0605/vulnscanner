@@ -63,7 +63,7 @@ jobs:
         run: npm ci
       
       - name: Install coverage provider
-        run: npm install -D @vitest/coverage-v8
+        run: npm install -D @vitest/coverage-v8@1.6.0
       
       - name: Run tests with coverage
         run: npm run test:coverage
