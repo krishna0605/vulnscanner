@@ -4,11 +4,13 @@ import Link from 'next/link';
 import { useState } from 'react';
 import ConceptModal from '@/components/landing/ConceptModal';
 import ResourcesModal from '@/components/landing/ResourcesModal';
+import VideoModal from '@/components/landing/VideoModal';
 import { concepts, resources, Concept } from '@/data/securityConcepts';
 
 export default function LandingPage() {
   const [selectedConcept, setSelectedConcept] = useState<Concept | null>(null);
   const [isResourcesOpen, setIsResourcesOpen] = useState(false);
+  const [isVideoOpen, setIsVideoOpen] = useState(false);
 
   return (
     <>
@@ -321,7 +323,10 @@ export default function LandingPage() {
                 See how modern vulnerabilities exploit system weaknesses. Our educational
                 visualization engine breaks down complex attacks into understandable flows.
               </p>
-              <div className="relative w-full aspect-video rounded-3xl overflow-hidden glass-panel border-white/10 group cursor-pointer shadow-2xl">
+              <div 
+                className="relative w-full aspect-video rounded-3xl overflow-hidden glass-panel border-white/10 group cursor-pointer shadow-2xl"
+                onClick={() => setIsVideoOpen(true)}
+              >
                 <img
                   alt="Cybersecurity Visualization"
                   className="w-full h-full object-cover opacity-60 grayscale group-hover:opacity-40 transition-opacity duration-500 scale-105 group-hover:scale-100"
@@ -720,6 +725,12 @@ export default function LandingPage() {
         resources={resources}
         isOpen={isResourcesOpen}
         onClose={() => setIsResourcesOpen(false)}
+      />
+
+      <VideoModal
+        videoId="X-O1-l0gP5Q"
+        isOpen={isVideoOpen}
+        onClose={() => setIsVideoOpen(false)}
       />
     </>
   );
