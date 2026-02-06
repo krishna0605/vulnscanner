@@ -15,5 +15,25 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, './src'),
     },
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html'],
+      reportsDirectory: './coverage',
+      exclude: [
+        'node_modules/',
+        'src/tests/',
+        '**/*.d.ts',
+        '**/*.config.*',
+        '**/types/**',
+      ],
+      thresholds: {
+        global: {
+          branches: 60,
+          functions: 60,
+          lines: 60,
+          statements: 60,
+        },
+      },
+    },
   },
 })
