@@ -1,8 +1,15 @@
 'use client';
 
 import Link from 'next/link';
+import { useState } from 'react';
+import ConceptModal from '@/components/landing/ConceptModal';
+import ResourcesModal from '@/components/landing/ResourcesModal';
+import { concepts, resources, Concept } from '@/data/securityConcepts';
 
 export default function LandingPage() {
+  const [selectedConcept, setSelectedConcept] = useState<Concept | null>(null);
+  const [isResourcesOpen, setIsResourcesOpen] = useState(false);
+
   return (
     <>
       {/* Background Elements */}
@@ -344,21 +351,35 @@ export default function LandingPage() {
                   <span className="material-symbols-outlined text-slate-500">school</span>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <span className="px-3 py-1 rounded-full bg-interactive-dark border border-white/10 text-xs font-mono text-white">
+                  <button 
+                    onClick={() => setSelectedConcept(concepts.CIA_TRIAD)}
+                    className="px-3 py-1 rounded-full bg-interactive-dark border border-white/10 text-xs font-mono text-white hover:bg-white/10 hover:border-white/30 transition-all cursor-pointer"
+                  >
                     CIA_TRIAD
-                  </span>
-                  <span className="px-3 py-1 rounded-full bg-interactive-dark border border-white/10 text-xs font-mono text-white">
+                  </button>
+                  <button 
+                    onClick={() => setSelectedConcept(concepts.MFA)}
+                    className="px-3 py-1 rounded-full bg-interactive-dark border border-white/10 text-xs font-mono text-white hover:bg-white/10 hover:border-white/30 transition-all cursor-pointer"
+                  >
                     MFA
-                  </span>
-                  <span className="px-3 py-1 rounded-full bg-interactive-dark border border-white/10 text-xs font-mono text-white">
+                  </button>
+                  <button 
+                    onClick={() => setSelectedConcept(concepts.ENCRYPTION)}
+                    className="px-3 py-1 rounded-full bg-interactive-dark border border-white/10 text-xs font-mono text-white hover:bg-white/10 hover:border-white/30 transition-all cursor-pointer"
+                  >
                     ENCRYPTION
-                  </span>
+                  </button>
                 </div>
               </div>
               <div className="glass-panel p-8 rounded-[24px] hover:border-white/30 transition-colors duration-300">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-xl font-bold text-white">Resources</h3>
-                  <span className="material-symbols-outlined text-slate-500">library_books</span>
+                  <button 
+                    onClick={() => setIsResourcesOpen(true)}
+                    className="material-symbols-outlined text-slate-500 hover:text-white transition-colors cursor-pointer"
+                  >
+                    library_books
+                  </button>
                 </div>
                 <p className="text-sm text-slate-400 mb-4 font-mono">
                   ACCESS_LEVEL: PUBLIC <br />
@@ -369,12 +390,12 @@ export default function LandingPage() {
                 </div>
               </div>
               <div className="flex gap-4 pt-4">
-                <button className="flex-1 py-4 px-6 rounded-2xl bg-interactive-dark border border-white/10 text-slate-300 font-medium hover:bg-white/10 hover:text-white transition-all text-sm font-mono tracking-wide">
+                <Link href="/learn#basics" className="flex-1 py-4 px-6 rounded-2xl bg-interactive-dark border border-white/10 text-slate-300 font-medium hover:bg-white/10 hover:text-white transition-all text-sm font-mono tracking-wide text-center">
                   EXPLORE_BASICS
-                </button>
-                <button className="flex-1 py-4 px-6 rounded-2xl bg-interactive-dark border border-white/10 text-slate-300 font-medium hover:bg-white/10 hover:text-white transition-all text-sm font-mono tracking-wide">
+                </Link>
+                <Link href="/learn#advanced" className="flex-1 py-4 px-6 rounded-2xl bg-interactive-dark border border-white/10 text-slate-300 font-medium hover:bg-white/10 hover:text-white transition-all text-sm font-mono tracking-wide text-center">
                   DEEP_DIVE_&gt;
-                </button>
+                </Link>
               </div>
             </div>
           </div>
@@ -689,6 +710,17 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+      <ConceptModal 
+        concept={selectedConcept}
+        isOpen={!!selectedConcept}
+        onClose={() => setSelectedConcept(null)}
+      />
+      
+      <ResourcesModal
+        resources={resources}
+        isOpen={isResourcesOpen}
+        onClose={() => setIsResourcesOpen(false)}
+      />
     </>
   );
 }
