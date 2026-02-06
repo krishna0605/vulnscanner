@@ -1,39 +1,8 @@
 import { NextResponse } from 'next/server';
-import { createServerClient, type CookieOptions } from '@supabase/ssr';
+import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3001';
-
-// Create a Supabase client that works within route handlers
-function createRouteHandlerClient() {
-  const cookieStore = cookies();
-  
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value;
-        },
-        set(name: string, value: string, options: CookieOptions) {
-          try {
-            cookieStore.set({ name, value, ...options });
-          } catch {
-            // Ignore - can't set cookies in some contexts
-          }
-        },
-        remove(name: string, options: CookieOptions) {
-          try {
-            cookieStore.delete(name);
-          } catch {
-            // Ignore - can't delete cookies in some contexts
-          }
-        },
-      },
-    }
-  );
-}
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -59,7 +28,34 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${origin}/login?error=no_code`);
   }
 
-  const supabase = createRouteHandlerClient();
+  const cookieStore = cookies();
+  
+  // Log all cookies to debug PKCE issue
+  const allCookies = cookieStore.getAll();
+  console.log('[Callback] Available cookies:', allCookies.map(c => c.name));
+  
+  // Create Supabase client using the newer getAll/setAll pattern
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll();
+        },
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              cookieStore.set(name, value, options);
+            });
+          } catch {
+            // The `setAll` method was called from a Server Component.
+            // This can be ignored if you have middleware refreshing user sessions.
+          }
+        },
+      },
+    }
+  );
     
   try {
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
