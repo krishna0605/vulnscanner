@@ -5,6 +5,7 @@ import helmet from '@fastify/helmet';
 import { projectRoutes } from './routes/projects';
 import { scanRoutes } from './routes/scans';
 import { profileRoutes } from './routes/profiles';
+import { mfaRoutes } from './routes/mfa';
 import { registerAuthPlugin } from './middleware/auth';
 import { AppError } from './lib/errors';
 import { z } from 'zod';
@@ -274,6 +275,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   fastify.register(projectRoutes);
   fastify.register(scanRoutes);
   fastify.register(profileRoutes);
+  fastify.register(mfaRoutes);
 
   // Health check endpoints (public, no auth required)
   fastify.get('/', async function handler(request, reply) {

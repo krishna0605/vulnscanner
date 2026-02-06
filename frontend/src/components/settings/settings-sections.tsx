@@ -409,6 +409,38 @@ export function ProfileSection() {
 }
 
 export function SecuritySection() {
+  const [mfaStatus, setMfaStatus] = React.useState<{
+    enabled: boolean;
+    type: string | null;
+    setupAt: string | null;
+  } | null>(null);
+  const [loading, setLoading] = React.useState(true);
+  const [disabling, setDisabling] = React.useState(false);
+
+  // Fetch MFA status on mount
+  React.useEffect(() => {
+    async function fetchMfaStatus() {
+      try {
+        const response = await fetch('/api/mfa/setup', {
+          method: 'GET',
+        });
+        const data = await response.json();
+        if (data.data) {
+          setMfaStatus({
+            enabled: data.data.mfaEnabled,
+            type: data.data.mfaType,
+            setupAt: data.data.setupAt,
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching MFA status:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchMfaStatus();
+  }, []);
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
       <div>
@@ -418,25 +450,83 @@ export function SecuritySection() {
         </p>
       </div>
 
-      <div className="bg-gradient-to-br from-emerald-500/5 to-transparent p-6 rounded-xl border border-emerald-500/10 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div className="p-3 bg-emerald-500/10 rounded-lg text-emerald-400">
-            <Shield className="h-6 w-6" />
+      {loading ? (
+        <div className="flex items-center justify-center h-24">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-500"></div>
+        </div>
+      ) : mfaStatus?.enabled ? (
+        /* MFA Enabled State */
+        <div className="bg-gradient-to-br from-emerald-500/5 to-transparent p-6 rounded-xl border border-emerald-500/10">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-emerald-500/10 rounded-lg text-emerald-400">
+                <Shield className="h-6 w-6" />
+              </div>
+              <div>
+                <h4 className="text-white font-bold">Two-Factor Authentication</h4>
+                <p className="text-xs text-emerald-400/80 mt-1 flex items-center gap-1">
+                  <span className="inline-block w-2 h-2 bg-emerald-400 rounded-full"></span>
+                  Enabled via {mfaStatus.type === 'totp' ? 'Authenticator App' : 'Email'}
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                className="border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-300"
+                asChild
+              >
+                <a href="/settings/setup-2fa">Manage</a>
+              </Button>
+            </div>
           </div>
-          <div>
-            <h4 className="text-white font-bold">Two-Factor Authentication</h4>
-            <p className="text-xs text-emerald-400/80 mt-1">
-              Currently Active via Authenticator App
-            </p>
+          
+          {/* MFA Details */}
+          <div className="mt-4 pt-4 border-t border-white/5 grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-xs text-slate-500 uppercase tracking-wide">Method</p>
+              <p className="text-sm text-white font-medium mt-1">
+                {mfaStatus.type === 'totp' ? 'Google Authenticator / TOTP' : 'Email OTP'}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-slate-500 uppercase tracking-wide">Enabled On</p>
+              <p className="text-sm text-white font-medium mt-1">
+                {mfaStatus.setupAt 
+                  ? new Date(mfaStatus.setupAt).toLocaleDateString('en-US', { 
+                      year: 'numeric', 
+                      month: 'short', 
+                      day: 'numeric' 
+                    })
+                  : 'Unknown'}
+              </p>
+            </div>
           </div>
         </div>
-        <Button
-          variant="outline"
-          className="border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-300"
-        >
-          Configure
-        </Button>
-      </div>
+      ) : (
+        /* MFA Not Enabled State */
+        <div className="bg-gradient-to-br from-amber-500/5 to-transparent p-6 rounded-xl border border-amber-500/10 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-amber-500/10 rounded-lg text-amber-400">
+              <Shield className="h-6 w-6" />
+            </div>
+            <div>
+              <h4 className="text-white font-bold">Two-Factor Authentication</h4>
+              <p className="text-xs text-amber-400/80 mt-1 flex items-center gap-1">
+                <span className="inline-block w-2 h-2 bg-amber-400 rounded-full"></span>
+                Not configured - Add extra security to your account
+              </p>
+            </div>
+          </div>
+          <Button
+            variant="outline"
+            className="border-amber-500/20 text-amber-400 hover:bg-amber-500/10 hover:text-amber-300"
+            asChild
+          >
+            <a href="/settings/setup-2fa">Enable 2FA</a>
+          </Button>
+        </div>
+      )}
 
       <div className="space-y-6">
         <h3 className="text-sm font-bold text-slate-300 uppercase tracking-widest mt-8 mb-4">

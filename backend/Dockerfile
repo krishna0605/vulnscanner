@@ -1,4 +1,9 @@
-# =============================================================================
+ git log -1                                                                                                                  
+commit 48b787e45ca575e7ac827f6f8a203fc8847f7338 (HEAD -> master, origin/master)                                               
+Author: krishna kapoor <creativesimulation1@gmail.com>                                                                        
+Date:   Sat Jan 31 12:42:52 2026 +0530
+
+    railway switch to docker update# =============================================================================
 # VulnScanner Backend Dockerfile
 # Multi-stage build with Playwright/Chromium support
 # =============================================================================
