@@ -35,23 +35,20 @@ WORKDIR /app
 # Install curl for healthcheck and dumb-init for signal handling
 RUN apt-get update && apt-get install -y dumb-init curl && rm -rf /var/lib/apt/lists/*
 
-# Create non-root user for security
-RUN groupadd --system --gid 1001 nodejs \
-    && useradd --system --uid 1001 --gid nodejs fastify
-
+# Use the existing pwuser from Playwright image (UID 1000)
 # Set working directory ownership
-RUN chown -R fastify:nodejs /app
+RUN chown -R pwuser:pwuser /app
 
 # Copy built assets from builder
-COPY --from=builder --chown=fastify:nodejs /app/dist ./dist
-COPY --from=builder --chown=fastify:nodejs /app/node_modules ./node_modules
-COPY --from=builder --chown=fastify:nodejs /app/package*.json ./
+COPY --from=builder --chown=pwuser:pwuser /app/dist ./dist
+COPY --from=builder --chown=pwuser:pwuser /app/node_modules ./node_modules
+COPY --from=builder --chown=pwuser:pwuser /app/package*.json ./
 
 # Copy Playwright browsers from the base image (already installed)
 # The mcr.microsoft.com/playwright image comes with browsers pre-installed
 
-# Switch to non-root user
-USER fastify
+# Switch to non-root user (pwuser is the default user in Playwright image)
+USER pwuser
 
 # Set Playwright to use the pre-installed browsers
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
