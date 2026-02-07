@@ -32,14 +32,23 @@ export function ActiveScans() {
           event: 'UPDATE',
           schema: 'public',
           table: 'scans',
-          filter: 'status=in.(pending,processing,scanning,paused,queued)',
         },
         (payload) => {
-          // Optimistic update for progress/status
+          const newData = payload.new as any;
+          const newStatus = newData.status?.toLowerCase();
+          
+          // If scan is now completed/failed/cancelled, remove it from active list
+          if (['completed', 'failed', 'cancelled'].includes(newStatus)) {
+            setActiveScans((current) => 
+              current.filter((scan) => scan.id !== payload.new.id)
+            );
+            return;
+          }
+          
+          // Otherwise update progress/status for active scans
           setActiveScans((current) =>
             current.map((scan) => {
               if (scan.id === payload.new.id) {
-                const newData = payload.new as any;
                 return {
                   ...scan,
                   // Update fields with fallback logic matching getActiveScans
