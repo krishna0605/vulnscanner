@@ -274,13 +274,50 @@ export class CrawlerService {
           break; // Done
         }
 
-        // --- STOP SCAN CHECK ---
-        // Check if user cancelled the scan
+        // --- PAUSE / STOP SCAN CHECK ---
+        // Check if user paused or cancelled the scan
         const { data: currentScan } = await supabase
           .from('scans')
           .select('status')
           .eq('id', this.scanId)
           .single();
+
+        // Handle paused state - wait until resumed or cancelled
+        if (currentScan?.status === 'paused') {
+          await this.log('⏸️ Scan paused by user. Waiting for resume...', 'info');
+          
+          // Enter pause loop
+          while (true) {
+            await new Promise(r => setTimeout(r, 2000)); // Check every 2 seconds
+            
+            const { data: pauseCheck } = await supabase
+              .from('scans')
+              .select('status')
+              .eq('id', this.scanId)
+              .single();
+            
+            if (pauseCheck?.status === 'scanning') {
+              await this.log('▶️ Scan resumed by user!', 'success');
+              break;
+            }
+            
+            if (pauseCheck?.status === 'cancelled' || pauseCheck?.status === 'failed') {
+              await this.log('🛑 Scan stopped while paused.', 'warn');
+              break;
+            }
+          }
+          
+          // Re-check status after exiting pause loop
+          const { data: afterPause } = await supabase
+            .from('scans')
+            .select('status')
+            .eq('id', this.scanId)
+            .single();
+          
+          if (afterPause?.status === 'cancelled' || afterPause?.status === 'failed') {
+            break; // Exit main loop
+          }
+        }
 
         if (currentScan && (currentScan.status === 'failed' || currentScan.status === 'cancelled')) {
              await this.log('🛑 Scan stopped by user command.', 'warn');

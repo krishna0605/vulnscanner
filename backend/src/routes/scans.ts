@@ -177,4 +177,161 @@ export async function scanRoutes(fastify: FastifyInstance) {
       return success(data);
     }
   );
+
+  // Pause an active scan
+  fastify.patch(
+    '/scans/:id/pause',
+    {
+      schema: {
+        description: 'Pause an active scan',
+        tags: ['Scans'],
+        summary: 'Pause scan',
+        params: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', format: 'uuid', description: 'Scan ID' },
+          },
+        },
+        response: {
+          200: {
+            description: 'Scan paused',
+            type: 'object',
+            properties: {
+              success: { type: 'boolean', const: true },
+              data: {
+                type: 'object',
+                properties: {
+                  status: { type: 'string' },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const { id } = validateParams(idParamSchema, request.params);
+
+      const { error } = await supabase
+        .from('scans')
+        .update({
+          status: 'paused',
+          current_action: 'Paused by user',
+        })
+        .eq('id', id)
+        .in('status', ['scanning', 'queued', 'processing']);
+
+      if (error) {
+        throw new DatabaseError(error.message);
+      }
+
+      request.log.info({ scanId: id }, '[API] Scan paused');
+      return success({ status: 'paused' });
+    }
+  );
+
+  // Resume a paused scan
+  fastify.patch(
+    '/scans/:id/resume',
+    {
+      schema: {
+        description: 'Resume a paused scan',
+        tags: ['Scans'],
+        summary: 'Resume scan',
+        params: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', format: 'uuid', description: 'Scan ID' },
+          },
+        },
+        response: {
+          200: {
+            description: 'Scan resumed',
+            type: 'object',
+            properties: {
+              success: { type: 'boolean', const: true },
+              data: {
+                type: 'object',
+                properties: {
+                  status: { type: 'string' },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const { id } = validateParams(idParamSchema, request.params);
+
+      const { error } = await supabase
+        .from('scans')
+        .update({
+          status: 'scanning',
+          current_action: 'Resuming...',
+        })
+        .eq('id', id)
+        .eq('status', 'paused');
+
+      if (error) {
+        throw new DatabaseError(error.message);
+      }
+
+      request.log.info({ scanId: id }, '[API] Scan resumed');
+      return success({ status: 'scanning' });
+    }
+  );
+
+  // Cancel/stop a scan
+  fastify.patch(
+    '/scans/:id/cancel',
+    {
+      schema: {
+        description: 'Cancel/stop a scan',
+        tags: ['Scans'],
+        summary: 'Cancel scan',
+        params: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', format: 'uuid', description: 'Scan ID' },
+          },
+        },
+        response: {
+          200: {
+            description: 'Scan cancelled',
+            type: 'object',
+            properties: {
+              success: { type: 'boolean', const: true },
+              data: {
+                type: 'object',
+                properties: {
+                  status: { type: 'string' },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const { id } = validateParams(idParamSchema, request.params);
+
+      const { error } = await supabase
+        .from('scans')
+        .update({
+          status: 'cancelled',
+          current_action: 'Cancelled by user',
+          completed_at: new Date().toISOString(),
+        })
+        .eq('id', id)
+        .in('status', ['scanning', 'queued', 'processing', 'paused']);
+
+      if (error) {
+        throw new DatabaseError(error.message);
+      }
+
+      request.log.info({ scanId: id }, '[API] Scan cancelled');
+      return success({ status: 'cancelled' });
+    }
+  );
 }

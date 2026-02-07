@@ -34,7 +34,7 @@ export async function getActiveScans(): Promise<ActiveScanItem[]> {
   const { data: scans, error } = await supabase
     .from('scans')
     .select('*')
-    .in('status', ['queued', 'scanning', 'processing']) // Added processing
+    .in('status', ['queued', 'scanning', 'processing', 'paused']) // Include paused scans
     .order('created_at', { ascending: false });
 
   if (error || !scans) return [];
@@ -196,4 +196,32 @@ export async function getScanStats() {
     avgDuration,
     successRate: `${successRate}%`,
   };
+}
+
+// -- Scan Control API --
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+
+export async function pauseScan(scanId: string): Promise<{ success: boolean }> {
+  const response = await fetch(`${API_URL}/scans/${scanId}/pause`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+  });
+  return response.json();
+}
+
+export async function resumeScan(scanId: string): Promise<{ success: boolean }> {
+  const response = await fetch(`${API_URL}/scans/${scanId}/resume`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+  });
+  return response.json();
+}
+
+export async function cancelScan(scanId: string): Promise<{ success: boolean }> {
+  const response = await fetch(`${API_URL}/scans/${scanId}/cancel`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+  });
+  return response.json();
 }

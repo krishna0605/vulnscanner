@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { RefreshCw, Pause, Square, Cloud, Database, Globe, Loader2 } from 'lucide-react';
-import { getActiveScans, ActiveScanItem } from '@/lib/api-client';
+import { RefreshCw, Pause, Play, Square, Cloud, Database, Globe, Loader2 } from 'lucide-react';
+import { getActiveScans, ActiveScanItem, pauseScan, resumeScan, cancelScan } from '@/lib/api-client';
 import Link from 'next/link';
 import { createClient } from '@/utils/supabase/client';
 
@@ -32,7 +32,7 @@ export function ActiveScans() {
           event: 'UPDATE',
           schema: 'public',
           table: 'scans',
-          filter: 'status=in.(pending,processing,scanning)',
+          filter: 'status=in.(pending,processing,scanning,paused,queued)',
         },
         (payload) => {
           // Optimistic update for progress/status
@@ -196,12 +196,36 @@ export function ActiveScans() {
                   <td className="px-6 py-5 text-right">
                     <div className="flex items-center justify-end space-x-2">
                       <button
-                        className="p-2 text-slate-400 hover:text-yellow-400 hover:bg-yellow-400/10 rounded-lg transition-colors"
-                        title="Pause Scan"
+                        onClick={async () => {
+                          // Toggle pause/resume based on current status
+                          const isPaused = scan.status === 'PAUSED' || scan.status === 'Paused by user';
+                          if (isPaused) {
+                            await resumeScan(scan.id);
+                          } else {
+                            await pauseScan(scan.id);
+                          }
+                          fetchScans(); // Refresh to show updated status
+                        }}
+                        className={`p-2 rounded-lg transition-colors ${
+                          scan.status === 'PAUSED' || scan.status === 'Paused by user'
+                            ? 'text-green-400 hover:text-green-300 hover:bg-green-400/10'
+                            : 'text-slate-400 hover:text-yellow-400 hover:bg-yellow-400/10'
+                        }`}
+                        title={scan.status === 'PAUSED' || scan.status === 'Paused by user' ? 'Resume Scan' : 'Pause Scan'}
                       >
-                        <Pause className="h-4 w-4" />
+                        {scan.status === 'PAUSED' || scan.status === 'Paused by user' ? (
+                          <Play className="h-4 w-4" />
+                        ) : (
+                          <Pause className="h-4 w-4" />
+                        )}
                       </button>
                       <button
+                        onClick={async () => {
+                          if (confirm('Are you sure you want to stop this scan?')) {
+                            await cancelScan(scan.id);
+                            fetchScans(); // Refresh to remove from active list
+                          }
+                        }}
                         className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
                         title="Stop Scan"
                       >
