@@ -1,305 +1,198 @@
-# Live Scan Feature Implementation Plan
+# UI Improvements Implementation Plan
 
-## Overview
+This plan addresses three key UI issues: navbar profile display, white button styling, and a comprehensive visual audit.
 
-The Live Scan feature enables users to monitor active vulnerability scans in real-time, with the ability to control scans (pause/resume/stop) while scans continue running in the background even if users navigate away or close their browser tab.
+## User Review Required
+
+> [!IMPORTANT]
+> **Profile Picture Loading**: The navbar will now make an async Supabase call on mount. This adds a small loading state. Should we show a skeleton placeholder or use initials as fallback?
+
+> [!WARNING]  
+> **CSS Variable Changes**: The button fix modifies the global [button.tsx](file:///c:/Users/Admin/Desktop/vulscanner/frontend/src/components/ui/button.tsx) component. All outline buttons across the app will be affected. This is intentional to ensure consistency.
 
 ---
 
-## Current State Analysis
+## Issue Analysis
 
-### What Already Exists ✅
+### Issue 1: Hardcoded Profile in Navbar
+**Location**: [header.tsx](file:///c:/Users/Admin/Desktop/vulscanner/frontend/src/components/layout/header.tsx#L113-L119)
 
-| Component | Location | Status |
-|-----------|----------|--------|
-| **Real-time Subscriptions** | [active-scans.tsx](file:///c:/Users/Admin/Desktop/vulscanner/frontend/src/components/scans/active-scans.tsx) | ✅ Working - Uses Supabase Realtime |
-| **Progress Updates** | `crawler.ts:updateProgress()` | ✅ Working - Updates `progress` and `current_action` |
-| **Scan Columns** | Database | ✅ Has `progress`, `current_action`, `node`, `started_at` |
-| **Live Console** | `scans/[id]/page.tsx` | ✅ Shows real-time logs and findings |
-| **Stop Scan (Basic)** | Scan Detail Page | ⚠️ Partial - Only sets status to 'failed' |
+**Current State**:
+```tsx
+<div className="hidden md:block text-right">
+  <p className="text-xs font-medium text-white">Admin</p>
+  <p className="text-[10px] text-slate-400 font-mono">Free Plan</p>
+</div>
+<div className="h-9 w-9 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 border border-white/20 shadow-glow" />
+```
 
-### What Needs to Be Fixed/Added ❌
+**Problem**: Static "Admin" and "Free Plan" text with a gradient placeholder instead of actual user data from Supabase.
 
-| Issue | Impact |
-|-------|--------|
-| **Pause/Stop buttons non-functional** | Users cannot control scans from the Active Scans table |
-| **No pause state in crawler** | Crawler doesn't check for paused state |
-| **No 'paused' status** | Database only has queued/scanning/completed/failed |
-| **Limited action feedback** | Pause/Stop actions have no visual confirmation |
+---
+
+### Issue 2: White Outline Buttons
+**Location**: [button.tsx](file:///c:/Users/Admin/Desktop/vulscanner/frontend/src/components/ui/button.tsx#L13)
+
+**Current State**:
+```tsx
+outline: 'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
+```
+
+**Problem**: `bg-background` resolves to `hsl(var(--background))` which is defined as `0 0% 100%` (pure white) in the `:root` selector. The app uses custom `bg-background-dark` but the `.dark` class isn't applied.
+
+**Visual Evidence** (from screenshot):
+- Export buttons in Settings → Profile & Account appear pure white
+- "View Details" button in scan findings has white background
+
+---
+
+### Issue 3: Additional UI Inconsistencies (Audit Results)
+
+| Component | Issue | File |
+|-----------|-------|------|
+| Sign Out All button | Uses `border-white/10 text-white` with no bg override | settings-sections.tsx:322 |
+| View Details button | No explicit dark background | scans/[id]/page.tsx:402 |
+| Copy button (API section) | Same outline issue | settings-sections.tsx:658 |
+| Download Report button | Styled correctly with custom classes | scans/[id]/page.tsx:245 |
+
+---
+
+## Proposed Changes
+
+### Component: Header (Navbar Profile)
+
+#### [MODIFY] [header.tsx](file:///c:/Users/Admin/Desktop/vulscanner/frontend/src/components/layout/header.tsx)
+
+**Changes**:
+1. Import Supabase client and React hooks
+2. Add state for user profile (avatar_url, full_name, email)
+3. Fetch profile on mount using the same pattern as [ProfileSection](file:///c:/Users/Admin/Desktop/vulscanner/frontend/src/components/settings/settings-sections.tsx#23-410) in settings
+4. Display actual profile picture with fallback to initials
+5. Show display name (or email username) and plan type
+
+**Code Changes**:
+```diff
++ import { useState, useEffect, useMemo } from 'react';
+- 'use client';
+
+  export function Header() {
+    const pathname = usePathname();
++   const [profile, setProfile] = useState<{
++     avatarUrl: string | null;
++     displayName: string;
++     plan: string;
++   }>({ avatarUrl: null, displayName: 'User', plan: 'Free Plan' });
++   const [loading, setLoading] = useState(true);
++
++   const supabase = useMemo(() => {
++     const { createClient } = require('@/utils/supabase/client');
++     return createClient();
++   }, []);
++
++   useEffect(() => {
++     async function loadProfile() {
++       const { data: { user } } = await supabase.auth.getUser();
++       if (user) {
++         const { data: profileData } = await supabase
++           .from('profiles')
++           .select('full_name, avatar_url')
++           .eq('id', user.id)
++           .single();
++         setProfile({
++           avatarUrl: profileData?.avatar_url || null,
++           displayName: profileData?.full_name || user.email?.split('@')[0] || 'User',
++           plan: 'Free Plan', // TODO: Fetch from subscriptions table
++         });
++       }
++       setLoading(false);
++     }
++     loadProfile();
++   }, [supabase]);
+
+    // In the profile section (lines 113-119):
+-   <p className="text-xs font-medium text-white">Admin</p>
++   <p className="text-xs font-medium text-white">{profile.displayName}</p>
+-   <div className="h-9 w-9 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 ..." />
++   {profile.avatarUrl ? (
++     <img src={profile.avatarUrl} alt="Avatar" className="h-9 w-9 rounded-full object-cover ..." />
++   ) : (
++     <div className="h-9 w-9 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white text-sm font-bold">
++       {profile.displayName.charAt(0).toUpperCase()}
++     </div>
++   )}
+```
+
+---
+
+### Component: Button (Fix Outline Variant)
+
+#### [MODIFY] [button.tsx](file:///c:/Users/Admin/Desktop/vulscanner/frontend/src/components/ui/button.tsx)
+
+**Changes**:
+Update the `outline` variant to use a transparent/dark background that works with the dark theme.
+
+```diff
+  variant: {
+    default: 'bg-primary text-primary-foreground hover:bg-primary/90',
+    destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
+-   outline: 'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
++   outline: 'border border-white/10 bg-transparent hover:bg-white/5 text-white',
+    secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
+    ghost: 'hover:bg-accent hover:text-accent-foreground',
+    link: 'text-primary underline-offset-4 hover:underline',
+  },
+```
+
+**Rationale**: The app uses a custom dark theme without the `.dark` class. Using `bg-transparent` with `border-white/10` matches the existing design language used elsewhere (e.g., inputs, cards).
+
+---
+
+### Component: Settings Sections (Button Audit)
+
+#### [MODIFY] [settings-sections.tsx](file:///c:/Users/Admin/Desktop/vulscanner/frontend/src/components/settings/settings-sections.tsx)
+
+**No changes needed** after button.tsx fix - the inline overrides like `border-white/10 text-white hover:bg-white/5` will work correctly with the new transparent base.
+
+---
+
+### Component: Scan Details Page
+
+#### [MODIFY] [scans/[id]/page.tsx](file:///c:/Users/Admin/Desktop/vulscanner/frontend/src/app/(dashboard)/scans/[id]/page.tsx)
+
+**Line 402 - View Details button**:
+Already has `border-white/10 hover:bg-white/5` which will work with the transparent base.
 
 ---
 
 ## Architecture Diagram
 
 ```mermaid
-flowchart TB
-    subgraph Frontend["Frontend (Next.js)"]
-        AS["Active Scans Table<br/>active-scans.tsx"]
-        SD["Scan Details Page<br/>scans/[id]/page.tsx"]
-        API["API Client<br/>api-client.ts"]
+flowchart TD
+    subgraph Navbar["Header Component"]
+        A[Mount] --> B[Fetch User via Supabase Auth]
+        B --> C[Fetch Profile from profiles table]
+        C --> D{Profile Data?}
+        D -->|Yes| E[Display Avatar + Name]
+        D -->|No| F[Display Initial + Email Username]
     end
 
-    subgraph Supabase["Supabase"]
-        RT["Realtime<br/>postgres_changes"]
-        DB[("Database<br/>scans table")]
+    subgraph ButtonFix["Button Styling Fix"]
+        G["outline variant"] --> H["bg-transparent<br/>border-white/10<br/>hover:bg-white/5"]
     end
 
-    subgraph Backend["Backend (Fastify)"]
-        SR["Scan Routes<br/>scans.ts"]
-        CS["Crawler Service<br/>crawler.ts"]
+    subgraph AffectedComponents["Components Using outline Buttons"]
+        I[Settings - Export]
+        J[Settings - Sign Out All]
+        K[Settings - API Copy]
+        L[Scan Details - View Details]
+        M[Scan Details - Download Report]
     end
 
-    AS -->|"Subscribe"| RT
-    SD -->|"Subscribe"| RT
-    RT -->|"Live Updates"| AS
-    RT -->|"Live Updates"| SD
-    
-    AS -->|"Pause/Resume/Stop"| SR
-    SD -->|"Stop Scan"| DB
-    
-    SR -->|"Update Status"| DB
-    CS -->|"Check Status Loop"| DB
-    CS -->|"updateProgress()"| DB
-    DB -->|"Trigger"| RT
-
-    style RT fill:#3b82f6,color:white
-    style CS fill:#10b981,color:white
-    style DB fill:#f59e0b,color:white
+    H --> I
+    H --> J
+    H --> K
+    H --> L
 ```
-
----
-
-## Data Flow: Live Scan Updates
-
-```mermaid
-sequenceDiagram
-    participant U as User Browser
-    participant FE as Frontend
-    participant SB as Supabase Realtime
-    participant DB as Database
-    participant CS as Crawler Service
-
-    Note over U,CS: Scan Started
-    
-    CS->>DB: INSERT scan (status: 'queued')
-    DB->>SB: Trigger postgres_changes
-    SB->>FE: New scan event
-    FE->>U: Display in Active Scans
-    
-    loop Every Page Scanned
-        CS->>DB: UPDATE progress, current_action
-        DB->>SB: Trigger UPDATE event
-        SB->>FE: Push update
-        FE->>U: Animate progress bar
-    end
-    
-    Note over U,CS: User Clicks Pause
-    
-    U->>FE: Click Pause button
-    FE->>DB: UPDATE status = 'paused'
-    DB->>SB: Trigger UPDATE event
-    SB->>FE: Status changed
-    FE->>U: Show Paused state
-    
-    CS->>DB: Check status
-    Note over CS: Crawler enters wait loop
-    
-    Note over U,CS: User Clicks Resume
-    
-    U->>FE: Click Resume button
-    FE->>DB: UPDATE status = 'scanning'
-    DB->>SB: Trigger UPDATE event
-    SB->>FE: Status changed
-    FE->>U: Show Running state
-    
-    CS->>DB: Check status
-    Note over CS: Crawler resumes work
-```
-
----
-
-## Proposed Changes
-
-### Database
-
-#### [MODIFY] Scans Table Schema
-
-Add new status values and ensure realtime is enabled:
-
-```sql
--- Add 'paused' and 'cancelled' to valid scan statuses
--- Current: queued, scanning, processing, completed, failed
--- New: queued, scanning, processing, paused, completed, failed, cancelled
-```
-
----
-
-### Backend
-
-#### [MODIFY] [crawler.ts](file:///c:/Users/Admin/Desktop/vulscanner/backend/src/lib/crawler.ts)
-
-**Changes:**
-1. Add pause/resume loop in the main scan loop
-2. Check for 'paused' status and wait instead of continuing
-3. Add graceful cancellation handler
-
-```diff
-+ // Inside the main while loop (around line 277-290)
-+ const { data: currentScan } = await supabase
-+   .from('scans')
-+   .select('status')
-+   .eq('id', this.scanId)
-+   .single();
-+ 
-+ if (currentScan?.status === 'paused') {
-+   await this.log('⏸️ Scan paused by user. Waiting...', 'info');
-+   await this.updateProgress(this.lastProgress, 'Paused by user');
-+   // Wait and re-check every 2 seconds
-+   while (true) {
-+     await new Promise(r => setTimeout(r, 2000));
-+     const { data: check } = await supabase...
-+     if (check?.status !== 'paused') break;
-+   }
-+   await this.log('▶️ Scan resumed!', 'success');
-+ }
-+ 
-  if (currentScan?.status === 'cancelled') {
-    await this.log('🛑 Scan cancelled.', 'warn');
-    break;
-  }
-```
-
----
-
-#### [MODIFY] [scans.ts](file:///c:/Users/Admin/Desktop/vulscanner/backend/src/routes/scans.ts)
-
-**Changes:**
-1. Add `PATCH /scans/:id/pause` endpoint
-2. Add `PATCH /scans/:id/resume` endpoint  
-3. Add `PATCH /scans/:id/cancel` endpoint
-
-```typescript
-// New endpoints to add:
-
-// Pause scan
-fastify.patch('/scans/:id/pause', async (request, reply) => {
-  const { id } = request.params;
-  await supabase.from('scans')
-    .update({ status: 'paused', current_action: 'Paused' })
-    .eq('id', id);
-  return success({ status: 'paused' });
-});
-
-// Resume scan
-fastify.patch('/scans/:id/resume', async (request, reply) => {
-  const { id } = request.params;
-  await supabase.from('scans')
-    .update({ status: 'scanning', current_action: 'Resuming...' })
-    .eq('id', id);
-  return success({ status: 'scanning' });
-});
-
-// Cancel scan
-fastify.patch('/scans/:id/cancel', async (request, reply) => {
-  const { id } = request.params;
-  await supabase.from('scans')
-    .update({ status: 'cancelled', current_action: 'Cancelled by user' })
-    .eq('id', id);
-  return success({ status: 'cancelled' });
-});
-```
-
----
-
-### Frontend
-
-#### [MODIFY] [active-scans.tsx](file:///c:/Users/Admin/Desktop/vulscanner/frontend/src/components/scans/active-scans.tsx)
-
-**Changes:**
-1. Add functional Pause/Resume toggle button
-2. Add functional Stop button
-3. Add visual feedback for paused state
-4. Add toast notifications for actions
-
-```diff
-  // Line 197-210: Replace non-functional buttons with working ones
-  
-- <button className="..." title="Pause Scan">
--   <Pause />
-- </button>
-+ <button 
-+   onClick={() => handlePause(scan.id, scan.status)}
-+   className="..."
-+ >
-+   {scan.status === 'PAUSED' ? <Play /> : <Pause />}
-+ </button>
-
-- <button className="..." title="Stop Scan">
--   <Square />
-- </button>
-+ <button onClick={() => handleCancel(scan.id)}>
-+   <Square />
-+ </button>
-```
-
-**New handler functions:**
-```typescript
-const handlePause = async (scanId: string, currentStatus: string) => {
-  const endpoint = currentStatus === 'PAUSED' ? 'resume' : 'pause';
-  await fetch(`${API_URL}/scans/${scanId}/${endpoint}`, { method: 'PATCH' });
-};
-
-const handleCancel = async (scanId: string) => {
-  if (confirm('Are you sure?')) {
-    await fetch(`${API_URL}/scans/${scanId}/cancel`, { method: 'PATCH' });
-  }
-};
-```
-
----
-
-#### [MODIFY] [api-client.ts](file:///c:/Users/Admin/Desktop/vulscanner/frontend/src/lib/api-client.ts)
-
-**Changes:**
-1. Add scan control API functions
-2. Update [ActiveScanItem](file:///c:/Users/Admin/Desktop/vulscanner/frontend/src/lib/api-client.ts#6-17) interface to include 'paused' status
-
-```typescript
-// New exports:
-export async function pauseScan(scanId: string): Promise<void> { ... }
-export async function resumeScan(scanId: string): Promise<void> { ... }
-export async function cancelScan(scanId: string): Promise<void> { ... }
-```
-
----
-
-## UI State Diagram
-
-```mermaid
-stateDiagram-v2
-    [*] --> Queued: Scan Created
-    Queued --> Scanning: Worker picks up
-    Scanning --> Paused: User clicks Pause
-    Paused --> Scanning: User clicks Resume
-    Scanning --> Completed: All pages done
-    Scanning --> Cancelled: User clicks Stop
-    Paused --> Cancelled: User clicks Stop
-    Scanning --> Failed: Error occurs
-    
-    Completed --> [*]
-    Cancelled --> [*]
-    Failed --> [*]
-```
-
----
-
-## Visual States for Active Scans Table
-
-| Status | Progress Bar Color | Status Text | Action Buttons |
-|--------|-------------------|-------------|----------------|
-| `scanning` | Blue (animated pulse) | `SCANNING...` | ⏸️ Pause, ⏹️ Stop |
-| `paused` | Yellow (static) | `PAUSED` | ▶️ Resume, ⏹️ Stop |
-| `queued` | Gray | `QUEUED` | ⏹️ Stop only |
 
 ---
 
@@ -307,48 +200,62 @@ stateDiagram-v2
 
 ### Automated Tests
 
-**Backend Unit Tests** - Run with: `cd backend && npm test`
+**Existing Tests**: The project has Playwright tests in `tests/`:
+- [smoke.spec.ts](file:///c:/Users/Admin/Desktop/vulscanner/tests/smoke.spec.ts) - Basic page load
+- [e2e/auth.spec.ts](file:///c:/Users/Admin/Desktop/vulscanner/tests/e2e/auth.spec.ts) - Authentication flows
+- [e2e/projects.spec.ts](file:///c:/Users/Admin/Desktop/vulscanner/tests/e2e/projects.spec.ts) - Projects functionality
+- [e2e/scan-flow.spec.ts](file:///c:/Users/Admin/Desktop/vulscanner/tests/e2e/scan-flow.spec.ts) - Scan workflows
 
-The existing test file [scans.test.ts](file:///c:/Users/Admin/Desktop/vulscanner/backend/tests/scans.test.ts) can be extended with:
-- Test `PATCH /scans/:id/pause` returns 200 and updates status
-- Test `PATCH /scans/:id/resume` returns 200 and updates status
-- Test `PATCH /scans/:id/cancel` returns 200 and updates status
+**Run command**:
+```bash
+cd c:\Users\Admin\Desktop\vulscanner
+npx playwright test
+```
 
 ### Manual Verification
 
-1. **Start a new scan** from `/scans/new`
-2. Navigate to `/scans` page and observe the Active Scans table
-3. **Test Pause:**
-   - Click the Pause button on an active scan
-   - Verify progress bar turns yellow and shows "PAUSED"
-   - Verify the scan log shows "Scan paused by user"
-4. **Test Resume:**
-   - Click the Resume/Play button
-   - Verify progress continues and status shows "SCANNING"
-5. **Test Stop:**
-   - Click the Stop button
-   - Confirm the action in the dialog
-   - Verify the scan disappears from Active Scans and appears in History as "Cancelled"
-6. **Test Background Persistence:**
-   - Start a scan
-   - Navigate away from the Scans page (e.g., to Dashboard)
-   - Wait 30 seconds
-   - Return to Scans page
-   - Verify the scan has progressed and shows current status
+> [!NOTE]
+> Since the changes are visual, manual verification is recommended.
+
+**Steps**:
+
+1. **Start the dev server**:
+   ```bash
+   cd c:\Users\Admin\Desktop\vulscanner\frontend
+   npm run dev
+   ```
+
+2. **Verify Navbar Profile** (after logging in):
+   - Navigate to `/dashboard`
+   - Check the top-right navbar section
+   - ✅ Should display user's display name (or email username if no name set)
+   - ✅ Should display user's profile picture (or initial in gradient circle if no picture)
+   - ✅ Should display "Free Plan" text
+
+3. **Verify Button Styling - Settings Page**:
+   - Navigate to `/settings`
+   - Go to "Profile & Account" tab
+   - ✅ "Export" button should have dark/transparent background with white border
+   - Go to "Account Activity" section
+   - ✅ "Sign Out All" button should have dark/transparent background
+
+4. **Verify Button Styling - Scan Details**:
+   - Navigate to `/scans` and click on any completed scan
+   - Go to "Findings" tab
+   - ✅ "View Details" button should have dark/transparent background
+   - ✅ "Download Report" button should remain styled correctly
+
+5. **Verify No Regressions**:
+   - Check all pages for any buttons that now look incorrect
+   - Specifically check: New Scan form, Project creation, Report generation
 
 ---
 
 ## Summary of Files to Modify
 
-| File | Type | Changes |
-|------|------|---------|
-| [backend/src/lib/crawler.ts](file:///c:/Users/Admin/Desktop/vulscanner/backend/src/lib/crawler.ts) | Backend | Add pause/resume loop logic |
-| [backend/src/routes/scans.ts](file:///c:/Users/Admin/Desktop/vulscanner/backend/src/routes/scans.ts) | Backend | Add 3 new API endpoints |
-| [frontend/src/components/scans/active-scans.tsx](file:///c:/Users/Admin/Desktop/vulscanner/frontend/src/components/scans/active-scans.tsx) | Frontend | Wire up action buttons |
-| [frontend/src/lib/api-client.ts](file:///c:/Users/Admin/Desktop/vulscanner/frontend/src/lib/api-client.ts) | Frontend | Add scan control functions |
-| `backend/supabase/` | Migration | Optional: Add status constraint |
+| File | Change Type | Description |
+|------|-------------|-------------|
+| [header.tsx](file:///c:/Users/Admin/Desktop/vulscanner/frontend/src/components/layout/header.tsx) | Major | Add Supabase profile fetching, display real user data |
+| [button.tsx](file:///c:/Users/Admin/Desktop/vulscanner/frontend/src/components/ui/button.tsx) | Minor | Fix outline variant background |
 
----
-
-> [!IMPORTANT]
-> **Background Execution**: The crawler already runs in a "fire and forget" mode on the server. Scans will continue even if users close their browser. This is the existing architecture and requires no changes.
+**Total files affected**: 2 files
