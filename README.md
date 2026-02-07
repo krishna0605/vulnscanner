@@ -1009,11 +1009,11 @@ graph TB
     end
     
     subgraph "Route Handlers"
-        Scans[/scans]
-        Projects[/projects]
-        Profiles[/profiles]
-        MFA[/mfa]
-        Health[/health]
+        Scans["/scans"]
+        Projects["/projects"]
+        Profiles["/profiles"]
+        MFA["/mfa"]
+        Health["/health"]
     end
     
     subgraph "Validation"
