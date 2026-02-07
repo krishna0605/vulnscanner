@@ -85,7 +85,7 @@ export default function TermsPage() {
               <section>
                 <h2 className="text-2xl font-bold text-white mb-4">Limitation of Liability</h2>
                 <p>
-                  VulnScanner is provided "as is" without warranties of any kind. We shall not be liable for any direct, indirect, incidental, or consequential damages arising from your use of our services. You assume full responsibility for the use of our scanning tools.
+                  VulnScanner is provided &quot;as is&quot; without warranties of any kind. We shall not be liable for any direct, indirect, incidental, or consequential damages arising from your use of our services. You assume full responsibility for the use of our scanning tools.
                 </p>
               </section>
 
