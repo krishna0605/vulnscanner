@@ -159,7 +159,6 @@ export function Header() {
           <div className="flex items-center gap-3">
             <div className="hidden md:block text-right">
               <p className="text-xs font-medium text-white">{profile.displayName}</p>
-              <p className="text-[10px] text-slate-400 font-mono">{profile.plan}</p>
             </div>
             {profile.avatarUrl ? (
               <img

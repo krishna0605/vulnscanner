@@ -23,7 +23,6 @@ const TABS = [
   { id: 'security', label: 'Security & 2FA', icon: Shield },
   { id: 'notifications', label: 'Notifications', icon: Bell },
   { id: 'api', label: 'API & Integrations', icon: Key },
-  { id: 'billing', label: 'Plan & Billing', icon: CreditCard },
   { id: 'system', label: 'System Preferences', icon: Monitor },
 ];
 
@@ -84,7 +83,6 @@ export function SettingsShell() {
             {activeTab === 'security' && <SecuritySection />}
             {activeTab === 'notifications' && <NotificationsSection />}
             {activeTab === 'api' && <ApiSection />}
-            {activeTab === 'billing' && <BillingSection />}
             {activeTab === 'system' && <SystemSection />}
           </motion.div>
         </AnimatePresence>
@@ -93,139 +91,7 @@ export function SettingsShell() {
   );
 }
 
-function BillingSection() {
-  return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
-      <div>
-        <h2 className="text-2xl font-bold text-white mb-1">Plan & Billing</h2>
-        <p className="text-slate-400 text-sm">Manage your subscription and view usage analytics.</p>
-      </div>
 
-      {/* Current Plan Card */}
-      <div className="bg-gradient-to-br from-cyan-500/10 to-blue-600/10 p-6 rounded-xl border border-cyan-500/20 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/10 rounded-full blur-3xl" />
-        <div className="relative z-10">
-          <div className="flex justify-between items-start mb-4">
-            <div>
-              <span className="text-[10px] text-cyan-400 uppercase tracking-widest font-bold">
-                Current Plan
-              </span>
-              <h3 className="text-2xl font-bold text-white mt-1">Professional</h3>
-            </div>
-            <span className="px-3 py-1 bg-emerald-500/10 text-emerald-400 text-xs font-bold rounded-full border border-emerald-500/20">
-              Active
-            </span>
-          </div>
-          <p className="text-slate-400 text-sm mb-4">
-            Unlimited scans, 10 projects, priority support
-          </p>
-          <div className="flex gap-3">
-            <Button
-              variant="outline"
-              className="border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10"
-            >
-              Upgrade Plan
-            </Button>
-            <Button variant="ghost" className="text-slate-400 hover:text-white">
-              View All Plans
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* Usage Stats */}
-      <div>
-        <h3 className="text-sm font-bold text-slate-300 uppercase tracking-widest mb-4">
-          Usage This Month
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white/5 p-4 rounded-xl border border-white/5">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-slate-400 text-xs">Scans Used</span>
-              <span className="text-white font-mono text-sm">45 / ∞</span>
-            </div>
-            <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
-              <div className="h-full bg-cyan-500 rounded-full w-[45%]" />
-            </div>
-          </div>
-          <div className="bg-white/5 p-4 rounded-xl border border-white/5">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-slate-400 text-xs">Projects</span>
-              <span className="text-white font-mono text-sm">3 / 10</span>
-            </div>
-            <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
-              <div className="h-full bg-violet-500 rounded-full w-[30%]" />
-            </div>
-          </div>
-          <div className="bg-white/5 p-4 rounded-xl border border-white/5">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-slate-400 text-xs">API Calls</span>
-              <span className="text-white font-mono text-sm">1.2K / 10K</span>
-            </div>
-            <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
-              <div className="h-full bg-emerald-500 rounded-full w-[12%]" />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Payment Method */}
-      <div>
-        <h3 className="text-sm font-bold text-slate-300 uppercase tracking-widest mb-4">
-          Payment Method
-        </h3>
-        <div className="bg-white/5 p-4 rounded-xl border border-white/5 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="p-2 bg-white/10 rounded-lg">
-              <CreditCard className="h-5 w-5 text-slate-300" />
-            </div>
-            <div>
-              <p className="text-white font-medium">•••• •••• •••• 4242</p>
-              <p className="text-xs text-slate-500">Expires 12/26</p>
-            </div>
-          </div>
-          <Button variant="ghost" size="sm" className="text-slate-400 hover:text-white">
-            Update
-          </Button>
-        </div>
-      </div>
-
-      {/* Billing History */}
-      <div>
-        <h3 className="text-sm font-bold text-slate-300 uppercase tracking-widest mb-4">
-          Recent Invoices
-        </h3>
-        <div className="space-y-2">
-          {[
-            { date: 'Jan 1, 2026', amount: '$49.00', status: 'Paid' },
-            { date: 'Dec 1, 2025', amount: '$49.00', status: 'Paid' },
-            { date: 'Nov 1, 2025', amount: '$49.00', status: 'Paid' },
-          ].map((invoice, i) => (
-            <div
-              key={i}
-              className="flex items-center justify-between p-3 bg-white/[0.02] rounded-lg hover:bg-white/5 transition-colors"
-            >
-              <div className="flex items-center gap-4">
-                <span className="text-slate-400 text-sm font-mono">{invoice.date}</span>
-                <span className="text-white font-medium">{invoice.amount}</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="text-emerald-400 text-xs">{invoice.status}</span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-slate-500 hover:text-white text-xs"
-                >
-                  Download
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function SystemSection() {
   return (
