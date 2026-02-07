@@ -184,7 +184,12 @@ export class CrawlerService {
     let browser: Browser | null = null;
 
     try {
-      browser = await chromium.launch();
+      // Use system Chromium in production (Docker), download in development
+      const executablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH;
+      browser = await chromium.launch({
+        executablePath: executablePath || undefined,
+        args: executablePath ? ['--no-sandbox', '--disable-setuid-sandbox'] : [],
+      });
       const context = await browser.newContext({
         ignoreHTTPSErrors: true,
         userAgent: userAgent,
