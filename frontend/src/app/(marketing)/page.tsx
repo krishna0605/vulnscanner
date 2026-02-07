@@ -58,12 +58,7 @@ export default function LandingPage() {
                 >
                   Services
                 </Link>
-                <Link
-                  className="text-slate-300 hover:text-white hover:bg-white/5 px-4 py-2 rounded-full text-sm font-medium transition-all"
-                  href="/pricing"
-                >
-                  Pricing
-                </Link>
+
                 <Link
                   className="text-slate-300 hover:text-white hover:bg-white/5 px-4 py-2 rounded-full text-sm font-medium transition-all"
                   href="/learn"
@@ -575,41 +570,7 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* CTA */}
-      <div className="py-24">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="relative overflow-hidden rounded-[40px] p-12 sm:p-20 text-center shadow-glow border border-white/20 glass-panel">
-            <div className="absolute inset-0 bg-gradient-to-br from-gray-700/30 via-gray-900/40 to-black/30 z-0"></div>
-            <div className="absolute top-0 left-0 w-full h-full z-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
-            <div className="absolute -top-24 -left-24 w-64 h-64 bg-white/10 rounded-full blur-[80px]"></div>
-            <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-gray-500/10 rounded-full blur-[80px]"></div>
-            <div className="relative z-10">
-              <h2 className="text-4xl sm:text-5xl font-sans font-bold text-white mb-6 text-glow">
-                Ready to Secure
-                <br />
-                Your Applications?
-              </h2>
-              <p className="text-slate-300 mb-10 max-w-xl mx-auto text-lg font-light">
-                Join thousands of developers and security professionals who trust VulnScanner.
-              </p>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
-                <a
-                  className="w-full sm:w-auto px-10 py-4 rounded-full bg-white text-black font-bold hover:bg-gray-200 transition-all shadow-lg transform hover:-translate-y-1"
-                  href="#"
-                >
-                  Start Free Trial
-                </a>
-                <a
-                  className="w-full sm:w-auto px-10 py-4 rounded-full bg-transparent border border-white/30 text-white font-semibold hover:bg-white/10 transition-colors backdrop-blur-sm"
-                  href="#"
-                >
-                  Talk to Sales
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+
 
       {/* Footer */}
       <footer className="border-t border-white/10 bg-[#313131]/80 backdrop-blur-xl pt-20 pb-10">
