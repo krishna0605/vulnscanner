@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import MarketingFooter from '@/components/layout/MarketingFooter';
 
 export default function LegalPage() {
   return (
@@ -97,6 +98,8 @@ export default function LegalPage() {
           </div>
         </div>
       </div>
+
+      <MarketingFooter />
     </>
   );
 }

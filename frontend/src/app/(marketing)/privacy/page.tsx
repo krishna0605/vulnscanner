@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import MarketingFooter from '@/components/layout/MarketingFooter';
 
 export default function PrivacyPage() {
   return (
@@ -131,6 +132,8 @@ export default function PrivacyPage() {
           </div>
         </div>
       </div>
+
+      <MarketingFooter />
     </>
   );
 }

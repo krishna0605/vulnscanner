@@ -12,6 +12,7 @@ import {
   communityLinks,
   OWASPItem,
 } from '@/data/academyData';
+import MarketingFooter from '@/components/layout/MarketingFooter';
 
 export default function LearnPage() {
   const [activeTab, setActiveTab] = useState<'owasp' | 'flashcards' | 'code' | 'ctf' | 'resources' | 'news' | 'community'>('owasp');
@@ -406,38 +407,7 @@ export default function LearnPage() {
       </div>
 
       {/* Footer */}
-      <footer className="border-t border-white/10 bg-[#313131]/80 backdrop-blur-xl pt-20 pb-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-12 mb-16">
-            <div className="col-span-2">
-              <div className="flex items-center mb-6">
-                <span className="material-symbols-outlined text-white text-3xl mr-2">security</span>
-                <span className="font-sans font-bold text-2xl text-white">VulnScanner</span>
-              </div>
-              <p className="text-sm text-slate-400 max-w-xs font-light leading-relaxed">
-                Protecting the modern web, one scan at a time.
-              </p>
-            </div>
-            <div>
-              <h4 className="font-bold text-white mb-6 font-mono text-sm uppercase tracking-wider">Product</h4>
-              <ul className="space-y-4 text-sm font-light">
-                <li><a className="text-slate-400 hover:text-white transition-colors" href="#">Features</a></li>
-                <li><a className="text-slate-400 hover:text-white transition-colors" href="/features">Features</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-bold text-white mb-6 font-mono text-sm uppercase tracking-wider">Company</h4>
-              <ul className="space-y-4 text-sm font-light">
-                <li><a className="text-slate-400 hover:text-white transition-colors" href="#">About</a></li>
-                <li><a className="text-slate-400 hover:text-white transition-colors" href="#">Contact</a></li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center">
-            <p className="text-xs text-slate-500 text-center md:text-left font-mono">© 2024 VulnScanner. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
+      <MarketingFooter />
     </>
   );
 }
