@@ -10,7 +10,7 @@ interface FindingHeaderProps {
 
 import { generateFindingPDF } from '@/utils/pdf-generator';
 import { useState } from 'react';
-import { createIssue, saveIntegrationConfig } from '@/app/actions';
+import { createIssue, saveIntegrationConfig, updateFindingStatus } from '@/app/actions';
 import { logger } from '@/utils/logger';
 
 export function FindingHeader({ finding }: FindingHeaderProps) {
@@ -30,6 +30,11 @@ export function FindingHeader({ finding }: FindingHeaderProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [isCreatingTicket, setIsCreatingTicket] = useState(false);
   const [ticketUrl, setTicketUrl] = useState<string | null>(null);
+
+  // Mark as Resolved State
+  const [isMarkingResolved, setIsMarkingResolved] = useState(false);
+  const [currentStatus, setCurrentStatus] = useState(finding.status);
+  const [showStatusDropdown, setShowStatusDropdown] = useState(false);
 
   const handleDownloadPdf = async () => {
     setIsGeneratingPdf(true);
@@ -77,6 +82,41 @@ export function FindingHeader({ finding }: FindingHeaderProps) {
       alert('Failed to save configuration');
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleMarkAsResolved = async (newStatus: 'fixed' | 'false_positive') => {
+    setIsMarkingResolved(true);
+    setShowStatusDropdown(false);
+    try {
+      const result = await updateFindingStatus(finding.id, newStatus);
+      if (result.success) {
+        setCurrentStatus(newStatus);
+      } else {
+        alert('Failed to update status: ' + result.error);
+      }
+    } catch (e) {
+      logger.error('Error marking as resolved:', { error: e });
+      alert('Failed to update status');
+    } finally {
+      setIsMarkingResolved(false);
+    }
+  };
+
+  const handleReopenFinding = async () => {
+    setIsMarkingResolved(true);
+    try {
+      const result = await updateFindingStatus(finding.id, 'open');
+      if (result.success) {
+        setCurrentStatus('open');
+      } else {
+        alert('Failed to reopen: ' + result.error);
+      }
+    } catch (e) {
+      logger.error('Error reopening finding:', { error: e });
+      alert('Failed to reopen finding');
+    } finally {
+      setIsMarkingResolved(false);
     }
   };
 
@@ -182,12 +222,63 @@ export function FindingHeader({ finding }: FindingHeaderProps) {
             </button>
           </div>
 
-          <button
-            className={`flex items-center gap-2 ${colors.button} text-white px-5 py-2.5 rounded-lg font-bold transition-all shadow-lg`}
-          >
-            <span className="material-symbols-outlined text-xl">check_circle</span>
-            <span>Mark as Resolved</span>
-          </button>
+          {/* Mark as Resolved / Status Button */}
+          <div className="relative">
+            {currentStatus === 'open' ? (
+              <>
+                <button
+                  onClick={() => setShowStatusDropdown(!showStatusDropdown)}
+                  disabled={isMarkingResolved}
+                  className={`flex items-center gap-2 ${colors.button} text-white px-5 py-2.5 rounded-lg font-bold transition-all shadow-lg disabled:opacity-50`}
+                >
+                  <span className="material-symbols-outlined text-xl">
+                    {isMarkingResolved ? 'progress_activity' : 'check_circle'}
+                  </span>
+                  <span>{isMarkingResolved ? 'Updating...' : 'Mark as Resolved'}</span>
+                  <span className="material-symbols-outlined text-sm">expand_more</span>
+                </button>
+                {showStatusDropdown && (
+                  <div className="absolute right-0 mt-2 w-48 bg-gray-900 border border-white/10 rounded-lg shadow-xl z-50">
+                    <button
+                      onClick={() => handleMarkAsResolved('fixed')}
+                      className="w-full px-4 py-3 text-left text-sm text-white hover:bg-white/10 flex items-center gap-2 rounded-t-lg"
+                    >
+                      <span className="material-symbols-outlined text-emerald-500">check_circle</span>
+                      Mark as Fixed
+                    </button>
+                    <button
+                      onClick={() => handleMarkAsResolved('false_positive')}
+                      className="w-full px-4 py-3 text-left text-sm text-white hover:bg-white/10 flex items-center gap-2 rounded-b-lg border-t border-white/5"
+                    >
+                      <span className="material-symbols-outlined text-slate-400">block</span>
+                      Mark as False Positive
+                    </button>
+                  </div>
+                )}
+              </>
+            ) : (
+              <button
+                onClick={handleReopenFinding}
+                disabled={isMarkingResolved}
+                className={`flex items-center gap-2 ${
+                  currentStatus === 'fixed'
+                    ? 'bg-emerald-600 hover:bg-emerald-500'
+                    : 'bg-slate-600 hover:bg-slate-500'
+                } text-white px-5 py-2.5 rounded-lg font-bold transition-all shadow-lg disabled:opacity-50`}
+              >
+                <span className="material-symbols-outlined text-xl">
+                  {isMarkingResolved ? 'progress_activity' : currentStatus === 'fixed' ? 'check_circle' : 'block'}
+                </span>
+                <span>
+                  {isMarkingResolved
+                    ? 'Updating...'
+                    : currentStatus === 'fixed'
+                      ? 'Resolved'
+                      : 'False Positive'}
+                </span>
+              </button>
+            )}
+          </div>
 
           {ticketUrl && (
             <a

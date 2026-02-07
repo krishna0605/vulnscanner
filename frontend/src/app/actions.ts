@@ -43,6 +43,30 @@ export async function addFindingComment(
 
 // -- Integrations --
 
+// -- Finding Status --
+
+export async function updateFindingStatus(
+  findingId: string,
+  status: 'open' | 'fixed' | 'false_positive'
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = createClient();
+
+  const { error } = await supabase
+    .from('findings')
+    .update({ status })
+    .eq('id', findingId);
+
+  if (error) {
+    logger.error(`Error updating finding status for ${findingId}:`, { error });
+    return { success: false, error: error.message };
+  }
+
+  return { success: true };
+}
+
+// -- Integration Config --
+
+
 export async function saveIntegrationConfig(
   projectId: string,
   type: 'jira' | 'github',

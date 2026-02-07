@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { FindingDetails } from '@/lib/api';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -9,6 +9,7 @@ interface FindingRemediationProps {
 }
 
 export function FindingRemediation({ finding }: FindingRemediationProps) {
+  const [activeSection, setActiveSection] = useState<string>('details');
   const getSeverityColors = (s: string) => {
     switch (s) {
       case 'critical':
@@ -65,24 +66,41 @@ export function FindingRemediation({ finding }: FindingRemediationProps) {
     <div className="flex flex-col gap-6 sticky top-8">
       {/* Navigation */}
       <nav className="glass-nav rounded-lg flex flex-col p-2 space-y-1 bg-black/40 border border-white/10">
-        <a
-          href="#details"
-          className="px-3 py-2 rounded-md text-sm font-medium text-gray-400 hover:bg-white/10 hover:text-white transition-colors text-left"
+        <button
+          onClick={() => {
+            setActiveSection('details');
+            document.getElementById('details')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }}
+          className={`px-3 py-2 rounded-md text-sm font-medium transition-colors text-left ${
+            activeSection === 'details'
+              ? 'bg-white/10 text-white'
+              : 'text-gray-400 hover:bg-white/10 hover:text-white'
+          }`}
         >
           Details
-        </a>
-        <a
-          href="#evidence"
-          className="px-3 py-2 rounded-md text-sm font-medium text-gray-400 hover:bg-white/10 hover:text-white transition-colors text-left"
+        </button>
+        <button
+          onClick={() => {
+            setActiveSection('evidence');
+            document.getElementById('evidence')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }}
+          className={`px-3 py-2 rounded-md text-sm font-medium transition-colors text-left ${
+            activeSection === 'evidence'
+              ? 'bg-white/10 text-white'
+              : 'text-gray-400 hover:bg-white/10 hover:text-white'
+          }`}
         >
           Evidence
-        </a>
-        <a
-          href="#remediation"
+        </button>
+        <button
+          onClick={() => {
+            setActiveSection('remediation');
+            document.getElementById('remediation')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }}
           className={`px-3 py-2 rounded-md text-sm font-medium ${colors.bg} ${colors.text} border ${colors.border} text-left shadow-sm`}
         >
           Remediation
-        </a>
+        </button>
       </nav>
 
       {/* Remediation Steps */}
