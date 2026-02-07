@@ -10,11 +10,13 @@ import { GoogleButton } from '@/components/auth/google-button';
 export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const router = useRouter();
 
   async function handleSubmit(formData: FormData) {
     setLoading(true);
     setError(null);
+    formData.set('rememberMe', rememberMe.toString());
 
     const result = await login(formData);
 
@@ -131,6 +133,8 @@ export default function LoginPage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
                   <input
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
                     className="h-4 w-4 rounded bg-white/5 border-white/20 text-white focus:ring-offset-0 focus:ring-1 focus:ring-white/50 checkbox-custom transition-all cursor-pointer"
                     id="remember-me"
                     name="remember-me"

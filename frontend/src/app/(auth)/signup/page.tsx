@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { signup } from '../actions';
 import { useState } from 'react';
+import { GoogleButton } from '@/components/auth/google-button';
 
 export default function SignupPage() {
   const [error, setError] = useState<string | null>(null);
@@ -228,6 +229,19 @@ export default function SignupPage() {
                   )}
                 </button>
               </form>
+
+              {/* Divider */}
+              <div className="mt-6 flex items-center">
+                <div className="flex-grow border-t border-white/10"></div>
+                <span className="px-4 text-xs text-slate-500 font-mono uppercase tracking-wider">or</span>
+                <div className="flex-grow border-t border-white/10"></div>
+              </div>
+
+              {/* Google OAuth Button */}
+              <div className="mt-6">
+                <GoogleButton />
+              </div>
+
               <div className="mt-8 pt-6 border-t border-white/10 text-center">
                 <p className="text-sm text-slate-400">
                   Already have an account?
