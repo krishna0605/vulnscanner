@@ -1,14 +1,14 @@
 # =============================================================================
-# VulnScanner Backend Dockerfile (Railway Simplified Version)
+# VulnScanner Backend Dockerfile (Railway with Playwright Support)
 # =============================================================================
 
 # Stage 1: Builder
-FROM node:20-alpine AS builder
+FROM node:20-slim AS builder
 
 WORKDIR /app
 
 # Install build dependencies
-RUN apk add --no-cache python3 make g++
+RUN apt-get update && apt-get install -y python3 make g++ && rm -rf /var/lib/apt/lists/*
 
 # Copy package files FROM BACKEND DIRECTORY
 COPY backend/package*.json ./
@@ -26,18 +26,18 @@ RUN npm run build
 RUN npm prune --production
 
 # =============================================================================
-# Stage 2: Runner (Lightweight - no Playwright for now)
+# Stage 2: Runner (With Playwright Chromium)
 # =============================================================================
-FROM node:20-alpine AS runner
+FROM mcr.microsoft.com/playwright:v1.52.0-noble AS runner
 
 WORKDIR /app
 
-# Install minimal runtime dependencies
-RUN apk add --no-cache dumb-init curl
+# Install curl for healthcheck and dumb-init for signal handling
+RUN apt-get update && apt-get install -y dumb-init curl && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user for security
-RUN addgroup --system --gid 1001 nodejs \
-    && adduser --system --uid 1001 fastify
+RUN groupadd --system --gid 1001 nodejs \
+    && useradd --system --uid 1001 --gid nodejs fastify
 
 # Set working directory ownership
 RUN chown -R fastify:nodejs /app
@@ -47,8 +47,14 @@ COPY --from=builder --chown=fastify:nodejs /app/dist ./dist
 COPY --from=builder --chown=fastify:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=fastify:nodejs /app/package*.json ./
 
+# Copy Playwright browsers from the base image (already installed)
+# The mcr.microsoft.com/playwright image comes with browsers pre-installed
+
 # Switch to non-root user
 USER fastify
+
+# Set Playwright to use the pre-installed browsers
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 
 # Expose port (Railway will set PORT env var)
 EXPOSE 3001
