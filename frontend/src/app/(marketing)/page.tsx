@@ -121,10 +121,12 @@ export default function LandingPage() {
               </Link>
               <a
                 className="px-8 py-4 rounded-full bg-interactive-dark hover:bg-white/10 text-white font-medium backdrop-blur-md border border-white/10 transition-all flex items-center gap-2"
-                href="#"
+                href="https://healthdocliv.notion.site/USER_GUIDE-300c54ff4fff80f6ab40d3f140abf748?source=copy_link"
+                target="_blank"
+                rel="noopener noreferrer"
               >
-                <span className="material-symbols-outlined text-sm">play_circle</span>
-                Watch Demo
+                <span className="material-symbols-outlined text-sm">menu_book</span>
+                User Guide
               </a>
             </div>
             <div className="mt-12 flex items-center gap-6 text-xs font-mono text-slate-500">
