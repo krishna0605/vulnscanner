@@ -18,7 +18,7 @@ export function FindingHeader({ finding }: FindingHeaderProps) {
 
   // Integration State
   const [showIntegrationModal, setShowIntegrationModal] = useState(false);
-  const [integrationType, setIntegrationType] = useState<'jira' | 'github'>('jira');
+  const [integrationType, setIntegrationType] = useState<'jira' | 'github'>('github');
   const [config, setConfig] = useState({
     url: '',
     email: '',
@@ -300,50 +300,13 @@ export function FindingHeader({ finding }: FindingHeaderProps) {
               <h3 className="text-xl font-bold text-white mb-4">Configure Integration</h3>
 
               <div className="flex gap-4 mb-6 border-b border-white/10 pb-4">
-                <button
-                  onClick={() => setIntegrationType('jira')}
-                  className={`flex-1 py-2 rounded-lg font-medium transition-colors ${integrationType === 'jira' ? 'bg-blue-600 text-white' : 'bg-white/5 text-gray-400 hover:text-white'}`}
-                >
-                  Jira
-                </button>
-                <button
-                  onClick={() => setIntegrationType('github')}
-                  className={`flex-1 py-2 rounded-lg font-medium transition-colors ${integrationType === 'github' ? 'bg-gray-700 text-white' : 'bg-white/5 text-gray-400 hover:text-white'}`}
-                >
+                <div className="flex-1 py-2 rounded-lg font-medium bg-gray-700 text-white text-center">
                   GitHub
-                </button>
+                </div>
               </div>
 
               <div className="space-y-4">
-                {integrationType === 'jira' ? (
-                  <>
-                    <input
-                      placeholder="Jira URL (https://your-domain.atlassian.net)"
-                      value={config.url}
-                      onChange={(e) => setConfig({ ...config, url: e.target.value })}
-                      className="w-full bg-black/50 border border-white/20 rounded-lg p-3 text-white focus:border-blue-500 outline-none"
-                    />
-                    <input
-                      placeholder="Project Key (e.g. PROJ)"
-                      value={config.project_key}
-                      onChange={(e) => setConfig({ ...config, project_key: e.target.value })}
-                      className="w-full bg-black/50 border border-white/20 rounded-lg p-3 text-white focus:border-blue-500 outline-none"
-                    />
-                    <input
-                      placeholder="Email Address"
-                      value={config.email}
-                      onChange={(e) => setConfig({ ...config, email: e.target.value })}
-                      className="w-full bg-black/50 border border-white/20 rounded-lg p-3 text-white focus:border-blue-500 outline-none"
-                    />
-                    <input
-                      type="password"
-                      placeholder="API Token"
-                      value={config.token}
-                      onChange={(e) => setConfig({ ...config, token: e.target.value })}
-                      className="w-full bg-black/50 border border-white/20 rounded-lg p-3 text-white focus:border-blue-500 outline-none"
-                    />
-                  </>
-                ) : (
+                {integrationType === 'github' && (
                   <>
                     <input
                       placeholder="Owner (e.g. facebook)"
