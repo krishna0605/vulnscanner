@@ -72,6 +72,13 @@ export async function saveIntegrationConfig(
   type: 'jira' | 'github',
   config: any
 ) {
+  logger.info('saveIntegrationConfig called:', { projectId, type, configKeys: Object.keys(config || {}) });
+  
+  if (!projectId) {
+    logger.error('saveIntegrationConfig: projectId is missing or undefined');
+    throw new Error('Failed to save configuration: Project ID is missing');
+  }
+  
   const supabase = createClient();
   const { data, error } = await supabase.rpc('upsert_integration', {
     p_project_id: projectId,
@@ -80,9 +87,18 @@ export async function saveIntegrationConfig(
   });
 
   if (error) {
-    logger.error('Error saving integration:', { error });
-    throw new Error('Failed to save configuration');
+    logger.error('Error saving integration:', { 
+      error, 
+      errorCode: error.code,
+      errorMessage: error.message,
+      errorDetails: error.details,
+      projectId,
+      type 
+    });
+    throw new Error(`Failed to save configuration: ${error.message}`);
   }
+  
+  logger.info('Integration config saved successfully:', { data });
   return data;
 }
 
