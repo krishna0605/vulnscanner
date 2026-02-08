@@ -199,8 +199,14 @@ export async function createIssue(
 
       if (!res.ok) {
         const errText = await res.text();
-        logger.error('GitHub API Error:', { error: errText });
-        throw new Error('Failed to create GitHub issue');
+        logger.error('GitHub API Error:', { 
+          status: res.status, 
+          statusText: res.statusText,
+          error: errText,
+          owner: config.owner,
+          repo: config.repo 
+        });
+        throw new Error(`Failed to create GitHub issue: ${res.status} - ${errText}`);
       }
 
       const json = await res.json();
