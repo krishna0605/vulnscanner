@@ -212,7 +212,7 @@ export class CrawlerService {
       }
 
       // Concurrency Control
-      const concurrency = this.config.concurrency || 1;
+      const concurrency = Math.min(this.config.concurrency || 1, 5); // Cap at 5 for Railway stability
       const rateLimitDelay = this.config.rateLimit ? Math.floor(1000 / this.config.rateLimit) : 0;
 
       // We need a proper queue processor for concurrency
@@ -259,7 +259,11 @@ export class CrawlerService {
                 Math.min(90, Math.floor((this.pagesScanned / maxPages) * 100)),
                 `Scanning: ${url}`
               );
-              await this.processPage(page, url, depth, maxDepth);
+              // Per-page timeout: 60s max to prevent any single page from hanging
+              await Promise.race([
+                this.processPage(page, url, depth, maxDepth),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Page processing timeout (60s)')), 60000))
+              ]);
             } catch (e: any) {
               console.error(`Error scanning ${url}`, e);
             } finally {
@@ -545,7 +549,7 @@ export class CrawlerService {
           page.off('dialog', dialogHandler);
           // Go back for next payload if we navigated
           if (page.url() !== url) {
-            await page.goto(url, { waitUntil: 'domcontentloaded' });
+            await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 10000 });
           }
         }
       } catch (e) {
@@ -771,9 +775,13 @@ export class CrawlerService {
 
     // 3. Active Fuzzing (New)
     try {
-        await this.fuzzPage(page, url);
+        // Wrap fuzzing with a 30s timeout to prevent hangs on slow sites
+        await Promise.race([
+          this.fuzzPage(page, url),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Fuzz timeout (30s)')), 30000))
+        ]);
     } catch (e) {
-        // console.error('Fuzzing failed', e);
+        // Fuzzing failed or timed out — non-fatal, continue scan
     }
 
 
