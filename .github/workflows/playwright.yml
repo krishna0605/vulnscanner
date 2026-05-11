@@ -103,6 +103,13 @@ jobs:
       - name: Run Playwright tests
         run: npx playwright test
         env:
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_c2Vuc2libGUtbGlnZXItMjcuY2xlcmsuYWNjb3VudHMuZGV2JA
+          NEXT_PUBLIC_CLERK_SIGN_IN_URL: /sign-in
+          NEXT_PUBLIC_CLERK_SIGN_UP_URL: /sign-up
+          NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL: /dashboard
+          NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL: /dashboard
+          NEXT_PUBLIC_CONVEX_URL: https://beaming-squid-545.convex.cloud
+          NEXT_PUBLIC_CONVEX_SITE_URL: https://beaming-squid-545.convex.site
           NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
           NEXT_PUBLIC_SUPABASE_ANON_KEY: dummy-anon-key
       
