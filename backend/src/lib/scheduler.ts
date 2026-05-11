@@ -106,7 +106,7 @@ export class SchedulerService {
     // 3. Start Crawler
     const crawler = new CrawlerService();
     // Fire and forget, crawler manages its own state
-    crawler.scan(newScan.id, newScan.target_url, newScan.config).catch((e) => {
+    crawler.scan(newScan.id, newScan.project_id, newScan.target_url, newScan.config).catch((e) => {
       console.error('[Scheduler] Crawler failed to start:', e);
     });
 

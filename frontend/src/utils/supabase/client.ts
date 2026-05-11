@@ -1,5 +1,7 @@
 import { createBrowserClient } from '@supabase/ssr';
-import { env } from '@/lib/env';
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? 'https://placeholder.supabase.co';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? 'placeholder-anon-key';
 
 /**
  * Creates a Supabase client for browser/client components.
@@ -7,8 +9,5 @@ import { env } from '@/lib/env';
  * PKCE code verifier is automatically stored in cookies by Supabase.
  */
 export function createClient() {
-  return createBrowserClient(
-    env.NEXT_PUBLIC_SUPABASE_URL, 
-    env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  );
+  return createBrowserClient(supabaseUrl, supabaseAnonKey);
 }

@@ -19,11 +19,8 @@ declare module 'fastify' {
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-// Validate required environment variables
 if (!supabaseUrl || !supabaseServiceKey) {
-  console.error('[Auth] CRITICAL: Missing required environment variables!');
-  console.error('[Auth] SUPABASE_URL:', supabaseUrl ? 'SET' : 'MISSING');
-  console.error('[Auth] SUPABASE_SERVICE_ROLE_KEY:', supabaseServiceKey ? 'SET' : 'MISSING');
+  console.warn('[Auth] Legacy Supabase auth is disabled because Supabase env vars are missing.');
 }
 
 const supabase = supabaseUrl && supabaseServiceKey 
@@ -31,8 +28,8 @@ const supabase = supabaseUrl && supabaseServiceKey
   : null;
 
 /**
- * JWT Authentication Middleware
- * Verifies the Bearer token from Authorization header using Supabase
+ * Legacy JWT Authentication Middleware.
+ * Scanner endpoints use SCANNER_SERVICE_TOKEN and Convex HTTP actions.
  */
 export async function authenticateRequest(
   request: FastifyRequest,
@@ -104,7 +101,7 @@ export function registerAuthPlugin(fastify: FastifyInstance) {
 
   fastify.addHook('onRequest', async (request, reply) => {
     // Skip auth for public routes
-    if (publicRoutes.includes(request.url)) {
+    if (publicRoutes.includes(request.url) || request.url.startsWith('/scanner/')) {
       return;
     }
 

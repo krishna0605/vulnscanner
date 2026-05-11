@@ -1,5 +1,5 @@
 import { chromium, Browser, Page } from 'playwright';
-import { supabase } from './supabase';
+import { convexScanner } from './convex';
 import { URL } from 'url';
 import { URLNormalizer } from './normalizer';
 import { TechnologyFingerprinter, Technology } from './fingerprinter';
@@ -123,23 +123,16 @@ export class CrawlerService {
     const pinoLevel = level === 'success' ? 'info' : level;
     logger[pinoLevel]({ scanId: this.scanId }, `[Scanner] ${message}`);
 
-    await supabase.from('scan_logs').insert({
-      scan_id: this.scanId,
-      message,
-      level,
-      timestamp: new Date().toISOString(),
-    });
+    try {
+      await convexScanner.addLog(this.scanId, message, level);
+    } catch (error) {
+      logger.warn({ err: error, scanId: this.scanId }, '[Scanner] Failed to persist log to Convex');
+    }
   }
 
   private async updateProgress(progress: number, action: string) {
     try {
-      await supabase
-        .from('scans')
-        .update({
-          progress,
-          current_action: action,
-        })
-        .eq('id', this.scanId);
+      await convexScanner.updateProgress(this.scanId, progress, action);
     } catch (e) {
       console.error('Failed to update progress', e);
     }
@@ -151,17 +144,13 @@ export class CrawlerService {
     this.config = config;
     this.visited.clear();
 
+    await convexScanner.markStarted(scanId, process.env.RAILWAY_SERVICE_NAME || 'Railway Scanner');
+
     // SSRF Protection: Validate URL before scanning
     const urlSafetyCheck = this.isUrlSafe(startUrl);
     if (!urlSafetyCheck.safe) {
       await this.log(`🛡️ SSRF Protection: Scan rejected - ${urlSafetyCheck.reason}`, 'error');
-      await supabase
-        .from('scans')
-        .update({
-          status: 'failed',
-          current_action: `Security: ${urlSafetyCheck.reason}`,
-        })
-        .eq('id', scanId);
+      await convexScanner.failScan(scanId, `Security: ${urlSafetyCheck.reason}`);
       return;
     }
 
@@ -285,50 +274,38 @@ export class CrawlerService {
 
         // --- PAUSE / STOP SCAN CHECK ---
         // Check if user paused or cancelled the scan
-        const { data: currentScan } = await supabase
-          .from('scans')
-          .select('status')
-          .eq('id', this.scanId)
-          .single();
+        const currentStatus = await convexScanner.getScanStatus(this.scanId);
 
         // Handle paused state - wait until resumed or cancelled
-        if (currentScan?.status === 'paused') {
+        if (currentStatus === 'paused') {
           await this.log('⏸️ Scan paused by user. Waiting for resume...', 'info');
           
           // Enter pause loop
           while (true) {
             await new Promise(r => setTimeout(r, 2000)); // Check every 2 seconds
             
-            const { data: pauseCheck } = await supabase
-              .from('scans')
-              .select('status')
-              .eq('id', this.scanId)
-              .single();
+            const pauseStatus = await convexScanner.getScanStatus(this.scanId);
             
-            if (pauseCheck?.status === 'scanning') {
+            if (pauseStatus === 'scanning') {
               await this.log('▶️ Scan resumed by user!', 'success');
               break;
             }
             
-            if (pauseCheck?.status === 'cancelled' || pauseCheck?.status === 'failed') {
+            if (pauseStatus === 'cancelled' || pauseStatus === 'failed') {
               await this.log('🛑 Scan stopped while paused.', 'warn');
               break;
             }
           }
           
           // Re-check status after exiting pause loop
-          const { data: afterPause } = await supabase
-            .from('scans')
-            .select('status')
-            .eq('id', this.scanId)
-            .single();
+          const afterPauseStatus = await convexScanner.getScanStatus(this.scanId);
           
-          if (afterPause?.status === 'cancelled' || afterPause?.status === 'failed') {
+          if (afterPauseStatus === 'cancelled' || afterPauseStatus === 'failed') {
             break; // Exit main loop
           }
         }
 
-        if (currentScan && (currentScan.status === 'failed' || currentScan.status === 'cancelled')) {
+        if (currentStatus === 'failed' || currentStatus === 'cancelled') {
              await this.log('🛑 Scan stopped by user command.', 'warn');
              // Cancel all active page loads if possible (browser context close will handle it)
              break; 
@@ -344,21 +321,11 @@ export class CrawlerService {
 
       await this.log(`Scan complete. Analyzed ${this.pagesScanned} pages.`, 'success');
       await this.updateProgress(100, 'Completed');
-      await supabase
-        .from('scans')
-        .update({
-          status: 'completed',
-          current_action: 'Completed',
-          completed_at: new Date().toISOString(),
-        })
-        .eq('id', scanId);
+      await convexScanner.completeScan(scanId);
     } catch (error: any) {
       logger.error({ err: error, scanId: scanId }, `[Crawler] Fatal Error`);
       await this.log(`Critical Engine Error: ${error.message}`, 'error');
-      await supabase
-        .from('scans')
-        .update({ status: 'failed', current_action: 'Failed' })
-        .eq('id', scanId);
+      await convexScanner.failScan(scanId, error.message || 'Scanner failed');
     } finally {
       if (browser) await browser.close();
     }
@@ -662,18 +629,18 @@ export class CrawlerService {
     const content = await page.content();
 
     // Insert Asset (Page Inventory)
+    const pageTitle = (await page.title()) || '';
+    let fingerprint: { technologies: Technology[]; securityScore: number; securityHeaders: Record<string, unknown> } | null = null;
+
     try {
-      const pageTitle = (await page.title()) || '';
-      await supabase.from('assets').insert({
-        project_id: this.projectId,
-        scan_id: this.scanId,
-        url: url,
+      await convexScanner.addAsset({
+        projectId: this.projectId,
+        scanId: this.scanId,
+        url,
         type: 'page',
-        status_code: status,
+        statusCode: status,
         title: pageTitle,
-        metadata: {
-          headers: headers,
-        },
+        metadata: { headers },
       });
     } catch (assetError) {
       // Non-critical, just log
@@ -682,7 +649,7 @@ export class CrawlerService {
 
     // 0. Fingerprint Technology
     try {
-      const fingerprint = this.fingerprinter.analyze(headers, content);
+      fingerprint = this.fingerprinter.analyze(headers, content);
 
       if (fingerprint.technologies.length > 0) {
         const techNames = fingerprint.technologies.map((t) => t.name).join(', ');
@@ -691,16 +658,19 @@ export class CrawlerService {
           await this.log(`Detected Technologies: ${techNames}`, 'success');
         }
 
-        // Update status of asset with technologies
-        await supabase
-          .from('assets')
-          .update({
-            metadata: {
-              headers: headers,
-              technologies: fingerprint.technologies,
-            },
-          })
-          .match({ scan_id: this.scanId, url: url });
+        await convexScanner.addAsset({
+          projectId: this.projectId,
+          scanId: this.scanId,
+          url,
+          type: 'page',
+          statusCode: status,
+          title: pageTitle,
+          metadata: {
+            headers,
+            technologies: fingerprint.technologies,
+          },
+          riskScore: fingerprint.securityScore,
+        });
       }
 
       // Report Security Header Issues from Fingerprinter
@@ -838,9 +808,16 @@ export class CrawlerService {
     remediation?: string;
     cwe_id?: string;
   }) {
-    await supabase.from('findings').insert({
-      scan_id: this.scanId,
-      ...finding,
+    await convexScanner.addFinding({
+      scanId: this.scanId,
+      projectId: this.projectId,
+      title: finding.title,
+      description: finding.description,
+      severity: finding.severity,
+      location: finding.location,
+      evidence: finding.evidence,
+      remediation: finding.remediation,
+      cweId: finding.cwe_id,
     });
     await this.log(
       `Finding: ${finding.title} (${finding.severity})`,

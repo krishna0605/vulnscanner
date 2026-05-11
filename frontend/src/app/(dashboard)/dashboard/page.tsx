@@ -1,5 +1,4 @@
-import { createClient } from '@/utils/supabase/server';
-import { redirect } from 'next/navigation';
+import { currentUser } from '@clerk/nextjs/server';
 import { SecurityScoreGauge } from '@/components/dashboard/security-score';
 import {
   ActiveThreatCard,
@@ -21,16 +20,9 @@ import {
 export const dynamic = 'force-dynamic'; // Ensure real-time data fetching
 
 export default async function DashboardPage() {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return redirect('/login');
-  }
-
-  const displayName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Admin';
+  const user = await currentUser();
+  const displayName =
+    user?.fullName || user?.primaryEmailAddress?.emailAddress?.split('@')[0] || 'Admin';
 
   // Fetch Dashboard Data
   const stats = await getDashboardStats();

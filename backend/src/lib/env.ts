@@ -12,9 +12,11 @@ dotenv.config({ path: path.resolve(__dirname, '../../.env') });
  */
 const envSchema = z.object({
   // Database
-  SUPABASE_URL: z.string().url('SUPABASE_URL must be a valid URL'),
-  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1, 'SUPABASE_SERVICE_ROLE_KEY is required'),
+  SUPABASE_URL: z.string().url('SUPABASE_URL must be a valid URL').optional(),
+  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1, 'SUPABASE_SERVICE_ROLE_KEY is required').optional(),
   DATABASE_URL: z.string().url().optional(),
+  CONVEX_SITE_URL: z.string().url('CONVEX_SITE_URL must be a valid URL').optional(),
+  SCANNER_SERVICE_TOKEN: z.string().min(16, 'SCANNER_SERVICE_TOKEN must be at least 16 chars').optional(),
 
   // Server
   PORT: z.coerce.number().default(3001),
@@ -28,6 +30,7 @@ const envSchema = z.object({
 
   // Monitoring
   SENTRY_DSN: z.string().url().optional(),
+  HUGGINGFACE_API_TOKEN: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

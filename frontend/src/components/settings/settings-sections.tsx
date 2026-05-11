@@ -19,77 +19,46 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { logger } from '@/utils/logger';
+import { useClerk, useUser } from '@clerk/nextjs';
 
 export function ProfileSection() {
+  const { user, isLoaded } = useUser();
+  const { signOut } = useClerk();
   const [displayName, setDisplayName] = React.useState('');
   const [email, setEmail] = React.useState('');
   const [bio, setBio] = React.useState('');
   const [avatarUrl, setAvatarUrl] = React.useState<string | null>(null);
   const [saved, setSaved] = React.useState(false);
-  const [loading, setLoading] = React.useState(true);
   const [uploading, setUploading] = React.useState(false);
   const [userId, setUserId] = React.useState<string | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-  // Import Supabase client
-  const supabase = React.useMemo(() => {
-    // Dynamic import to avoid SSR issues
-    const { createClient } = require('@/utils/supabase/client');
-    return createClient();
-  }, []);
-
-  // Load user session and profile on mount
   React.useEffect(() => {
-    async function loadProfile() {
-      try {
-        // Get user session
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-
-        if (user) {
-          setUserId(user.id);
-          setEmail(user.email || '');
-
-          // Fetch profile from database
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('full_name, bio, avatar_url')
-            .eq('id', user.id)
-            .single();
-
-          if (profile) {
-            setDisplayName(profile.full_name || '');
-            setBio(profile.bio || '');
-            setAvatarUrl(profile.avatar_url);
-          }
-        }
-      } catch (error) {
-        logger.error('Error loading profile:', { error });
-      } finally {
-        setLoading(false);
-      }
+    if (user) {
+      setUserId(user.id);
+      setEmail(user.primaryEmailAddress?.emailAddress || '');
+      setDisplayName(user.fullName || user.username || '');
+      setBio(typeof user.unsafeMetadata?.bio === 'string' ? user.unsafeMetadata.bio : '');
+      setAvatarUrl(user.imageUrl || null);
     }
-
-    loadProfile();
-  }, [supabase]);
+  }, [user]);
 
   const handleSave = async () => {
-    if (!userId) return;
+    if (!user) return;
 
     try {
-      const { error } = await supabase.from('profiles').upsert({
-        id: userId,
-        full_name: displayName || null,
-        bio: bio || null,
-        avatar_url: avatarUrl,
-        updated_at: new Date().toISOString(),
+      const [firstName, ...lastNameParts] = displayName.trim().split(/\s+/);
+      await user.update({
+        firstName: firstName || undefined,
+        lastName: lastNameParts.join(' ') || undefined,
+        unsafeMetadata: {
+          ...user.unsafeMetadata,
+          bio,
+        },
       });
 
-      if (!error) {
-        setSaved(true);
-        setTimeout(() => setSaved(false), 2000);
-      }
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
     } catch (error) {
       logger.error('Error saving profile:', { error });
     }
@@ -97,7 +66,7 @@ export function ProfileSection() {
 
   const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file || !userId) return;
+    if (!file || !user) return;
 
     // Check file size (2MB limit)
     if (file.size > 2 * 1024 * 1024) {
@@ -107,29 +76,9 @@ export function ProfileSection() {
 
     setUploading(true);
     try {
-      // Delete old avatar first
-      const { data: existingFiles } = await supabase.storage.from('avatars').list(userId);
-
-      if (existingFiles && existingFiles.length > 0) {
-        const filesToDelete = existingFiles.map((f: any) => `${userId}/${f.name}`);
-        await supabase.storage.from('avatars').remove(filesToDelete);
-      }
-
-      // Upload new avatar
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${userId}/avatar.${fileExt}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(fileName, file, { upsert: true });
-
-      if (!uploadError) {
-        const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(fileName);
-
-        // Add cache buster to force refresh
-        const newUrl = `${urlData.publicUrl}?t=${Date.now()}`;
-        setAvatarUrl(newUrl);
-      }
+      await user.setProfileImage({ file });
+      await user.reload();
+      setAvatarUrl(user.imageUrl || null);
     } catch (error) {
       logger.error('Error uploading avatar:', { error });
     } finally {
@@ -138,23 +87,10 @@ export function ProfileSection() {
   };
 
   const handleRemoveAvatar = async () => {
-    if (!userId) return;
-
-    try {
-      const { data: existingFiles } = await supabase.storage.from('avatars').list(userId);
-
-      if (existingFiles && existingFiles.length > 0) {
-        const filesToDelete = existingFiles.map((f: any) => `${userId}/${f.name}`);
-        await supabase.storage.from('avatars').remove(filesToDelete);
-      }
-
-      setAvatarUrl(null);
-    } catch (error) {
-      logger.error('Error removing avatar:', { error });
-    }
+    setAvatarUrl(null);
   };
 
-  if (loading) {
+  if (!isLoaded) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-500"></div>
@@ -324,8 +260,7 @@ export function ProfileSection() {
               className="border-white/10 text-white hover:bg-white/5"
               onClick={async () => {
                 if (confirm('Are you sure you want to sign out of all devices?')) {
-                  await supabase.auth.signOut({ scope: 'global' });
-                  window.location.href = '/login';
+                  await signOut({ redirectUrl: '/sign-in' });
                 }
               }}
             >
@@ -362,29 +297,9 @@ export function ProfileSection() {
               if (!finalConfirm) return;
 
               try {
-                // Delete avatar from storage first
-                const { data: existingFiles } = await supabase.storage.from('avatars').list(userId);
-
-                if (existingFiles && existingFiles.length > 0) {
-                  const filesToDelete = existingFiles.map((f: any) => `${userId}/${f.name}`);
-                  await supabase.storage.from('avatars').remove(filesToDelete);
-                }
-
-                // Call the delete_user_account RPC function
-                const { error } = await supabase.rpc('delete_user_account', {
-                  user_id_param: userId,
-                });
-
-                if (error) {
-                  alert('Error deleting account: ' + error.message);
-                  return;
-                }
-
-                // Sign out the user
-                await supabase.auth.signOut();
-
-                alert('Your account has been deleted. Redirecting to login...');
-                window.location.href = '/login';
+                await user?.delete();
+                alert('Your account has been deleted. Redirecting to sign in...');
+                window.location.href = '/sign-in';
               } catch (err) {
                 logger.error('Delete account error:', { err });
                 alert('An error occurred while deleting your account.');
@@ -409,142 +324,59 @@ export function ProfileSection() {
 }
 
 export function SecuritySection() {
-  const [mfaStatus, setMfaStatus] = React.useState<{
-    enabled: boolean;
-    type: string | null;
-    setupAt: string | null;
-  } | null>(null);
-  const [loading, setLoading] = React.useState(true);
-  const [disabling, setDisabling] = React.useState(false);
-
-  // Fetch MFA status on mount
-  React.useEffect(() => {
-    async function fetchMfaStatus() {
-      try {
-        const response = await fetch('/api/mfa/setup', {
-          method: 'GET',
-        });
-        const data = await response.json();
-        if (data.data) {
-          setMfaStatus({
-            enabled: data.data.mfaEnabled,
-            type: data.data.mfaType,
-            setupAt: data.data.setupAt,
-          });
-        }
-      } catch (error) {
-        console.error('Error fetching MFA status:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchMfaStatus();
-  }, []);
-
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
       <div>
         <h2 className="text-2xl font-bold text-white mb-1">Security & Authentication</h2>
         <p className="text-slate-400 text-sm">
-          Enhance your account security with 2FA and hardware keys.
+          Authentication is managed by Clerk for this workspace.
         </p>
       </div>
 
-      {loading ? (
-        <div className="flex items-center justify-center h-24">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-500"></div>
-        </div>
-      ) : mfaStatus?.enabled ? (
-        /* MFA Enabled State */
-        <div className="bg-gradient-to-br from-emerald-500/5 to-transparent p-6 rounded-xl border border-emerald-500/10">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-emerald-500/10 rounded-lg text-emerald-400">
-                <Shield className="h-6 w-6" />
-              </div>
-              <div>
-                <h4 className="text-white font-bold">Two-Factor Authentication</h4>
-                <p className="text-xs text-emerald-400/80 mt-1 flex items-center gap-1">
-                  <span className="inline-block w-2 h-2 bg-emerald-400 rounded-full"></span>
-                  Enabled via {mfaStatus.type === 'totp' ? 'Authenticator App' : 'Email'}
-                </p>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                className="border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-300"
-                asChild
-              >
-                <a href="/settings/setup-2fa">Manage</a>
-              </Button>
-            </div>
+      <div className="bg-gradient-to-br from-cyan-500/5 to-transparent p-6 rounded-xl border border-cyan-500/10 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div className="p-3 bg-cyan-500/10 rounded-lg text-cyan-400">
+            <Shield className="h-6 w-6" />
           </div>
-          
-          {/* MFA Details */}
-          <div className="mt-4 pt-4 border-t border-white/5 grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-xs text-slate-500 uppercase tracking-wide">Method</p>
-              <p className="text-sm text-white font-medium mt-1">
-                {mfaStatus.type === 'totp' ? 'Google Authenticator / TOTP' : 'Email OTP'}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-slate-500 uppercase tracking-wide">Enabled On</p>
-              <p className="text-sm text-white font-medium mt-1">
-                {mfaStatus.setupAt 
-                  ? new Date(mfaStatus.setupAt).toLocaleDateString('en-US', { 
-                      year: 'numeric', 
-                      month: 'short', 
-                      day: 'numeric' 
-                    })
-                  : 'Unknown'}
-              </p>
-            </div>
+          <div>
+            <h4 className="text-white font-bold">Clerk Session Protection</h4>
+            <p className="text-xs text-cyan-400/80 mt-1 flex items-center gap-1">
+              <span className="inline-block w-2 h-2 bg-cyan-400 rounded-full"></span>
+              Email, Google OAuth, password reset, and session controls are handled by Clerk.
+            </p>
           </div>
         </div>
-      ) : (
-        /* MFA Not Enabled State */
-        <div className="bg-gradient-to-br from-amber-500/5 to-transparent p-6 rounded-xl border border-amber-500/10 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-amber-500/10 rounded-lg text-amber-400">
-              <Shield className="h-6 w-6" />
-            </div>
-            <div>
-              <h4 className="text-white font-bold">Two-Factor Authentication</h4>
-              <p className="text-xs text-amber-400/80 mt-1 flex items-center gap-1">
-                <span className="inline-block w-2 h-2 bg-amber-400 rounded-full"></span>
-                Not configured - Add extra security to your account
-              </p>
-            </div>
+      </div>
+
+      <div className="bg-gradient-to-br from-amber-500/5 to-transparent p-6 rounded-xl border border-amber-500/10 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div className="p-3 bg-amber-500/10 rounded-lg text-amber-400">
+            <Shield className="h-6 w-6" />
           </div>
-          <Button
-            variant="outline"
-            className="border-amber-500/20 text-amber-400 hover:bg-amber-500/10 hover:text-amber-300"
-            asChild
-          >
-            <a href="/settings/setup-2fa">Enable 2FA</a>
-          </Button>
+          <div>
+            <h4 className="text-white font-bold">Two-Factor Authentication</h4>
+            <p className="text-xs text-amber-400/80 mt-1 flex items-center gap-1">
+              <span className="inline-block w-2 h-2 bg-amber-400 rounded-full"></span>
+              Deferred until Clerk MFA is enabled for the production plan.
+            </p>
+          </div>
         </div>
-      )}
+      </div>
 
       <div className="space-y-6">
         <h3 className="text-sm font-bold text-slate-300 uppercase tracking-widest mt-8 mb-4">
           Password Management
         </h3>
-        <div className="grid grid-cols-1 gap-4 max-w-lg">
-          <div className="space-y-2">
-            <Label className="text-slate-400 text-xs">Current Password</Label>
-            <Input type="password" className="bg-[#252525] border-white/5 text-white" />
-          </div>
-          <div className="space-y-2">
-            <Label className="text-slate-400 text-xs">New Password</Label>
-            <Input type="password" className="bg-[#252525] border-white/5 text-white" />
+        <div className="bg-white/[0.02] border border-white/5 rounded-xl p-5">
+          <div className="flex items-center gap-4">
+            <div>
+              <p className="text-white font-medium text-sm">Password changes are managed by Clerk.</p>
+              <p className="text-xs text-slate-500 mt-1">
+                Use the Clerk account controls in the header avatar menu to update password and connected accounts.
+              </p>
+            </div>
           </div>
         </div>
-        <Button disabled className="bg-white/5 text-slate-500">
-          Update Password
-        </Button>
       </div>
     </div>
   );

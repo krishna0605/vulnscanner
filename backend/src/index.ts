@@ -6,8 +6,9 @@ dotenv.config();
 console.log('[Startup] Environment check:');
 console.log('  - PORT:', process.env.PORT || '(not set, using 3001)');
 console.log('  - NODE_ENV:', process.env.NODE_ENV || '(not set)');
-console.log('  - SUPABASE_URL:', process.env.SUPABASE_URL ? 'SET' : 'MISSING');
-console.log('  - SUPABASE_SERVICE_ROLE_KEY:', process.env.SUPABASE_SERVICE_ROLE_KEY ? 'SET' : 'MISSING');
+console.log('  - CONVEX_SITE_URL:', process.env.CONVEX_SITE_URL ? 'SET' : 'MISSING');
+console.log('  - SCANNER_SERVICE_TOKEN:', process.env.SCANNER_SERVICE_TOKEN ? 'SET' : 'MISSING');
+console.log('  - SUPABASE_URL (legacy):', process.env.SUPABASE_URL ? 'SET' : 'MISSING');
 console.log('  - ALLOWED_ORIGINS:', process.env.ALLOWED_ORIGINS || '(not set)');
 
 import { buildApp, getAllowedOrigins } from './app';

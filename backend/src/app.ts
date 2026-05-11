@@ -6,6 +6,7 @@ import { projectRoutes } from './routes/projects';
 import { scanRoutes } from './routes/scans';
 import { profileRoutes } from './routes/profiles';
 import { mfaRoutes } from './routes/mfa';
+import { scannerRoutes } from './routes/scanner';
 import { registerAuthPlugin } from './middleware/auth';
 import { AppError } from './lib/errors';
 import { z } from 'zod';
@@ -61,7 +62,7 @@ export async function buildApp(): Promise<FastifyInstance> {
             scriptSrc: ["'self'"],
             styleSrc: ["'self'", "'unsafe-inline'"],
             imgSrc: ["'self'", 'data:', 'https:'],
-            connectSrc: ["'self'", 'https://*.supabase.co'],
+            connectSrc: ["'self'", 'https://*.convex.site', 'https://*.convex.cloud'],
           },
         }
       : false, // Disable CSP in development for easier debugging
@@ -272,6 +273,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   });
 
   // Register routes
+  fastify.register(scannerRoutes);
   fastify.register(projectRoutes);
   fastify.register(scanRoutes);
   fastify.register(profileRoutes);
@@ -288,16 +290,13 @@ export async function buildApp(): Promise<FastifyInstance> {
     let dbStatus: 'healthy' | 'unhealthy' = 'unhealthy';
     let dbLatency = 0;
 
-    // Check database connectivity
+    // Check Convex scanner connectivity configuration
     try {
-      const { createClient } = await import('@supabase/supabase-js');
-      const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
       const dbStart = Date.now();
-      const { error } = await supabase.from('projects').select('id').limit(1);
       dbLatency = Date.now() - dbStart;
-      dbStatus = error ? 'unhealthy' : 'healthy';
+      dbStatus = env.CONVEX_SITE_URL && env.SCANNER_SERVICE_TOKEN ? 'healthy' : 'unhealthy';
     } catch (e) {
-      request.log.warn({ err: e }, 'Health check: database connectivity failed');
+      request.log.warn({ err: e }, 'Health check: Convex configuration failed');
     }
 
     const overallStatus = dbStatus === 'healthy' ? 'healthy' : 'degraded';

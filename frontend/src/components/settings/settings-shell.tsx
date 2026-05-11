@@ -20,7 +20,7 @@ interface SettingsShellProps {
 
 const TABS = [
   { id: 'profile', label: 'Profile & Account', icon: User },
-  { id: 'security', label: 'Security & 2FA', icon: Shield },
+  { id: 'security', label: 'Security', icon: Shield },
   { id: 'notifications', label: 'Notifications', icon: Bell },
   { id: 'api', label: 'API & Integrations', icon: Key },
   { id: 'system', label: 'System Preferences', icon: Monitor },

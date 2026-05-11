@@ -1,6 +1,6 @@
 const { Client } = require('pg');
 
-const connectionString = 'postgresql://postgres:Krishna%402003%23kapoor@db.djiiorrvmonqdccnftyq.supabase.co:5432/postgres';
+const connectionString = process.env.DATABASE_URL || '';
 
 const SQL = `
 -- Add missing status column if it doesn't exist
@@ -36,3 +36,4 @@ async function run() {
 }
 
 run();
+

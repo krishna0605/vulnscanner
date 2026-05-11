@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 // Using simpler icons for the top nav or keeping it text-based for a cleaner look
-import { Bell, Shield } from 'lucide-react';
+import { Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { UserButton, useUser } from '@clerk/nextjs';
 
 const navItems = [
   { title: 'Dashboard', href: '/dashboard' },
@@ -16,53 +16,11 @@ const navItems = [
   { title: 'Settings', href: '/settings' },
 ];
 
-interface UserProfile {
-  avatarUrl: string | null;
-  displayName: string;
-  plan: string;
-}
-
 export function Header() {
   const pathname = usePathname();
-  const [profile, setProfile] = useState<UserProfile>({
-    avatarUrl: null,
-    displayName: 'User',
-    plan: 'Free Plan',
-  });
-  const [loading, setLoading] = useState(true);
-
-  // Create Supabase client
-  const supabase = useMemo(() => {
-    const { createClient } = require('@/utils/supabase/client');
-    return createClient();
-  }, []);
-
-  // Fetch user profile on mount
-  useEffect(() => {
-    async function loadProfile() {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          const { data: profileData } = await supabase
-            .from('profiles')
-            .select('full_name, avatar_url')
-            .eq('id', user.id)
-            .single();
-
-          setProfile({
-            avatarUrl: profileData?.avatar_url || null,
-            displayName: profileData?.full_name || user.email?.split('@')[0] || 'User',
-            plan: 'Free Plan',
-          });
-        }
-      } catch (error) {
-        console.error('Error loading profile:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadProfile();
-  }, [supabase]);
+  const { user } = useUser();
+  const displayName =
+    user?.fullName || user?.primaryEmailAddress?.emailAddress?.split('@')[0] || 'User';
 
   return (
     <header className="sticky top-0 z-50 h-20 glass-nav transition-all duration-300 w-full">
@@ -158,30 +116,10 @@ export function Header() {
 
           <div className="flex items-center gap-3">
             <div className="hidden md:block text-right">
-              <p className="text-xs font-medium text-white">{profile.displayName}</p>
+              <p className="text-xs font-medium text-white">{displayName}</p>
             </div>
-            {profile.avatarUrl ? (
-              <img
-                src={profile.avatarUrl}
-                alt="Avatar"
-                className="h-9 w-9 rounded-full object-cover border border-white/20 shadow-glow"
-              />
-            ) : (
-              <div className="h-9 w-9 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 border border-white/20 shadow-glow flex items-center justify-center text-white text-sm font-bold">
-                {profile.displayName.charAt(0).toUpperCase()}
-              </div>
-            )}
+            <UserButton afterSignOutUrl="/" />
           </div>
-
-          <form action="/auth/signout" method="post">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="ml-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
-            >
-              <span className="material-symbols-outlined text-lg">logout</span>
-            </Button>
-          </form>
         </div>
       </div>
     </header>
