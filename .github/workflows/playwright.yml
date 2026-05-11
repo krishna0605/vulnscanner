@@ -103,6 +103,7 @@ jobs:
       - name: Run Playwright tests
         run: npx playwright test
         env:
+          E2E_SKIP_AUTH: "true"
           NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_c2Vuc2libGUtbGlnZXItMjcuY2xlcmsuYWNjb3VudHMuZGV2JA
           NEXT_PUBLIC_CLERK_SIGN_IN_URL: /sign-in
           NEXT_PUBLIC_CLERK_SIGN_UP_URL: /sign-up
