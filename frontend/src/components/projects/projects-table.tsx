@@ -21,7 +21,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { MoreHorizontal } from 'lucide-react';
-import { ProjectTableRow } from '@/lib/api';
+import type { ProjectTableRow } from '@/lib/api';
 import { formatDistanceToNow } from 'date-fns';
 import { useRouter } from 'next/navigation';
 import { deleteProject, startProjectScan } from '@/app/actions';

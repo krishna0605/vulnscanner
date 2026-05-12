@@ -1,149 +1,84 @@
 # Deployment Guide
 
-This document covers deploying VulnScanner to production environments.
+VulnScanner uses a split deployment:
 
-## Deployment Options
+| Area | Platform | Responsibility |
+| --- | --- | --- |
+| Frontend | Vercel | Next.js UI and server actions |
+| Auth | Clerk | Sign-in, sign-up, sessions, user identity |
+| Data/backend functions | Convex | DB, realtime queries, mutations, scanner writebacks |
+| Scanner runtime | Railway | Playwright crawling and long-running scan jobs |
+| AI enrichment | Hugging Face | Optional model/API calls |
 
-| Option               | Frontend  | Backend   | Complexity |
-| -------------------- | --------- | --------- | ---------- |
-| **Vercel + Railway** | Vercel    | Railway   | Low        |
-| **Docker Compose**   | Container | Container | Medium     |
-| **Kubernetes**       | K8s       | K8s       | High       |
+## Vercel
 
----
+Set the project root to `frontend`.
 
-## Option 1: Vercel + Railway (Recommended)
-
-### Frontend (Vercel)
-
-1. **Connect Repository**
-
-   ```bash
-   # Install Vercel CLI
-   npm i -g vercel
-
-   # Deploy from frontend directory
-   cd frontend
-   vercel
-   ```
-
-2. **Configure Environment Variables** in Vercel Dashboard:
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - `BACKEND_URL` (Railway URL)
-
-### Backend (Railway)
-
-1. **Connect Repository** via Railway Dashboard
-2. **Set Root Directory** to `backend`
-3. **Configure Environment Variables**:
-   - `SUPABASE_URL`
-   - `SUPABASE_SERVICE_ROLE_KEY`
-   - `ALLOWED_ORIGINS` (Vercel URL)
-   - `PORT=3001`
-
----
-
-## Option 2: Docker Compose
-
-### Prerequisites
-
-- Docker & Docker Compose installed
-- Environment variables configured
-
-### Deploy
-
-```bash
-# Create .env file from example
-cp backend/.env.example .env
-
-# Build and start services
-docker-compose up -d --build
-
-# View logs
-docker-compose logs -f
-
-# Stop services
-docker-compose down
-```
-
-### Environment Variables
-
-Create a `.env` file in the project root:
+Required variables:
 
 ```env
-# Supabase
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+NEXT_PUBLIC_CONVEX_URL=https://your-convex-deployment.convex.cloud
+NEXT_PUBLIC_CONVEX_SITE_URL=https://your-convex-deployment.convex.site
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_live_...
+CLERK_SECRET_KEY=sk_live_...
+CLERK_WEBHOOK_SECRET=whsec_...
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
+NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
+NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/dashboard
+NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/dashboard
+BACKEND_URL=https://your-railway-service.up.railway.app
 ```
 
----
+## Convex
+
+Deploy from `frontend`:
+
+```bash
+cd frontend
+npx convex deploy
+```
+
+Required variables:
+
+```env
+CLERK_JWT_ISSUER_DOMAIN=https://your-clerk-domain.clerk.accounts.dev
+CLERK_WEBHOOK_SECRET=whsec_...
+RAILWAY_BACKEND_URL=https://your-railway-service.up.railway.app
+SCANNER_SERVICE_TOKEN=replace-with-a-long-random-shared-secret
+```
+
+## Railway
+
+Deploy the `backend` directory.
+
+Required variables:
+
+```env
+CONVEX_SITE_URL=https://your-convex-deployment.convex.site
+SCANNER_SERVICE_TOKEN=replace-with-the-same-secret-used-in-convex
+NODE_ENV=production
+PORT=3001
+ALLOWED_ORIGINS=https://your-vercel-domain.vercel.app
+RATE_LIMIT_MAX=100
+RATE_LIMIT_WINDOW_MS=60000
+```
+
+Optional variables:
+
+```env
+SENTRY_DSN=https://your-dsn@sentry.io/project-id
+HUGGINGFACE_API_TOKEN=hf_...
+```
 
 ## Health Checks
 
-Both services expose health endpoints:
+| Service | Endpoint |
+| --- | --- |
+| Frontend | `/api/health` |
+| Backend | `/health` |
 
-| Service  | Endpoint      | Expected Response            |
-| -------- | ------------- | ---------------------------- |
-| Frontend | `/api/health` | `{ status: 'ok' }`           |
-| Backend  | `/health`     | `{ status: 'healthy', ... }` |
+## Rollback
 
----
-
-## CI/CD Pipeline
-
-The GitHub Actions workflow (`.github/workflows/ci.yml`) handles:
-
-1. **Lint & Type Check** - Code quality
-2. **Unit Tests** - Backend/Frontend tests
-3. **Build** - Compile TypeScript, Next.js build
-4. **Docker Build** - Container image creation (on main branch)
-
----
-
-## Rollback Procedure
-
-### Vercel
-
-```bash
-vercel rollback [deployment-url]
-```
-
-### Railway
-
-Use Railway dashboard to redeploy previous commit.
-
-### Docker
-
-```bash
-# Tag previous working image
-docker tag vulnscanner-backend:latest vulnscanner-backend:rollback
-
-# Rollback
-docker-compose down
-docker tag vulnscanner-backend:rollback vulnscanner-backend:latest
-docker-compose up -d
-```
-
----
-
-## Monitoring & Observability
-
-| Tool               | Purpose           | Integration        |
-| ------------------ | ----------------- | ------------------ |
-| Sentry             | Error Tracking    | Already configured |
-| Supabase Dashboard | DB Metrics        | Built-in           |
-| Docker Stats       | Container Metrics | `docker stats`     |
-
----
-
-## Security Checklist
-
-- [ ] Environment variables set (not hardcoded)
-- [ ] CORS configured for production domains only
-- [ ] Rate limiting enabled
-- [ ] HTTPS enforced (Vercel/Railway handle this)
-- [ ] Non-root container users
-- [ ] Health checks configured
+- Vercel: redeploy a previous frontend deployment.
+- Railway: redeploy a previous backend deployment.
+- Convex: redeploy the previous code revision if schema/function changes need to be rolled back.

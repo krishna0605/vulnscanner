@@ -11,10 +11,7 @@ dotenv.config({ path: path.resolve(__dirname, '../../.env') });
  * If any required variable is missing or invalid, the app will fail to start.
  */
 const envSchema = z.object({
-  // Database
-  SUPABASE_URL: z.string().url('SUPABASE_URL must be a valid URL').optional(),
-  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1, 'SUPABASE_SERVICE_ROLE_KEY is required').optional(),
-  DATABASE_URL: z.string().url().optional(),
+  // Convex scanner bridge
   CONVEX_SITE_URL: z.string().url('CONVEX_SITE_URL must be a valid URL').optional(),
   SCANNER_SERVICE_TOKEN: z.string().min(16, 'SCANNER_SERVICE_TOKEN must be at least 16 chars').optional(),
 

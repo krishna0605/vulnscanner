@@ -1,9 +1,11 @@
 import { query } from "./_generated/server";
+import type { QueryCtx } from "./_generated/server";
+import type { Id } from "./_generated/dataModel";
 import { v } from "convex/values";
 import { requireCurrentUser } from "./lib/auth";
 
-async function ownedProjects(ctx: any, userId: any) {
-  return await ctx.db.query("projects").withIndex("by_owner", (q: any) => q.eq("ownerId", userId)).collect();
+async function ownedProjects(ctx: QueryCtx, userId: Id<"users">) {
+  return await ctx.db.query("projects").withIndex("by_owner", (q) => q.eq("ownerId", userId)).collect();
 }
 
 export const globalStats = query({
@@ -11,7 +13,7 @@ export const globalStats = query({
   handler: async (ctx) => {
     const user = await requireCurrentUser(ctx);
     const projects = await ownedProjects(ctx, user._id);
-    const projectIds = new Set(projects.map((project: any) => project._id));
+    const projectIds = new Set(projects.map((project) => project._id));
     const scans = (await ctx.db.query("scans").withIndex("by_owner", (q) => q.eq("ownerId", user._id)).collect());
     const findings = (await ctx.db.query("findings").collect()).filter((finding) => projectIds.has(finding.projectId));
     const critical = findings.filter((finding) => finding.severity === "critical").length;
@@ -36,7 +38,7 @@ export const recentScans = query({
     const user = await requireCurrentUser(ctx);
     const scans = await ctx.db.query("scans").withIndex("by_owner", (q) => q.eq("ownerId", user._id)).collect();
     const projects = await ownedProjects(ctx, user._id);
-    const projectById = new Map(projects.map((project: any) => [project._id, project]));
+    const projectById = new Map(projects.map((project) => [project._id, project]));
     return scans
       .sort((a, b) => b.createdAt - a.createdAt)
       .slice(0, args.limit ?? 20)
@@ -65,7 +67,7 @@ export const scanReport = query({
     const typeCounts = new Map<string, number>();
 
     for (const finding of findings) {
-      severityDistribution[finding.severity] += 1;
+      severityDistribution[finding.severity as keyof typeof severityDistribution] += 1;
       typeCounts.set(finding.title, (typeCounts.get(finding.title) ?? 0) + 1);
     }
 

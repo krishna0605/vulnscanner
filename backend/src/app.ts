@@ -2,12 +2,7 @@ import Fastify, { FastifyInstance } from 'fastify';
 import cors from '@fastify/cors';
 import rateLimit from '@fastify/rate-limit';
 import helmet from '@fastify/helmet';
-import { projectRoutes } from './routes/projects';
-import { scanRoutes } from './routes/scans';
-import { profileRoutes } from './routes/profiles';
-import { mfaRoutes } from './routes/mfa';
 import { scannerRoutes } from './routes/scanner';
-import { registerAuthPlugin } from './middleware/auth';
 import { AppError } from './lib/errors';
 import { z } from 'zod';
 import * as Sentry from '@sentry/node';
@@ -111,9 +106,7 @@ export async function buildApp(): Promise<FastifyInstance> {
         },
       },
       tags: [
-        { name: 'Scans', description: 'Vulnerability scan operations' },
-        { name: 'Projects', description: 'Project management' },
-        { name: 'Profiles', description: 'Scan profile configuration' },
+        { name: 'Scanner', description: 'Railway scanner worker operations' },
       ],
     },
   });
@@ -144,9 +137,6 @@ export async function buildApp(): Promise<FastifyInstance> {
       message: `Rate limit exceeded. You can make ${context.max} requests per ${context.after}. Please try again later.`,
     }),
   });
-
-  // Register Authentication Plugin (protects all non-public routes)
-  registerAuthPlugin(fastify);
 
   // Audit Logging - log all requests for security monitoring
   fastify.addHook('onResponse', (request, reply, done) => {
@@ -272,12 +262,8 @@ export async function buildApp(): Promise<FastifyInstance> {
     });
   });
 
-  // Register routes
+  // Register scanner routes. App data and auth live in Convex + Clerk.
   fastify.register(scannerRoutes);
-  fastify.register(projectRoutes);
-  fastify.register(scanRoutes);
-  fastify.register(profileRoutes);
-  fastify.register(mfaRoutes);
 
   // Health check endpoints (public, no auth required)
   fastify.get('/', async function handler(request, reply) {
@@ -307,7 +293,7 @@ export async function buildApp(): Promise<FastifyInstance> {
       uptime: process.uptime(),
       version: process.env.npm_package_version || '1.0.0',
       checks: {
-        database: {
+        convex: {
           status: dbStatus,
           latency_ms: dbLatency,
         },

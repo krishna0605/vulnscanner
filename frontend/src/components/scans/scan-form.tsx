@@ -1,8 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/utils/supabase/client';
+import { useAction, useQuery } from 'convex/react';
+import { api } from '@convex/_generated/api';
+import type { Id } from '@convex/_generated/dataModel';
 import { logger } from '@/utils/logger';
 
 import { motion } from 'framer-motion';
@@ -51,7 +53,8 @@ import {
 
 export function ScanForm() {
   const [loading, setLoading] = useState(false);
-  const [projects, setProjects] = useState<any[]>([]);
+  const projects = useQuery(api.projects.list, { status: 'active' }) ?? [];
+  const startScan = useAction(api.scans.start);
   const [formData, setFormData] = useState({
     projectId: '',
     url: '',
@@ -87,7 +90,6 @@ export function ScanForm() {
     concurrency: 5,
   });
   const router = useRouter();
-  const supabase = createClient();
 
   // Static Scan Types Definition
   const DEFAULT_SCAN_TYPES = [
@@ -180,19 +182,6 @@ export function ScanForm() {
   const [profiles, setProfiles] = useState<any[]>(DEFAULT_SCAN_TYPES);
   const [selectedProfileId, setSelectedProfileId] = useState<string>('standard');
 
-  useEffect(() => {
-    // Fetch Projects Only
-    async function initData() {
-      const { data: projData } = await supabase.from('projects').select('id, name');
-      if (projData) setProjects(projData);
-      
-      // Auto-select standard profile logic
-      handleProfileChange('standard');
-    }
-    initData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [supabase]);
-
   const handleProfileChange = (profileId: string) => {
     setSelectedProfileId(profileId);
     const profile = profiles.find((p) => p.id === profileId);
@@ -235,55 +224,43 @@ export function ScanForm() {
 
     setLoading(true);
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      const res = await fetch('/api/scans', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session?.access_token}`,
+      const result = await startScan({
+        projectId: formData.projectId as Id<'projects'>,
+        targetUrl: formData.url,
+        type: formData.scanType as any,
+        config: {
+          scanType: formData.scanType,
+          maxDepth: formData.maxDepth,
+          maxPages: formData.scanType === 'deep' ? 200 : 50,
+          checkHeaders: formData.checkHeaders,
+          checkCookies: formData.checkCookies,
+          checkSSL: formData.checkSSL,
+          checkOSINT: formData.checkOSINT,
+          checkMixedContent: formData.checkMixedContent,
+          checkComments: formData.checkComments,
+          checkSCA: formData.checkSCA,
+          checkProbing: formData.checkProbing,
+          isScheduled: formData.isScheduled,
+          scheduleCron: formData.isScheduled ? formData.scheduleCron : null,
+          authEnabled: formData.authEnabled,
+          authLoginUrl: formData.authLoginUrl,
+          authUsername: formData.authUsername,
+          authPassword: formData.authPassword,
+          vectorSQLi: formData.vectorSQLi,
+          vectorXSS: formData.vectorXSS,
+          vectorLFI: formData.vectorLFI,
+          vectorCmdInj: formData.vectorCmdInj,
+          vectorSSRF: formData.vectorSSRF,
+          vectorMisconfig: formData.vectorMisconfig,
+          rateLimit: formData.rateLimit,
+          concurrency: formData.concurrency,
         },
-        body: JSON.stringify({
-          projectId: formData.projectId,
-          targetUrl: formData.url,
-          config: {
-            scanType: formData.scanType,
-            maxDepth: formData.maxDepth,
-            maxPages: formData.scanType === 'deep' ? 200 : 50,
-            checkHeaders: formData.checkHeaders,
-            checkCookies: formData.checkCookies,
-            checkSSL: formData.checkSSL,
-            checkOSINT: formData.checkOSINT,
-            checkMixedContent: formData.checkMixedContent,
-            checkComments: formData.checkComments,
-            checkSCA: formData.checkSCA,
-            checkProbing: formData.checkProbing,
-            isScheduled: formData.isScheduled,
-            scheduleCron: formData.isScheduled ? formData.scheduleCron : null,
-            authEnabled: formData.authEnabled,
-            authLoginUrl: formData.authLoginUrl,
-            authUsername: formData.authUsername,
-            authPassword: formData.authPassword,
-            vectorSQLi: formData.vectorSQLi,
-            vectorXSS: formData.vectorXSS,
-            vectorLFI: formData.vectorLFI,
-            vectorCmdInj: formData.vectorCmdInj,
-            vectorSSRF: formData.vectorSSRF,
-            vectorMisconfig: formData.vectorMisconfig,
-            rateLimit: formData.rateLimit,
-            concurrency: formData.concurrency,
-          },
-        }),
       });
-      const data = await res.json();
-      // Handle wrapped response
-      const scanId = data.success ? data.data?.id : data.id; 
-      
-      if (scanId) {
-        router.push(`/scans/${scanId}`);
+
+      if (result?.id) {
+        router.push(`/scans/${result.id}`);
       } else {
-        alert(data.error || 'Failed to start scan');
+        alert('Failed to start scan');
       }
     } catch (e) {
       logger.error('Error starting scan', { error: e });
@@ -306,13 +283,22 @@ export function ScanForm() {
             <Label className="text-slate-400 text-xs uppercase tracking-wider font-mono">
               Select Project
             </Label>
-            <Select onValueChange={(v: string) => setFormData({ ...formData, projectId: v })}>
+            <Select
+              onValueChange={(v: string) => {
+                const selected = projects.find((project: any) => project._id === v);
+                setFormData({
+                  ...formData,
+                  projectId: v,
+                  url: formData.url || selected?.targetUrls?.[0] || '',
+                });
+              }}
+            >
               <SelectTrigger className="w-full h-12 bg-white/5 border-white/10 text-white rounded-xl">
                 <SelectValue>Select a project...</SelectValue>
               </SelectTrigger>
               <SelectContent className="bg-[#313131] border-white/10 text-white">
-                {projects.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>
+                {projects.map((p: any) => (
+                  <SelectItem key={p._id} value={p._id}>
                     {p.name}
                   </SelectItem>
                 ))}

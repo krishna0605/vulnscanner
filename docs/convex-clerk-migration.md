@@ -1,14 +1,13 @@
-# Convex + Clerk Migration
+# Convex + Clerk Architecture
 
-This project is being migrated from Supabase Auth/Postgres/Realtime to Clerk + Convex.
+This project now uses Clerk + Convex as the active auth and data platform.
 
-## Target Ownership
+## Ownership
 
 - Clerk owns authentication, sessions, OAuth, profile identity, and auth UI.
 - Convex owns application data, realtime reads, mutations, scan state, logs, findings, comments, reports, integrations, and activity.
 - Railway owns Playwright scanning and writes status/results back to Convex through Convex HTTP actions.
-- Hugging Face remains optional and should initially be called from Railway when scan enrichment needs long-running work.
-- Supabase remains only as a temporary migration/backout dependency until the cutover is verified.
+- Hugging Face remains optional and should be called from Railway when scan enrichment needs long-running work.
 
 ## Local Setup
 
@@ -18,8 +17,6 @@ From `frontend`:
 npm install
 npx convex dev
 ```
-
-Create or select a Convex project when prompted. Convex will generate `frontend/convex/_generated` and local Convex env entries.
 
 From `backend`:
 
@@ -36,6 +33,7 @@ Vercel/frontend:
 
 ```env
 NEXT_PUBLIC_CONVEX_URL=https://your-convex-deployment.convex.cloud
+NEXT_PUBLIC_CONVEX_SITE_URL=https://your-convex-deployment.convex.site
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_live_...
 CLERK_SECRET_KEY=sk_live_...
 CLERK_WEBHOOK_SECRET=whsec_...
@@ -78,7 +76,7 @@ NEXT_PUBLIC_SENTRY_DSN=https://...
 ## Clerk Setup
 
 1. Create development and production Clerk apps.
-2. Enable email/password and Google OAuth.
+2. Enable email/password and any social providers you need.
 3. Set sign-in URL to `/sign-in`.
 4. Set sign-up URL to `/sign-up`.
 5. Set after sign-in and after sign-up URLs to `/dashboard`.
@@ -96,18 +94,15 @@ npx convex deploy
 
 Deploy Convex before deploying Vercel/Railway production so generated functions and HTTP endpoints exist.
 
-## Migration Sequence
+## Validation Sequence
 
-1. Rotate old Supabase database credentials before migration.
-2. Create Clerk and Convex dev/prod apps.
-3. Add Convex dashboard variables.
-4. Add Vercel variables.
-5. Add Railway variables.
-6. Run `npx convex dev` to generate Convex client/server files.
-7. Test Clerk sign-in, Clerk webhook user sync, project creation, scan dispatch, scanner progress, findings, comments, and reports in dev.
-8. Export Supabase tables and import compact records into Convex using `legacySupabaseId` fields for mapping.
-9. Keep Supabase read-only for 7-14 days.
-10. Remove Supabase env vars, archived debug scripts, and legacy compatibility routes once production reports match.
+1. Confirm Clerk sign-in reaches `/dashboard`.
+2. Confirm Clerk webhook user sync writes to Convex.
+3. Confirm project creation writes to Convex.
+4. Confirm scan dispatch creates a queued scan in Convex.
+5. Confirm Railway receives the scanner job.
+6. Confirm Railway writes progress, logs, assets, findings, and completion back to Convex.
+7. Confirm reports and dashboards read from Convex.
 
 ## Free-Tier Guardrails
 

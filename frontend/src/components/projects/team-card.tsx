@@ -3,7 +3,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { TeamMember } from '@/lib/api';
+import type { TeamMember } from '@/lib/api';
 import { GlassCard } from './motion-wrapper';
 
 export function TeamCard({ members }: { members: TeamMember[] }) {

@@ -1,6 +1,6 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
-import { requireCurrentUser } from "./lib/auth";
+import { requireCurrentUser, requireProjectOwner } from "./lib/auth";
 
 export const get = query({
   args: { findingId: v.id("findings") },
@@ -36,6 +36,46 @@ export const related = query({
     if (!scan || scan.ownerId !== user._id) return [];
     return (await ctx.db.query("findings").withIndex("by_scan", (q) => q.eq("scanId", args.scanId)).collect())
       .filter((finding) => finding.title === args.title && finding.severity === args.severity);
+  },
+});
+
+export const listOpen = query({
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    const user = await requireCurrentUser(ctx);
+    const projects = await ctx.db.query("projects").withIndex("by_owner", (q) => q.eq("ownerId", user._id)).collect();
+    const projectById = new Map(projects.map((project) => [project._id, project]));
+    const projectIds = new Set(projects.map((project) => project._id));
+    return (await ctx.db.query("findings").collect())
+      .filter((finding) => projectIds.has(finding.projectId) && finding.status === "open")
+      .sort((a, b) => b.createdAt - a.createdAt)
+      .slice(0, args.limit ?? 20)
+      .map((finding) => ({
+        ...finding,
+        id: finding._id,
+        projectName: projectById.get(finding.projectId)?.name ?? "Unknown Project",
+        detectedAt: new Date(finding.createdAt).toISOString(),
+        cveId: finding.cveId,
+      }));
+  },
+});
+
+export const byProject = query({
+  args: { projectId: v.id("projects") },
+  handler: async (ctx, args) => {
+    await requireProjectOwner(ctx, args.projectId);
+    return (await ctx.db.query("findings").withIndex("by_project", (q) => q.eq("projectId", args.projectId)).collect())
+      .filter((finding) => finding.status === "open")
+      .sort((a, b) => b.createdAt - a.createdAt)
+      .map((finding) => ({
+        id: finding._id,
+        title: finding.title,
+        severity: finding.severity,
+        status: finding.status,
+        project_id: finding.projectId,
+        created_at: new Date(finding.createdAt).toISOString(),
+        location: finding.location ?? "Unknown",
+      }));
   },
 });
 

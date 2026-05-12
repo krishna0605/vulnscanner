@@ -1,6 +1,6 @@
 'use client';
 
-import { AssetStat } from '@/lib/api';
+import type { AssetStat } from '@/lib/api';
 import { GlassCard } from './motion-wrapper';
 import { motion } from 'framer-motion';
 

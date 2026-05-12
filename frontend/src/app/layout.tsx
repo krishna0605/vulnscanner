@@ -25,6 +25,8 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const skipAuthForE2E = process.env.E2E_SKIP_AUTH === 'true';
+
   return (
     <html lang="en">
       <head>
@@ -34,12 +36,19 @@ export default function RootLayout({
         />
       </head>
       <body className={`${spaceGrotesk.variable} ${jetbrainsMono.variable} font-sans antialiased`}>
-        <ClerkProvider>
-          <ConvexClientProvider>
+        {skipAuthForE2E ? (
+          <>
             {children}
             <Toaster />
-          </ConvexClientProvider>
-        </ClerkProvider>
+          </>
+        ) : (
+          <ClerkProvider>
+            <ConvexClientProvider>
+              {children}
+              <Toaster />
+            </ConvexClientProvider>
+          </ClerkProvider>
+        )}
       </body>
     </html>
   );

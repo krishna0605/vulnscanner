@@ -1,38 +1,18 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Calendar, Timer, CheckCircle, TrendingUp } from 'lucide-react';
-import { getScanStats } from '@/lib/api-client';
-
-import { createClient } from '@/utils/supabase/client';
+import { Calendar, Timer, CheckCircle } from 'lucide-react';
+import { useQuery } from 'convex/react';
+import { api } from '@convex/_generated/api';
 
 export function ScanStats() {
-  const [stats, setStats] = useState({ monthCount: 0, avgDuration: '-', successRate: '-' });
-  const supabase = createClient();
-
-  const fetchStats = async () => {
-    const data = await getScanStats();
-    setStats(data);
+  const stats = useQuery(api.scans.stats, {}) ?? {
+    monthCount: 0,
+    avgDuration: '-',
+    successRate: '-',
   };
-
-  useEffect(() => {
-    fetchStats();
-
-    const channel = supabase
-      .channel('stats-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'scans' }, () => {
-        fetchStats();
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-      {/* Scans This Month */}
       <div className="glass-panel p-6 rounded-[24px] hover:bg-white/5 transition-colors group relative overflow-hidden">
         <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl -mr-6 -mt-6 transition-all group-hover:bg-emerald-500/20"></div>
         <div className="flex justify-between items-start mb-4">
@@ -44,7 +24,6 @@ export function ScanStats() {
         <p className="text-slate-400 text-sm font-medium">Scans This Month</p>
       </div>
 
-      {/* Average Duration */}
       <div className="glass-panel p-6 rounded-[24px] hover:bg-white/5 transition-colors group relative overflow-hidden">
         <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl -mr-6 -mt-6 transition-all group-hover:bg-blue-500/20"></div>
         <div className="flex justify-between items-start mb-4">
@@ -56,7 +35,6 @@ export function ScanStats() {
         <p className="text-slate-400 text-sm font-medium">Average Duration</p>
       </div>
 
-      {/* Success Rate */}
       <div className="glass-panel p-6 rounded-[24px] hover:bg-white/5 transition-colors group relative overflow-hidden">
         <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl -mr-6 -mt-6 transition-all group-hover:bg-purple-500/20"></div>
         <div className="flex justify-between items-start mb-4">

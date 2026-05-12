@@ -27,7 +27,6 @@ export default defineSchema({
     avatarUrl: v.optional(v.string()),
     role: v.optional(v.string()),
     plan: v.optional(v.string()),
-    legacySupabaseId: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -40,13 +39,11 @@ export default defineSchema({
     description: v.optional(v.string()),
     status: v.union(v.literal("active"), v.literal("archived"), v.literal("maintenance")),
     targetUrls: v.array(v.string()),
-    legacySupabaseId: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index("by_owner", ["ownerId"])
-    .index("by_owner_status", ["ownerId", "status"])
-    .index("by_legacy_supabase_id", ["legacySupabaseId"]),
+    .index("by_owner_status", ["ownerId", "status"]),
 
   assets: defineTable({
     projectId: v.id("projects"),
@@ -57,13 +54,11 @@ export default defineSchema({
     title: v.optional(v.string()),
     metadata: v.optional(v.any()),
     riskScore: v.optional(v.number()),
-    legacySupabaseId: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index("by_project", ["projectId"])
-    .index("by_scan", ["scanId"])
-    .index("by_legacy_supabase_id", ["legacySupabaseId"]),
+    .index("by_scan", ["scanId"]),
 
   scans: defineTable({
     projectId: v.id("projects"),
@@ -78,7 +73,6 @@ export default defineSchema({
     findingsCount: v.optional(v.number()),
     highSeverityCount: v.optional(v.number()),
     node: v.optional(v.string()),
-    legacySupabaseId: v.optional(v.string()),
     startedAt: v.optional(v.number()),
     completedAt: v.optional(v.number()),
     createdAt: v.number(),
@@ -87,8 +81,7 @@ export default defineSchema({
     .index("by_project", ["projectId"])
     .index("by_owner", ["ownerId"])
     .index("by_owner_status", ["ownerId", "status"])
-    .index("by_project_created", ["projectId", "createdAt"])
-    .index("by_legacy_supabase_id", ["legacySupabaseId"]),
+    .index("by_project_created", ["projectId", "createdAt"]),
 
   scanLogs: defineTable({
     scanId: v.id("scans"),
@@ -112,15 +105,13 @@ export default defineSchema({
     cvssScore: v.optional(v.number()),
     referenceLinks: v.optional(v.any()),
     affectedAssets: v.optional(v.any()),
-    legacySupabaseId: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index("by_scan", ["scanId"])
     .index("by_project", ["projectId"])
     .index("by_project_status", ["projectId", "status"])
-    .index("by_scan_severity", ["scanId", "severity"])
-    .index("by_legacy_supabase_id", ["legacySupabaseId"]),
+    .index("by_scan_severity", ["scanId", "severity"]),
 
   findingComments: defineTable({
     findingId: v.id("findings"),
@@ -133,7 +124,6 @@ export default defineSchema({
     projectId: v.id("projects"),
     type: v.union(v.literal("jira"), v.literal("github")),
     config: v.any(),
-    legacySupabaseId: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })

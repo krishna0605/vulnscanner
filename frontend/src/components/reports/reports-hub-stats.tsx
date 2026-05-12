@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { ShieldCheck, Activity, AlertTriangle, Layers } from 'lucide-react';
-import { ReportsGlobalStats } from '@/lib/api';
+import type { ReportsGlobalStats } from '@/lib/api';
 
 interface ReportsHubStatsProps {
   stats: ReportsGlobalStats;

@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
-import { ReportProjectSummary } from '@/lib/api';
+import type { ReportProjectSummary } from '@/lib/api';
 
 interface ProjectsListProps {
   projects: ReportProjectSummary[];

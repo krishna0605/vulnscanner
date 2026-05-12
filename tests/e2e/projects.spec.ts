@@ -103,16 +103,16 @@ test.describe('Project Management', () => {
     });
   });
 
-  // Skip in CI - requires Supabase for session verification and redirect
+  // Skip until Clerk test-user auth is wired into the E2E suite.
   test.describe.skip('Public Pages', () => {
     test('projects page redirects to login when not authenticated', async ({ page }) => {
       await page.goto('/projects');
-      await expect(page).toHaveURL(/login/);
+      await expect(page).toHaveURL(/sign-in/);
     });
 
     test('project detail page redirects to login when not authenticated', async ({ page }) => {
       await page.goto('/projects/some-project-id');
-      await expect(page).toHaveURL(/login/);
+      await expect(page).toHaveURL(/sign-in/);
     });
   });
 });

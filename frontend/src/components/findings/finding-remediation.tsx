@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { FindingDetails } from '@/lib/api';
+import type { FindingDetails } from '@/lib/api';
 import { formatDistanceToNow } from 'date-fns';
 
 interface FindingRemediationProps {

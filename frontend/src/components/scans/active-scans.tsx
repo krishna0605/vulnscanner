@@ -1,87 +1,33 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { RefreshCw, Pause, Play, Square, Cloud, Database, Globe, Loader2 } from 'lucide-react';
-import { getActiveScans, ActiveScanItem, pauseScan, resumeScan, cancelScan } from '@/lib/api-client';
+import { RefreshCw, Pause, Play, Square, Cloud, Database, Globe } from 'lucide-react';
 import Link from 'next/link';
-import { createClient } from '@/utils/supabase/client';
+import { formatDistanceToNow } from 'date-fns';
+import { useMutation, useQuery } from 'convex/react';
+import { api } from '@convex/_generated/api';
+import type { Id } from '@convex/_generated/dataModel';
+
+interface ActiveScanItem {
+  id: string;
+  target: string;
+  ip: string;
+  type: 'cloud' | 'database' | 'web';
+  node: string;
+  status: string;
+  rawStatus: string;
+  progress: number;
+  started: string;
+  color: 'blue' | 'emerald' | 'orange';
+}
 
 export function ActiveScans() {
-  const [activeScans, setActiveScans] = useState<ActiveScanItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const supabase = createClient();
-
-  const fetchScans = async () => {
-    // Don't show global loading on refresh, just background update
-    if (activeScans.length === 0) setLoading(true);
-    const data = await getActiveScans();
-    setActiveScans(data);
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    fetchScans();
-
-    // Realtime Subscription
-    const channel = supabase
-      .channel('scans-realtime')
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'scans',
-        },
-        (payload) => {
-          const newData = payload.new as any;
-          const newStatus = newData.status?.toLowerCase();
-          
-          // If scan is now completed/failed/cancelled, remove it from active list
-          if (['completed', 'failed', 'cancelled'].includes(newStatus)) {
-            setActiveScans((current) => 
-              current.filter((scan) => scan.id !== payload.new.id)
-            );
-            return;
-          }
-          
-          // Otherwise update progress/status for active scans
-          setActiveScans((current) =>
-            current.map((scan) => {
-              if (scan.id === payload.new.id) {
-                return {
-                  ...scan,
-                  // Update fields with fallback logic matching getActiveScans
-                  progress: newData.progress ?? scan.progress,
-                  status:
-                    newData.current_action ||
-                    (newData.status ? newData.status.toUpperCase() : scan.status),
-                  node: newData.node || scan.node,
-                };
-              }
-              return scan;
-            })
-          );
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'scans',
-        },
-        () => {
-          // New scan started, refresh full list to get relations
-          fetchScans();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
+  const scans = useQuery(api.scans.listActive, {});
+  const pauseScan = useMutation(api.scans.pause);
+  const resumeScan = useMutation(api.scans.resume);
+  const cancelScan = useMutation(api.scans.cancel);
+  const loading = scans === undefined;
+  const activeScans = (scans ?? []).map(mapActiveScan);
 
   return (
     <div className="glass-panel rounded-[24px] overflow-hidden mb-8">
@@ -94,9 +40,9 @@ export function ActiveScans() {
           </span>
         </div>
         <button
-          onClick={fetchScans}
           disabled={loading}
-          className="text-slate-400 hover:text-white transition-colors p-2 hover:bg-white/5 rounded-full disabled:opacity-50"
+          className="text-slate-400 transition-colors p-2 rounded-full disabled:opacity-50"
+          title="Convex updates this list live"
         >
           <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
         </button>
@@ -136,9 +82,9 @@ export function ActiveScans() {
             )}
 
             {activeScans.map((scan) => {
-              // Dynamic Icon Mapping
               const Icon =
                 scan.type === 'database' ? Database : scan.type === 'cloud' ? Cloud : Globe;
+              const isPaused = scan.rawStatus === 'paused';
 
               return (
                 <tr key={scan.id} className="hover:bg-white/[0.02] transition-colors group">
@@ -206,33 +152,25 @@ export function ActiveScans() {
                     <div className="flex items-center justify-end space-x-2">
                       <button
                         onClick={async () => {
-                          // Toggle pause/resume based on current status
-                          const isPaused = scan.status === 'PAUSED' || scan.status === 'Paused by user';
                           if (isPaused) {
-                            await resumeScan(scan.id);
+                            await resumeScan({ scanId: scan.id as Id<'scans'> });
                           } else {
-                            await pauseScan(scan.id);
+                            await pauseScan({ scanId: scan.id as Id<'scans'> });
                           }
-                          fetchScans(); // Refresh to show updated status
                         }}
                         className={`p-2 rounded-lg transition-colors ${
-                          scan.status === 'PAUSED' || scan.status === 'Paused by user'
+                          isPaused
                             ? 'text-green-400 hover:text-green-300 hover:bg-green-400/10'
                             : 'text-slate-400 hover:text-yellow-400 hover:bg-yellow-400/10'
                         }`}
-                        title={scan.status === 'PAUSED' || scan.status === 'Paused by user' ? 'Resume Scan' : 'Pause Scan'}
+                        title={isPaused ? 'Resume Scan' : 'Pause Scan'}
                       >
-                        {scan.status === 'PAUSED' || scan.status === 'Paused by user' ? (
-                          <Play className="h-4 w-4" />
-                        ) : (
-                          <Pause className="h-4 w-4" />
-                        )}
+                        {isPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
                       </button>
                       <button
                         onClick={async () => {
                           if (confirm('Are you sure you want to stop this scan?')) {
-                            await cancelScan(scan.id);
-                            fetchScans(); // Refresh to remove from active list
+                            await cancelScan({ scanId: scan.id as Id<'scans'> });
                           }
                         }}
                         className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
@@ -250,4 +188,31 @@ export function ActiveScans() {
       </div>
     </div>
   );
+}
+
+function mapActiveScan(scan: any): ActiveScanItem {
+  const target = scan.targetUrl ?? '';
+  const type = target.includes('db') ? 'database' : target.includes('api') ? 'cloud' : 'web';
+  const color = type === 'database' ? 'emerald' : type === 'cloud' ? 'blue' : 'orange';
+
+  return {
+    id: scan._id,
+    target,
+    ip: hostnameFromUrl(target),
+    type,
+    node: scan.node ?? 'Railway-Worker',
+    status: scan.currentAction ?? scan.status.toUpperCase(),
+    rawStatus: scan.status,
+    progress: scan.progress ?? 0,
+    started: formatDistanceToNow(new Date(scan.startedAt ?? scan.createdAt), { addSuffix: true }),
+    color,
+  };
+}
+
+function hostnameFromUrl(value: string) {
+  try {
+    return new URL(value).hostname;
+  } catch {
+    return 'N/A';
+  }
 }

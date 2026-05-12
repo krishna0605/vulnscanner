@@ -11,15 +11,13 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-      args:
-        - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
-        - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
     ports:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
-      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      - NEXT_PUBLIC_CONVEX_URL=${NEXT_PUBLIC_CONVEX_URL}
+      - NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+      - CLERK_SECRET_KEY=${CLERK_SECRET_KEY}
       - BACKEND_URL=http://backend:3001
     depends_on:
       backend:
@@ -46,8 +44,8 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3001
-      - SUPABASE_URL=${SUPABASE_URL}
-      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - CONVEX_SITE_URL=${CONVEX_SITE_URL}
+      - SCANNER_SERVICE_TOKEN=${SCANNER_SERVICE_TOKEN}
       - ALLOWED_ORIGINS=http://localhost:3000,http://frontend:3000
       - LOG_LEVEL=info
       - RATE_LIMIT_MAX=100
@@ -70,9 +68,3 @@ services:
 networks:
   vulnscanner-network:
     driver: bridge
-
-# =============================================================================
-# Volumes (optional for local PostgreSQL if not using Supabase)
-# =============================================================================
-# volumes:
-#   postgres-data:

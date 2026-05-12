@@ -9,7 +9,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { GlobalVuln } from '@/lib/api';
+import type { GlobalVuln } from '@/lib/api';
 import { formatDistanceToNow } from 'date-fns';
 
 export function GlobalVulnerabilityTable({ vulns }: { vulns: GlobalVuln[] }) {

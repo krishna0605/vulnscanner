@@ -8,11 +8,9 @@ console.log('  - PORT:', process.env.PORT || '(not set, using 3001)');
 console.log('  - NODE_ENV:', process.env.NODE_ENV || '(not set)');
 console.log('  - CONVEX_SITE_URL:', process.env.CONVEX_SITE_URL ? 'SET' : 'MISSING');
 console.log('  - SCANNER_SERVICE_TOKEN:', process.env.SCANNER_SERVICE_TOKEN ? 'SET' : 'MISSING');
-console.log('  - SUPABASE_URL (legacy):', process.env.SUPABASE_URL ? 'SET' : 'MISSING');
 console.log('  - ALLOWED_ORIGINS:', process.env.ALLOWED_ORIGINS || '(not set)');
 
 import { buildApp, getAllowedOrigins } from './app';
-import { SchedulerService } from './lib/scheduler';
 import { logger } from './lib/logger';
 
 // Server startup
@@ -22,11 +20,7 @@ const start = async () => {
   try {
     console.log('[Startup] Building app...');
     const app = await buildApp();
-    
-    console.log('[Startup] Starting scheduler...');
-    const scheduler = new SchedulerService();
-    scheduler.start();
-    
+
     console.log(`[Startup] Binding to 0.0.0.0:${PORT}...`);
     await app.listen({ port: PORT, host: '0.0.0.0' });
 
@@ -38,7 +32,7 @@ const start = async () => {
         rateLimit: `${process.env.RATE_LIMIT_MAX || '100'} req/min`,
         security: {
           helmet: true,
-          jwtAuth: true,
+          scannerTokenAuth: true,
           auditLog: true,
         },
       },

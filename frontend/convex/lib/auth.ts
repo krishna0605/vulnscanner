@@ -1,4 +1,5 @@
 import type { QueryCtx, MutationCtx } from "../_generated/server";
+import type { Id } from "../_generated/dataModel";
 
 export async function getCurrentUser(ctx: QueryCtx | MutationCtx) {
   const identity = await ctx.auth.getUserIdentity();
@@ -12,6 +13,46 @@ export async function getCurrentUser(ctx: QueryCtx | MutationCtx) {
     .unique();
 }
 
+export async function ensureCurrentUser(ctx: MutationCtx) {
+  const identity = await ctx.auth.getUserIdentity();
+  if (!identity) {
+    throw new Error("Unauthorized");
+  }
+
+  const now = Date.now();
+  const existing = await ctx.db
+    .query("users")
+    .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+    .unique();
+
+  const email = identity.email;
+  const name = identity.name ?? identity.nickname;
+  const avatarUrl = identity.pictureUrl;
+
+  if (existing) {
+    await ctx.db.patch(existing._id, {
+      email,
+      name,
+      avatarUrl,
+      updatedAt: now,
+    });
+    return (await ctx.db.get(existing._id))!;
+  }
+
+  const userId = await ctx.db.insert("users", {
+    clerkId: identity.subject,
+    email,
+    name,
+    avatarUrl,
+    role: "user",
+    plan: "Free Plan",
+    createdAt: now,
+    updatedAt: now,
+  });
+
+  return (await ctx.db.get(userId))!;
+}
+
 export async function requireCurrentUser(ctx: QueryCtx | MutationCtx) {
   const user = await getCurrentUser(ctx);
   if (!user) {
@@ -22,7 +63,7 @@ export async function requireCurrentUser(ctx: QueryCtx | MutationCtx) {
 
 export async function requireProjectOwner(
   ctx: QueryCtx | MutationCtx,
-  projectId: any,
+  projectId: Id<"projects">,
 ) {
   const user = await requireCurrentUser(ctx);
   const project = await ctx.db.get(projectId);

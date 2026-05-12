@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { FindingDetails } from '@/lib/api';
+import type { FindingDetails } from '@/lib/api';
 
 interface FindingHeaderProps {
   finding: FindingDetails;

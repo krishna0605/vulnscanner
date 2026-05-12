@@ -1,62 +1,95 @@
-s# Production Deployment Guide
+# Production Deployment Guide
 
-This project requires a **Split Deployment** strategy because:
+VulnScanner now runs on:
 
-1.  **Frontend (`/frontend`)**: Next.js app (Perfect for Vercel).
-2.  **Backend (`/backend`)**: Fastify app with **Cron Jobs** and **Playwright** (Browsers).
-    - _Note: Browsers and long-running tasks are NOT supported on Vercel Serverless. You must use a Docker host like Railway, Render, or Fly.io._
+- Vercel for the Next.js frontend
+- Clerk for authentication
+- Convex for application data, realtime queries, mutations, and scanner writebacks
+- Railway for the Playwright scanner backend
+- Hugging Face as an optional AI enrichment service
 
----
+## 1. Convex
 
-## Part 1: Backend Deployment (Railway/Render)
+Deploy Convex from the frontend workspace:
 
-**Do this FIRST**, as you will need the Backend URL for the Frontend configuration.
+```bash
+cd frontend
+npx convex deploy
+```
 
-### Option A: Railway (Recommended)
+Set these variables in the Convex dashboard:
 
-1.  Go to [Railway.app](https://railway.app/) and create a new project.
-2.  Select **"Deploy from GitHub repo"**.
-3.  Select your repository: `krishna0605/vulnscanner`.
-4.  **Configuration**:
-    - We have added a `railway.toml` file to your repository which automatically sets the **Root Directory** to `/backend`.
-    - You do **NOT** need to configure the Root Directory manually in the settings.
-5.  **Environment Variables**:
-    - Go to `Variables`.
-    - Add the following keys (copy from your local `.env`):
-      - `SUPABASE_URL`
-      - `SUPABASE_SERVICE_ROLE_KEY`
-      - `PORT` (Value: `3001` or let Railway assign one as `PORT`)
-6.  **Deploy**:
-    - If a deployment started automatically, it might have failed initially (before `railway.toml` was added).
-    - Go to "Deployments" and click **Redeploy** on the latest commit (which includes `railway.toml`).
-7.  Once deployed, copy the **Public Domain** provided by Railway (e.g., `https://vulnscanner-backend.up.railway.app`).
-    - _Note: You might need to generate a domain in `Settings` -> `Networking`._
+```env
+CLERK_JWT_ISSUER_DOMAIN=https://your-clerk-domain.clerk.accounts.dev
+CLERK_WEBHOOK_SECRET=whsec_...
+RAILWAY_BACKEND_URL=https://your-railway-service.up.railway.app
+SCANNER_SERVICE_TOKEN=replace-with-a-long-random-shared-secret
+```
 
----
+Optional:
 
-## Part 2: Frontend Deployment (Vercel)
+```env
+HUGGINGFACE_API_TOKEN=hf_...
+```
 
-1.  Go to [Vercel Dashboard](https://vercel.com/new).
-2.  Import the repository: `krishna0605/vulnscanner`.
-3.  **Project Configuration** (Critical Step):
-    - **Root Directory**: Click `Edit` and select `frontend`.
-    - **Framework Preset**: It should verify as `Next.js` automatically after selecting the root directory.
-4.  **Environment Variables**:
-    - Expand "Environment Variables".
-    - Add the following:
-      - `NEXT_PUBLIC_SUPABASE_URL`: (Your Supabase URL)
-      - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: (Your Supabase Anon Key)
-      - `BACKEND_URL`: **(The Railway URL from Part 1)**
-        - _Example: `https://vulnscanner-backend.up.railway.app`_
-        - _Important: Do NOT add a trailing slash `/`._
-5.  **Deploy**: Click "Deploy".
+## 2. Railway Backend
 
----
+Deploy the `backend` service to Railway. The repository contains `railway.toml`, so Railway should use the backend root automatically.
 
-## Part 3: Post-Deployment Verification
+Set these Railway variables:
 
-1.  Open your new Vercel URL.
-2.  Try to log in (Supabase Auth).
-3.  Test a scan.
-    - If the scan fails immediately, check the **Console** (F12) for CORS errors or 404s on `/api/...`.
-    - If you see CORS errors, you may need to add the Vercel Domain to the `CORS_ORIGINS` or `ALLOWED_ORIGINS` in your Backend Environment Variables on Railway.
+```env
+CONVEX_SITE_URL=https://your-convex-deployment.convex.site
+SCANNER_SERVICE_TOKEN=replace-with-the-same-secret-used-in-convex
+NODE_ENV=production
+PORT=3001
+ALLOWED_ORIGINS=https://your-vercel-domain.vercel.app,https://your-custom-domain.com
+RATE_LIMIT_MAX=100
+RATE_LIMIT_WINDOW_MS=60000
+SENTRY_DSN=optional
+HUGGINGFACE_API_TOKEN=optional
+```
+
+After deploy, copy the Railway public domain and put it into `RAILWAY_BACKEND_URL` in Convex.
+
+## 3. Vercel Frontend
+
+Import the repository in Vercel and set the root directory to `frontend`.
+
+Set these Vercel variables:
+
+```env
+NEXT_PUBLIC_CONVEX_URL=https://your-convex-deployment.convex.cloud
+NEXT_PUBLIC_CONVEX_SITE_URL=https://your-convex-deployment.convex.site
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_live_...
+CLERK_SECRET_KEY=sk_live_...
+CLERK_WEBHOOK_SECRET=whsec_...
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
+NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
+NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/dashboard
+NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/dashboard
+BACKEND_URL=https://your-railway-service.up.railway.app
+NEXT_PUBLIC_SENTRY_DSN=optional
+```
+
+## 4. Clerk
+
+In Clerk:
+
+- Enable email/password plus any social providers you want.
+- Configure sign-in path as `/sign-in`.
+- Configure sign-up path as `/sign-up`.
+- Configure after sign-in and after sign-up paths as `/dashboard`.
+- Create the Convex JWT template/integration.
+- Create a webhook pointing at the Convex HTTP actions URL and use the resulting secret as `CLERK_WEBHOOK_SECRET`.
+
+## 5. Verification
+
+After all deployments:
+
+1. Sign in through Clerk.
+2. Create a project.
+3. Start a scan.
+4. Confirm Railway receives the scan request.
+5. Confirm Convex receives scan logs, assets, findings, and completion status.
+6. Confirm the dashboard updates without a refresh.

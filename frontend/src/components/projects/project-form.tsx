@@ -26,8 +26,11 @@ interface ProjectFormProps {
 
 export function ProjectForm({ initialData }: ProjectFormProps) {
   const router = useRouter();
-  const [targets, setTargets] = React.useState<{ id: number; value: string }[]>(
-    initialData?.assets?.map((a: any) => ({ id: a.id, value: a.url })) || [{ id: 1, value: '' }]
+  const [targets, setTargets] = React.useState<{ id: number | string; value: string }[]>(
+    initialData?.assets?.map((a: any) => ({ id: a.id, value: a.url })) ||
+      initialData?.target_urls?.map((url: string, index: number) => ({ id: `${url}-${index}`, value: url })) || [
+        { id: 1, value: '' },
+      ]
   );
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
@@ -37,7 +40,7 @@ export function ProjectForm({ initialData }: ProjectFormProps) {
     setTargets([...targets, { id: Date.now(), value: '' }]);
   };
 
-  const removeTarget = (id: number) => {
+  const removeTarget = (id: number | string) => {
     if (targets.length > 1) {
       setTargets(targets.filter((t) => t.id !== id));
     }

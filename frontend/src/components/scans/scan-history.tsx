@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import {
   Filter,
   Download,
@@ -11,54 +10,24 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { EmptyState } from '@/components/ui/empty-state';
-import { getScanHistory, HistoryScanItem } from '@/lib/api-client';
+import { useQuery } from 'convex/react';
+import { api } from '@convex/_generated/api';
 
-import { createClient } from '@/utils/supabase/client';
+interface HistoryScanItem {
+  id: string;
+  name: string;
+  target: string;
+  completed: string;
+  status: string;
+  statusType: 'success' | 'danger' | 'warning';
+  high: number;
+  med: number;
+  low: number;
+}
 
 export function ScanHistory() {
-  const [history, setHistory] = useState<HistoryScanItem[]>([]);
-  const supabase = createClient();
-
-  const fetchHistory = async () => {
-    const data = await getScanHistory();
-    setHistory(data);
-  };
-
-  useEffect(() => {
-    fetchHistory();
-
-    const channel = supabase
-      .channel('history-realtime')
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'scans',
-          filter: 'status=in.(completed,failed)',
-        },
-        () => {
-          fetchHistory();
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'scans',
-          filter: 'status=in.(completed,failed)',
-        },
-        () => {
-          fetchHistory();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
+  const scans = useQuery(api.scans.history, { limit: 10 }) ?? [];
+  const history = scans.map(mapHistoryScan);
 
   return (
     <div className="glass-panel rounded-[24px] overflow-hidden">
@@ -158,4 +127,26 @@ export function ScanHistory() {
       </div>
     </div>
   );
+}
+
+function mapHistoryScan(scan: any): HistoryScanItem {
+  const counts = scan.severityCounts ?? { critical: 0, high: 0, medium: 0, low: 0 };
+  const high = counts.critical + counts.high;
+  const med = counts.medium;
+  const low = counts.low;
+  const totalFindings = high + med + low;
+  const isFailed = scan.status === 'failed';
+  const hasIssues = high > 0;
+
+  return {
+    id: scan._id,
+    name: `Scan #${scan._id.slice(-4)}`,
+    target: scan.targetUrl,
+    completed: new Date(scan.completedAt ?? scan.createdAt).toLocaleDateString(),
+    status: isFailed ? 'Failed' : hasIssues ? 'Issues Found' : totalFindings > 0 ? 'Low Risk' : 'Clean',
+    statusType: isFailed ? 'danger' : hasIssues ? 'danger' : totalFindings > 0 ? 'warning' : 'success',
+    high,
+    med,
+    low,
+  };
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { FindingDetails } from '@/lib/api';
+import type { FindingDetails } from '@/lib/api';
 import { FindingHeader } from './finding-header';
 import { FindingStats } from './finding-stats';
 import { FindingContent } from './finding-content';

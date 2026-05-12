@@ -1,77 +1,10 @@
 import { Globe, Server, Database, Search, Filter, Layers } from 'lucide-react';
-import { createClient } from '@/utils/supabase/server';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-
-async function getAssetStats() {
-  const supabase = await createClient();
-
-  // Get user's projects
-  const { data: projects } = await supabase.from('projects').select('id, name, target_url');
-  const projectIds = projects?.map((p) => p.id) || [];
-
-  if (projectIds.length === 0) {
-    return { totalAssets: 0, domains: 0, subdomains: 0, ips: 0, assets: [] };
-  }
-
-  // Get scans for user's projects to extract discovered assets
-  const { data: scans } = await supabase
-    .from('scans')
-    .select('id, target_url, project_id')
-    .in('project_id', projectIds);
-
-  // Extract unique domains from projects and scans
-  const domains = new Set<string>();
-  const assets: Array<{
-    name: string;
-    type: string;
-    project: string;
-    status: string;
-    lastScan: string;
-  }> = [];
-
-  projects?.forEach((p) => {
-    try {
-      const url = new URL(p.target_url);
-      domains.add(url.hostname);
-      assets.push({
-        name: url.hostname,
-        type: 'Domain',
-        project: p.name,
-        status: 'Active',
-        lastScan: 'Recently',
-      });
-    } catch {}
-  });
-
-  scans?.forEach((s) => {
-    try {
-      const url = new URL(s.target_url);
-      if (!domains.has(url.hostname)) {
-        domains.add(url.hostname);
-        const project = projects?.find((p) => p.id === s.project_id);
-        assets.push({
-          name: url.hostname,
-          type: 'Subdomain',
-          project: project?.name || 'Unknown',
-          status: 'Discovered',
-          lastScan: 'Pending',
-        });
-      }
-    } catch {}
-  });
-
-  return {
-    totalAssets: assets.length,
-    domains: projects?.length || 0,
-    subdomains: Math.max(0, assets.length - (projects?.length || 0)),
-    ips: 0, // Would require additional discovery
-    assets,
-  };
-}
+import { getAssetInventory } from '@/lib/api';
 
 export default async function AssetsPage() {
-  const stats = await getAssetStats();
+  const stats = await getAssetInventory();
 
   return (
     <div className="max-w-[1600px] mx-auto animate-in fade-in duration-700">

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { FindingDetails } from '@/lib/api';
+import type { FindingDetails } from '@/lib/api';
 
 interface FindingStatsProps {
   finding: FindingDetails;
