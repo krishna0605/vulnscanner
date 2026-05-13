@@ -1,11 +1,12 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
-import { ensureCurrentUser, requireCurrentUser, requireProjectOwner } from "./lib/auth";
+import { ensureCurrentUser, getCurrentUser, requireCurrentUser, requireProjectOwner } from "./lib/auth";
 
 export const list = query({
   args: { status: v.optional(v.union(v.literal("active"), v.literal("archived"), v.literal("maintenance"))) },
   handler: async (ctx, args) => {
-    const user = await requireCurrentUser(ctx);
+    const user = await getCurrentUser(ctx);
+    if (!user) return [];
     const rows = args.status
       ? await ctx.db
           .query("projects")
@@ -56,7 +57,8 @@ export const get = query({
 export const listWithStats = query({
   args: {},
   handler: async (ctx) => {
-    const user = await requireCurrentUser(ctx);
+    const user = await getCurrentUser(ctx);
+    if (!user) return [];
     const projects = await ctx.db.query("projects").withIndex("by_owner", (q) => q.eq("ownerId", user._id)).collect();
     const scans = await ctx.db.query("scans").withIndex("by_owner", (q) => q.eq("ownerId", user._id)).collect();
     const projectIds = new Set(projects.map((project) => project._id));

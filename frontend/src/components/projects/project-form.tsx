@@ -16,9 +16,12 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
 
-import { createProject, updateProject } from '@/app/actions';
 import { useRouter } from 'next/navigation';
 import { logger } from '@/utils/logger';
+import { useConvexAuth, useMutation } from 'convex/react';
+import { api } from '@convex/_generated/api';
+import type { Id } from '@convex/_generated/dataModel';
+import { ConvexAuthState } from '@/components/auth/convex-auth-state';
 
 interface ProjectFormProps {
   initialData?: any;
@@ -26,6 +29,9 @@ interface ProjectFormProps {
 
 export function ProjectForm({ initialData }: ProjectFormProps) {
   const router = useRouter();
+  const { isAuthenticated, isLoading: isAuthLoading } = useConvexAuth();
+  const createProjectMutation = useMutation(api.projects.create);
+  const updateProjectMutation = useMutation(api.projects.update);
   const [targets, setTargets] = React.useState<{ id: number | string; value: string }[]>(
     initialData?.assets?.map((a: any) => ({ id: a.id, value: a.url })) ||
       initialData?.target_urls?.map((url: string, index: number) => ({ id: `${url}-${index}`, value: url })) || [
@@ -33,6 +39,7 @@ export function ProjectForm({ initialData }: ProjectFormProps) {
       ]
   );
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [submitError, setSubmitError] = React.useState<string | null>(null);
 
   const isEditMode = !!initialData;
 
@@ -49,32 +56,83 @@ export function ProjectForm({ initialData }: ProjectFormProps) {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setSubmitError(null);
     const formData = new FormData(e.currentTarget);
 
-    // Append targets as JSON
-    formData.append('targets', JSON.stringify(targets));
+    const name = String(formData.get('name') ?? '').trim();
+    const description = String(formData.get('description') ?? '').trim();
+    const targetUrls = targets.map((target) => target.value.trim()).filter(Boolean);
+
+    if (!name) {
+      setSubmitError('Project name is required.');
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (!isAuthenticated) {
+      setSubmitError(
+        'Your Clerk session is not connected to Convex yet. Refresh the session and confirm the Convex Clerk issuer/JWT template.'
+      );
+      setIsSubmitting(false);
+      return;
+    }
 
     try {
       if (isEditMode) {
-        await updateProject(initialData.id, formData);
+        await updateProjectMutation({
+          projectId: (initialData.id ?? initialData._id) as Id<'projects'>,
+          name,
+          description: description || undefined,
+          targetUrls,
+        });
       } else {
-        await createProject(formData);
+        await createProjectMutation({
+          name,
+          description: description || undefined,
+          targetUrls,
+        });
       }
       router.push('/projects');
       router.refresh();
     } catch (error) {
-      alert(`Failed to ${isEditMode ? 'update' : 'create'} project`);
+      const message = getProjectMutationError(error, isEditMode ? 'update' : 'create');
+      setSubmitError(message);
       logger.error(`Failed to ${isEditMode ? 'update' : 'create'} project`, { error });
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  if (isAuthLoading) {
+    return (
+      <ConvexAuthState
+        title="Authenticating workspace..."
+        message="Connecting your Clerk session to Convex before enabling project changes."
+      />
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <ConvexAuthState
+        title="Session needs refresh"
+        message="Clerk is signed in, but Convex has not accepted an auth token for project changes. Confirm the Clerk Convex JWT template and Convex issuer, then sign in again."
+        variant="error"
+      />
+    );
+  }
+
   return (
     <form
       onSubmit={handleSubmit}
       className="glass-panel p-8 rounded-[24px] relative overflow-hidden"
     >
+      {submitError && (
+        <div className="mb-8 rounded-2xl border border-red-500/30 bg-red-500/10 px-5 py-4 text-sm leading-6 text-red-100">
+          {submitError}
+        </div>
+      )}
+
       {/* Step 01: Project Identity */}
       <div className="relative pb-10 border-l border-white/10 pl-8 ml-3">
         <span className="absolute -left-[19px] top-0 flex h-10 w-10 items-center justify-center rounded-full bg-[#313131] border border-white/20 ring-4 ring-[#313131] z-10 transition-all hover:scale-110 hover:border-cyan-500/50 cursor-pointer shadow-glow">
@@ -279,7 +337,7 @@ export function ProjectForm({ initialData }: ProjectFormProps) {
           Cancel
         </Button>
         <Button
-          disabled={isSubmitting}
+          disabled={isSubmitting || isAuthLoading || !isAuthenticated}
           type="submit"
           className="bg-white text-black font-bold h-12 px-8 rounded-xl shadow-glow hover:shadow-glow-hover transition-all flex items-center gap-2"
         >
@@ -295,4 +353,19 @@ export function ProjectForm({ initialData }: ProjectFormProps) {
       </div>
     </form>
   );
+}
+
+function getProjectMutationError(error: unknown, action: 'create' | 'update') {
+  const rawMessage = error instanceof Error ? error.message : String(error ?? '');
+  const lower = rawMessage.toLowerCase();
+
+  if (lower.includes('unauthorized') || lower.includes('unauthenticated')) {
+    return `Failed to ${action} project because Convex did not receive a valid Clerk auth token. Confirm CLERK_JWT_ISSUER_DOMAIN in Convex, the Clerk JWT template named "convex", and matching Clerk keys in Vercel.`;
+  }
+
+  if (lower.includes('argumentvalidationerror') || lower.includes('validation')) {
+    return `Failed to ${action} project because the project data did not match the Convex schema. Check the project name and target URLs.`;
+  }
+
+  return rawMessage || `Failed to ${action} project. Please try again.`;
 }

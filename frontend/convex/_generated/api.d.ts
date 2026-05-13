@@ -9,6 +9,7 @@
  */
 
 import type * as assets from "../assets.js";
+import type * as auth from "../auth.js";
 import type * as comments from "../comments.js";
 import type * as dashboard from "../dashboard.js";
 import type * as findings from "../findings.js";
@@ -29,6 +30,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   assets: typeof assets;
+  auth: typeof auth;
   comments: typeof comments;
   dashboard: typeof dashboard;
   findings: typeof findings;

@@ -1,11 +1,18 @@
 import { internalMutation, internalQuery, mutation, query } from "./_generated/server";
 import { v } from "convex/values";
-import { getCurrentUser } from "./lib/auth";
+import { ensureCurrentUser, getCurrentUser } from "./lib/auth";
 
 export const me = query({
   args: {},
   handler: async (ctx) => {
     return await getCurrentUser(ctx);
+  },
+});
+
+export const syncCurrent = mutation({
+  args: {},
+  handler: async (ctx) => {
+    return await ensureCurrentUser(ctx);
   },
 });
 

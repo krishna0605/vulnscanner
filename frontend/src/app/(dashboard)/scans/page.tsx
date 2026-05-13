@@ -6,6 +6,7 @@ import { ScanHistory } from '@/components/scans/scan-history';
 import { Button } from '@/components/ui/button';
 import { Radar } from 'lucide-react';
 import Link from 'next/link';
+import { ConvexAuthGuard } from '@/components/auth/convex-auth-state';
 
 export default function ScansPage() {
   return (
@@ -27,9 +28,11 @@ export default function ScansPage() {
         </div>
       </div>
 
-      <ScanStats />
-      <ActiveScans />
-      <ScanHistory />
+      <ConvexAuthGuard>
+        <ScanStats />
+        <ActiveScans />
+        <ScanHistory />
+      </ConvexAuthGuard>
     </div>
   );
 }

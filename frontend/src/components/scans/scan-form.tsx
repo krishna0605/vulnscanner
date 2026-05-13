@@ -2,10 +2,11 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAction, useQuery } from 'convex/react';
+import { useAction, useConvexAuth, useQuery } from 'convex/react';
 import { api } from '@convex/_generated/api';
 import type { Id } from '@convex/_generated/dataModel';
 import { logger } from '@/utils/logger';
+import { ConvexAuthState } from '@/components/auth/convex-auth-state';
 
 import { motion } from 'framer-motion';
 import {
@@ -53,7 +54,11 @@ import {
 
 export function ScanForm() {
   const [loading, setLoading] = useState(false);
-  const projects = useQuery(api.projects.list, { status: 'active' }) ?? [];
+  const [scanError, setScanError] = useState<string | null>(null);
+  const { isAuthenticated, isLoading: isAuthLoading } = useConvexAuth();
+  const projectsResult = useQuery(api.projects.list, isAuthenticated ? { status: 'active' } : 'skip');
+  const projects = projectsResult ?? [];
+  const projectsLoading = isAuthenticated && projectsResult === undefined;
   const startScan = useAction(api.scans.start);
   const [formData, setFormData] = useState({
     projectId: '',
@@ -217,8 +222,17 @@ export function ScanForm() {
 
 
   const handleStartScan = async () => {
+    setScanError(null);
+
+    if (!isAuthenticated) {
+      setScanError(
+        'Your Clerk session is not connected to Convex yet. Refresh the session and confirm the Convex Clerk issuer/JWT template.'
+      );
+      return;
+    }
+
     if (!formData.projectId || !formData.url) {
-      alert('Please select a project and enter a target URL.');
+      setScanError('Please select a project and enter a target URL.');
       return;
     }
 
@@ -260,18 +274,43 @@ export function ScanForm() {
       if (result?.id) {
         router.push(`/scans/${result.id}`);
       } else {
-        alert('Failed to start scan');
+        setScanError('Failed to start scan. The scanner did not return a scan id.');
       }
     } catch (e) {
       logger.error('Error starting scan', { error: e });
-      alert('Error starting scan');
+      setScanError(getScanErrorMessage(e));
     } finally {
       setLoading(false);
     }
   };
 
+  if (isAuthLoading) {
+    return (
+      <ConvexAuthState
+        title="Authenticating workspace..."
+        message="Connecting your Clerk session to Convex before loading scan configuration."
+      />
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <ConvexAuthState
+        title="Session needs refresh"
+        message="Clerk is signed in, but Convex has not accepted an auth token for scans yet. Confirm the Clerk Convex JWT template and Convex issuer, then sign in again."
+        variant="error"
+      />
+    );
+  }
+
   return (
     <div className="glass-panel p-8 rounded-[24px] relative overflow-hidden">
+      {scanError && (
+        <div className="mb-8 rounded-2xl border border-red-500/30 bg-red-500/10 px-5 py-4 text-sm leading-6 text-red-100">
+          {scanError}
+        </div>
+      )}
+
       {/* Step 01: Target Information */}
       <div className="relative pb-10 border-l border-white/10 pl-8 ml-3">
         <span className="absolute -left-[19px] top-0 flex h-10 w-10 items-center justify-center rounded-full bg-[#313131] border border-white/20 ring-4 ring-[#313131] z-10">
@@ -302,7 +341,16 @@ export function ScanForm() {
                     {p.name}
                   </SelectItem>
                 ))}
-                {projects.length === 0 && <SelectItem value="none">No projects found</SelectItem>}
+                {projectsLoading && (
+                  <SelectItem value="loading" disabled>
+                    Loading projects...
+                  </SelectItem>
+                )}
+                {!projectsLoading && projects.length === 0 && (
+                  <SelectItem value="none" disabled>
+                    No projects found
+                  </SelectItem>
+                )}
               </SelectContent>
             </Select>
           </div>
@@ -612,7 +660,7 @@ export function ScanForm() {
         </Button>
         <Button
           onClick={handleStartScan}
-          disabled={loading}
+          disabled={loading || projectsLoading || !isAuthenticated}
           className="bg-cyan-500 hover:bg-cyan-400 text-black font-bold h-12 px-8 rounded-xl shadow-[0_0_20px_rgba(6,182,212,0.3)] hover:shadow-[0_0_30px_rgba(6,182,212,0.5)] transition-all"
         >
           <Rocket className="mr-2 h-5 w-5" />
@@ -621,4 +669,19 @@ export function ScanForm() {
       </div>
     </div>
   );
+}
+
+function getScanErrorMessage(error: unknown) {
+  const rawMessage = error instanceof Error ? error.message : String(error ?? '');
+  const lower = rawMessage.toLowerCase();
+
+  if (lower.includes('unauthorized') || lower.includes('unauthenticated')) {
+    return 'Failed to start scan because Convex did not receive a valid Clerk auth token. Confirm CLERK_JWT_ISSUER_DOMAIN in Convex, the Clerk JWT template named "convex", and matching Clerk keys in Vercel.';
+  }
+
+  if (lower.includes('railway') || lower.includes('scanner')) {
+    return rawMessage;
+  }
+
+  return rawMessage || 'Error starting scan. Please try again.';
 }

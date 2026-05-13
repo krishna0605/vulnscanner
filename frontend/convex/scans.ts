@@ -1,14 +1,15 @@
 import { action, mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { api, internal } from "./_generated/api";
-import { requireCurrentUser } from "./lib/auth";
+import { getCurrentUser, requireCurrentUser } from "./lib/auth";
 
 const scanType = v.union(v.literal("quick"), v.literal("standard"), v.literal("deep"), v.literal("full"));
 
 export const listActive = query({
   args: {},
   handler: async (ctx) => {
-    const user = await requireCurrentUser(ctx);
+    const user = await getCurrentUser(ctx);
+    if (!user) return [];
     const active = ["queued", "scanning", "processing", "paused"];
     const rows = await ctx.db.query("scans").withIndex("by_owner", (q) => q.eq("ownerId", user._id)).collect();
     return rows.filter((scan) => active.includes(scan.status)).sort((a, b) => b.createdAt - a.createdAt);
@@ -18,7 +19,8 @@ export const listActive = query({
 export const history = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, args) => {
-    const user = await requireCurrentUser(ctx);
+    const user = await getCurrentUser(ctx);
+    if (!user) return [];
     const rows = await ctx.db.query("scans").withIndex("by_owner", (q) => q.eq("ownerId", user._id)).collect();
     const scans = rows
       .filter((scan) => scan.status === "completed" || scan.status === "failed")
@@ -41,7 +43,14 @@ export const history = query({
 export const stats = query({
   args: {},
   handler: async (ctx) => {
-    const user = await requireCurrentUser(ctx);
+    const user = await getCurrentUser(ctx);
+    if (!user) {
+      return {
+        monthCount: 0,
+        avgDuration: "N/A",
+        successRate: "100%",
+      };
+    }
     const scans = await ctx.db.query("scans").withIndex("by_owner", (q) => q.eq("ownerId", user._id)).collect();
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();

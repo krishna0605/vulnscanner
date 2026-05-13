@@ -16,7 +16,12 @@ export default function SignInPage() {
           <p className="mt-3 text-slate-400">Authentication is disabled for E2E test mode.</p>
         </section>
       ) : (
-        <SignIn routing="path" path="/sign-in" signUpUrl="/sign-up" afterSignInUrl="/dashboard" />
+        <SignIn
+          routing="path"
+          path="/sign-in"
+          signUpUrl="/sign-up"
+          fallbackRedirectUrl="/dashboard"
+        />
       )}
     </main>
   );
